@@ -28,6 +28,14 @@ services:
       MARKET_DATA_ENABLED: ${MARKET_DATA_ENABLED:-true}
       EXPOSE_ACCOUNT_TOKENS: ${EXPOSE_ACCOUNT_TOKENS:-true}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      SMTP_HOST: ${SMTP_HOST:-localhost}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_AUTH: ${SMTP_AUTH:-false}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+      MAIL_FROM: ${MAIL_FROM:-nao-responda@mad.local}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4200}
     depends_on:
       db:
         condition: service_healthy

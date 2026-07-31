@@ -90,8 +90,10 @@ class AuthIntegrationTest {
                         .content("{\"name\":\"Sol\",\"email\":\"sol@example.com\",\"password\":\"senha-antiga\"}"))
                 .andReturn().getResponse().getContentAsString();
         String verification = mapper.readTree(registration).get("verificationToken").asText();
-        mvc.perform(post("/api/auth/confirm-email").contentType(MediaType.APPLICATION_JSON)
-                .content(mapper.writeValueAsString(java.util.Map.of("token", verification))));
+        String confirmation = mvc.perform(post("/api/auth/confirm-email").contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(java.util.Map.of("token", verification))))
+                .andReturn().getResponse().getContentAsString();
+        String previousRefresh = mapper.readTree(confirmation).get("refreshToken").asText();
         String forgot = mvc.perform(post("/api/auth/forgot-password").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"sol@example.com\"}"))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
@@ -102,5 +104,8 @@ class AuthIntegrationTest {
         mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"sol@example.com\",\"password\":\"senha-nova\"}"))
                 .andExpect(status().isOk());
+        mvc.perform(post("/api/auth/refresh").contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(java.util.Map.of("token", previousRefresh))))
+                .andExpect(status().isUnauthorized());
     }
 }

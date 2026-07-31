@@ -110,6 +110,10 @@ td small { display: block; color: var(--muted); margin-top: .2rem; }
 .stack-single { display: grid; }
 .danger-zone { margin-top: 1rem; border-color: #e7c2be; }
 .detail-metrics { grid-template-columns: repeat(4, 1fr); }
+.context-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; max-width: 720px; }
+.income-history { margin-top: 1rem; max-height: 280px; }
+.income-history table { min-width: 520px; }
+.empty-copy.compact { padding: 1rem 0 0; }
 .notes-list { margin-top: 1.5rem; }
 .note { border-top: 1px solid var(--line); padding: 1rem 0; }
 .note p { white-space: pre-wrap; margin-bottom: .4rem; }

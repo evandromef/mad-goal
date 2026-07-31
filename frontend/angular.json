@@ -46,6 +46,8 @@
           "options": {
             "tsConfig": "tsconfig.spec.json",
             "buildTarget": "mad-frontend:build:development",
+            "coverageInclude": ["src/app/**/*.ts"],
+            "coverageExclude": ["src/app/**/*.spec.ts", "src/app/app.routes.ts"],
             "coverageThresholds": {
               "statements": 80,
               "functions": 80,

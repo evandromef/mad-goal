@@ -30,8 +30,10 @@ public class AccountTokenService {
 
     public String issueAccountToken(User user, AccountToken.Type type) {
         String raw = randomToken();
-        long hours = type == AccountToken.Type.EMAIL_CONFIRMATION ? 24 : 1;
-        accountTokens.save(new AccountToken(user, type, hash(raw), Instant.now().plus(hours, ChronoUnit.HOURS)));
+        Instant expiresAt = type == AccountToken.Type.EMAIL_CONFIRMATION
+                ? Instant.now().plus(24, ChronoUnit.HOURS)
+                : Instant.now().plus(30, ChronoUnit.MINUTES);
+        accountTokens.save(new AccountToken(user, type, hash(raw), expiresAt));
         return raw;
     }
 
@@ -61,6 +63,11 @@ public class AccountTokenService {
 
     public void revokeRefreshToken(String raw) {
         refreshTokens.findByTokenHash(hash(raw)).ifPresent(token -> token.revoke(Instant.now()));
+    }
+
+    public void revokeAllRefreshTokens(User user) {
+        Instant now = Instant.now();
+        refreshTokens.findByUserIdAndRevokedAtIsNull(user.getId()).forEach(token -> token.revoke(now));
     }
 
     private String randomToken() {

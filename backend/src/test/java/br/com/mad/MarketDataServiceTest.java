@@ -26,10 +26,13 @@ class MarketDataServiceTest {
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         when(repository.findByTickerIgnoreCase(any())).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        Asset removed = new Asset("OLD3", "Removido", Asset.Category.ACAO, null);
+        when(repository.findAll()).thenReturn(List.of(removed));
         server.expect(requestTo("https://brapi.test/api/quote/list?limit=1000")).andRespond(withSuccess("""
                 {"stocks":[
                   {"stock":"ABCD3","name":"Empresa","type":"stock","subType":"stock","close":12.34567891},
                   {"stock":"FUND11","name":"Fundo","type":"fund","subType":"fii","close":99.1},
+                  {"stock":"OFF3","name":"Indisponível","type":"stock","subType":"stock","active":false},
                   {"stock":"IGNO3","name":"Ignorado","type":"index","subType":"index","close":1}
                 ]}
                 """, MediaType.APPLICATION_JSON));
@@ -37,6 +40,7 @@ class MarketDataServiceTest {
 
         assertThat(service.synchronizeCatalog()).isEqualTo(2);
         verify(repository, times(2)).save(any(Asset.class));
+        assertThat(removed.isActive()).isFalse();
         server.verify();
     }
 

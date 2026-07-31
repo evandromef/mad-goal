@@ -8,6 +8,8 @@ spring:
       ddl-auto: create-drop
   flyway:
     enabled: false
+  mail:
+    host: localhost
 app:
   jwt:
     secret: test-secret-that-has-more-than-thirty-two-characters-long
@@ -21,3 +23,6 @@ app:
     expose-tokens: true
   google:
     client-id: ""
+  mail:
+    from: nao-responda@mad.test
+    frontend-url: http://localhost:4200

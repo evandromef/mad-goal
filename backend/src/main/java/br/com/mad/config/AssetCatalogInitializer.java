@@ -8,7 +8,6 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Component
@@ -24,13 +23,13 @@ public class AssetCatalogInitializer implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         if (assets.count() == 0) {
             assets.saveAll(List.of(
-                    new Asset("PETR4", "Petrobras PN", Asset.Category.ACAO, new BigDecimal("32.50")),
-                    new Asset("VALE3", "Vale ON", Asset.Category.ACAO, new BigDecimal("61.20")),
-                    new Asset("ITUB4", "Itaú Unibanco PN", Asset.Category.ACAO, new BigDecimal("36.80")),
-                    new Asset("WEGE3", "WEG ON", Asset.Category.ACAO, new BigDecimal("45.10")),
-                    new Asset("MXRF11", "Maxi Renda FII", Asset.Category.FII, new BigDecimal("9.65")),
-                    new Asset("HGLG11", "CSHG Logística FII", Asset.Category.FII, new BigDecimal("158.40")),
-                    new Asset("KNRI11", "Kinea Renda Imobiliária FII", Asset.Category.FII, new BigDecimal("145.30"))
+                    new Asset("PETR4", "Petrobras PN", Asset.Category.ACAO, null),
+                    new Asset("VALE3", "Vale ON", Asset.Category.ACAO, null),
+                    new Asset("ITUB4", "Itaú Unibanco PN", Asset.Category.ACAO, null),
+                    new Asset("WEGE3", "WEG ON", Asset.Category.ACAO, null),
+                    new Asset("MXRF11", "Maxi Renda FII", Asset.Category.FII, null),
+                    new Asset("HGLG11", "CSHG Logística FII", Asset.Category.FII, null),
+                    new Asset("KNRI11", "Kinea Renda Imobiliária FII", Asset.Category.FII, null)
             ));
         }
         marketData.synchronizeCatalogSafely();

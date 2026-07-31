@@ -30,7 +30,7 @@ public class Asset {
         this.name = name;
         this.category = category;
         this.currentPrice = currentPrice;
-        this.priceDate = LocalDate.now();
+        this.priceDate = currentPrice == null ? null : LocalDate.now();
     }
     public UUID getId() { return id; }
     public String getTicker() { return ticker; }
@@ -45,4 +45,5 @@ public class Asset {
     public void updateQuote(BigDecimal currentPrice, LocalDate priceDate) {
         this.currentPrice = currentPrice; this.priceDate = priceDate;
     }
+    public void deactivate() { this.active = false; }
 }

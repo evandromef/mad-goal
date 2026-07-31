@@ -5,6 +5,7 @@ import br.com.mad.domain.User;
 import br.com.mad.repository.UserRepository;
 import br.com.mad.security.JwtService;
 import br.com.mad.service.AccountTokenService;
+import br.com.mad.service.AccountMailService;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -28,18 +29,20 @@ public class AuthController {
     private final PasswordEncoder encoder;
     private final JwtService jwt;
     private final AccountTokenService tokens;
+    private final AccountMailService mail;
     private final RestClient google;
     private final String googleClientId;
     private final boolean exposeTokens;
 
     public AuthController(UserRepository users, PasswordEncoder encoder, JwtService jwt,
-                          AccountTokenService tokens, RestClient.Builder restClientBuilder,
+                          AccountTokenService tokens, AccountMailService mail, RestClient.Builder restClientBuilder,
                           @Value("${app.google.client-id:}") String googleClientId,
                           @Value("${app.account.expose-tokens:false}") boolean exposeTokens) {
         this.users = users;
         this.encoder = encoder;
         this.jwt = jwt;
         this.tokens = tokens;
+        this.mail = mail;
         this.google = restClientBuilder.baseUrl("https://oauth2.googleapis.com").build();
         this.googleClientId = googleClientId;
         this.exposeTokens = exposeTokens;
@@ -70,6 +73,7 @@ public class AuthController {
         }
         User user = users.save(new User(body.name().trim(), email, encoder.encode(body.password())));
         String token = tokens.issueAccountToken(user, AccountToken.Type.EMAIL_CONFIRMATION);
+        if (!exposeTokens) mail.sendConfirmation(user, token);
         return new PendingResponse("Cadastro criado. Confirme seu e-mail para entrar.", exposeTokens ? token : null);
     }
 
@@ -123,7 +127,11 @@ public class AuthController {
     @Transactional
     public PendingResponse forgotPassword(@Valid @RequestBody EmailRequest body) {
         String token = users.findByEmailIgnoreCase(body.email().trim())
-                .map(user -> tokens.issueAccountToken(user, AccountToken.Type.PASSWORD_RESET))
+                .map(user -> {
+                    String issued = tokens.issueAccountToken(user, AccountToken.Type.PASSWORD_RESET);
+                    if (!exposeTokens) mail.sendPasswordReset(user, issued);
+                    return issued;
+                })
                 .orElse(null);
         return new PendingResponse("Se o e-mail estiver cadastrado, as instruções foram geradas.",
                 exposeTokens ? token : null);
@@ -135,6 +143,7 @@ public class AuthController {
         User user = tokens.consumeAccountToken(body.token(), AccountToken.Type.PASSWORD_RESET);
         user.setPasswordHash(encoder.encode(body.password()));
         user.verifyEmail();
+        tokens.revokeAllRefreshTokens(user);
         return Map.of("message", "Senha redefinida com sucesso.");
     }
 

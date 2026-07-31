@@ -29,9 +29,9 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
     }
   }
   await form.getByLabel('Tipo').selectOption('COMPRA');
-  const petr4 = await page.locator('select[formcontrolname="assetId"] option', { hasText: /^PETR4 ·/ })
+  const petr4 = await form.locator('select[formcontrolname="assetId"] option', { hasText: /^PETR4 ·/ })
     .getAttribute('value');
-  await page.getByLabel('Ativo').selectOption(petr4!);
+  await form.getByLabel('Ativo').selectOption(petr4!);
   await page.getByLabel('Quantidade').fill('10.12345678');
   await page.getByLabel('Valor total').fill('1000.12345678');
   await page.getByRole('button', { name: 'Salvar lançamento' }).click();

@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
@@ -17,6 +18,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Locale;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class MarketDataService {
@@ -43,11 +46,12 @@ public class MarketDataService {
         JsonNode response = client.get().uri("/api/quote/list?limit=1000").retrieve().body(JsonNode.class);
         if (response == null || !response.path("stocks").isArray()) return 0;
         int synchronizedCount = 0;
+        Set<String> eligibleTickers = new HashSet<>();
         for (JsonNode item : response.path("stocks")) {
             Asset.Category category = category(item);
-            if (category == null) continue;
             String ticker = item.path("stock").asText("").trim().toUpperCase(Locale.ROOT);
-            if (ticker.isBlank()) continue;
+            if (ticker.isBlank() || category == null || !available(item)) continue;
+            eligibleTickers.add(ticker);
             String name = item.path("name").asText(ticker).trim();
             BigDecimal close = item.path("close").isNumber() ? item.path("close").decimalValue() : null;
             Asset asset = assets.findByTickerIgnoreCase(ticker)
@@ -57,6 +61,9 @@ public class MarketDataService {
             assets.save(asset);
             synchronizedCount++;
         }
+        assets.findAll().stream()
+                .filter(asset -> !eligibleTickers.contains(asset.getTicker().toUpperCase(Locale.ROOT)))
+                .forEach(Asset::deactivate);
         log.info("Catálogo sincronizado com {} ativos elegíveis", synchronizedCount);
         return synchronizedCount;
     }
@@ -88,6 +95,7 @@ public class MarketDataService {
         return updated;
     }
 
+    @Async
     public void synchronizeCatalogSafely() {
         try {
             synchronizeCatalog();
@@ -119,6 +127,13 @@ public class MarketDataService {
         if ("stock".equals(type) && ("stock".equals(subType) || "unit".equals(subType) || subType.isBlank()))
             return Asset.Category.ACAO;
         return null;
+    }
+
+    private boolean available(JsonNode item) {
+        for (String field : new String[]{"active", "isActive", "available", "isAvailable", "isActivelyTrading"}) {
+            if (item.has(field) && item.path(field).isBoolean() && !item.path(field).asBoolean()) return false;
+        }
+        return true;
     }
 
     private LocalDate quoteDate(String timestamp) {

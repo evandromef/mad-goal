@@ -97,6 +97,11 @@ Nenhum segredo real é versionado. As seguintes variáveis podem ser definidas n
 | `MARKET_DATA_ENABLED` | Habilita sincronização real de catálogo e cotações |
 | `GOOGLE_CLIENT_ID` | Client ID público para login Google |
 | `EXPOSE_ACCOUNT_TOKENS` | Exibe tokens de confirmação/recuperação na resposta para desenvolvimento local |
+| `SMTP_HOST` / `SMTP_PORT` | Servidor SMTP usado para mensagens de conta |
+| `SMTP_USER` / `SMTP_PASSWORD` | Credenciais SMTP, quando exigidas pelo provedor |
+| `SMTP_AUTH` / `SMTP_STARTTLS` | Habilita autenticação e STARTTLS no SMTP |
+| `MAIL_FROM` | Remetente das mensagens de conta |
+| `FRONTEND_URL` | URL base usada nos links de confirmação e recuperação |
 
 O catálogo recebe uma carga inicial idempotente para permitir uso offline e, quando
 `MARKET_DATA_ENABLED=true`, é sincronizado semanalmente com a Brapi. Cotações são
@@ -107,7 +112,8 @@ requisição por ticker; uma falha preserva a última cotação válida. Defina
 No ambiente local, `EXPOSE_ACCOUNT_TOKENS=true` permite concluir confirmação de
 e-mail e recuperação de senha sem um servidor SMTP: o token é preenchido
 automaticamente na tela. Em ambientes compartilhados, mantenha essa opção desativada
-e entregue o token por um provedor de e-mail.
+e configure o SMTP; a aplicação enviará links de confirmação e recuperação ao
+endereço do usuário.
 
 ## API REST
 

@@ -38,6 +38,7 @@ public class AccountToken {
     }
     public User getUser() { return user; }
     public Type getType() { return type; }
+    public Instant getExpiresAt() { return expiresAt; }
     public boolean isUsable(Instant now) { return usedAt == null && expiresAt.isAfter(now); }
     public void use(Instant now) { usedAt = now; }
 }

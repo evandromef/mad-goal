@@ -12,16 +12,25 @@ import { ApiService, LedgerItem, Note, Position } from '../core/api.service';
     <main class="workspace">
       @if (position(); as item) {
         <section class="hero-row"><div><p class="eyebrow">{{ item.category }}</p><h1>{{ item.ticker }}</h1><p>{{ item.name }}</p></div>
-          <div class="form-actions">
-            <a class="button primary" [routerLink]="['/']" [queryParams]="{wallet: walletId, asset: assetId, type: 'COMPRA'}">Nova compra</a>
-            <a class="button secondary" [routerLink]="['/']" [queryParams]="{wallet: walletId, asset: assetId, type: 'DIVIDENDO'}">Novo provento</a>
+          <div class="context-actions">
+            <a class="button primary" [routerLink]="['/']" [queryParams]="context('COMPRA')">Compra</a>
+            <a class="button secondary" [routerLink]="['/']" [queryParams]="context('VENDA')">Venda</a>
+            <a class="button secondary" [routerLink]="['/']" [queryParams]="context('SUBSCRICAO')">Subscrição</a>
+            <a class="button secondary" [routerLink]="['/']" [queryParams]="context('DIVIDENDO')">Provento</a>
+            <a class="button secondary" [routerLink]="['/']" [queryParams]="context('BONIFICACAO')">Bonificação</a>
+            <a class="button secondary" [routerLink]="['/']" [queryParams]="context('DESDOBRAMENTO')">Desdobramento</a>
+            <a class="button secondary" [routerLink]="['/']" [queryParams]="context('GRUPAMENTO')">Grupamento</a>
           </div>
         </section>
         <section class="metrics detail-metrics">
           <article class="metric"><span>Quantidade</span><strong>{{ item.quantity | number:'1.0-8' }}</strong></article>
           <article class="metric"><span>Custo</span><strong>{{ item.acquisitionCost | currency:'BRL' }}</strong></article>
+          <article class="metric"><span>Cotação</span><strong>{{ item.currentPrice == null ? 'Indisponível' : (item.currentPrice | currency:'BRL') }}</strong><small>Preço unitário</small></article>
+          <article class="metric"><span>Data da cotação</span><strong>{{ item.priceDate == null ? 'Indisponível' : (item.priceDate | date:'dd/MM/yyyy':'UTC') }}</strong><small>Última referência válida</small></article>
           <article class="metric"><span>Valor atual</span><strong>{{ item.currentValue == null ? 'Indisponível' : (item.currentValue | currency:'BRL') }}</strong></article>
+          <article class="metric"><span>Resultado (P&amp;L)</span><strong [class.negative]="item.profitLoss != null && item.profitLoss < 0">{{ item.profitLoss == null ? 'Indisponível' : (item.profitLoss | currency:'BRL') }}</strong></article>
           <article class="metric"><span>Rentabilidade</span><strong>{{ item.returnPercentage == null ? 'Indisponível' : ((item.returnPercentage | number:'1.2-2') + '%') }}</strong></article>
+          <article class="metric"><span>Alocação</span><strong>{{ item.allocationPercentage == null ? 'Indisponível' : ((item.allocationPercentage | number:'1.2-2') + '%') }}</strong></article>
         </section>
       }
       <section class="content-grid">
@@ -85,6 +94,9 @@ export class AssetDetailComponent implements OnInit {
       this.position.set(data.positions.find(item => item.assetId === this.assetId) ?? null));
     this.api.records(this.walletId).subscribe(items => this.records.set(items.filter(item => item.assetId === this.assetId)));
     this.loadNotes();
+  }
+  context(type: string): { wallet: string; asset: string; type: string } {
+    return { wallet: this.walletId, asset: this.assetId, type };
   }
   historyValue(item: LedgerItem): string {
     if (item.totalValue != null) return item.totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });

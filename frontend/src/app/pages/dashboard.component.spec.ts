@@ -205,6 +205,24 @@ describe('DashboardComponent - lançamentos', () => {
     expect(messageSlot).not.toBeNull();
   });
 
+  it('filtra proventos por ativo e expõe os ativos da carteira', () => {
+    const component = TestBed.createComponent(DashboardComponent).componentInstance;
+    component.selectedWalletId.set('wallet-1');
+    component.assets.set([
+      { id: 'asset-1', ticker: 'PETR4', name: 'Petrobras', category: 'ACAO', currentPrice: null, priceDate: null },
+      { id: 'asset-2', ticker: 'VALE3', name: 'Vale', category: 'ACAO', currentPrice: null, priceDate: null }
+    ]);
+    component.records.set([item]);
+    component.incomeForm.patchValue({ assetId: 'asset-1', type: 'DIVIDENDO', groupBy: 'QUARTERLY' });
+
+    expect(component.incomeAssets().map(asset => asset.id)).toEqual(['asset-1']);
+    component.loadIncomes();
+
+    expect(api.incomes).toHaveBeenCalledWith('wallet-1', {
+      assetId: 'asset-1', type: 'DIVIDENDO', groupBy: 'QUARTERLY'
+    });
+  });
+
   it('monta payloads de provento, bonificação e evento e trata erros', () => {
     const component = TestBed.createComponent(DashboardComponent).componentInstance;
     component.selectedWalletId.set('wallet-1');
@@ -253,7 +271,10 @@ describe('DashboardComponent - lançamentos', () => {
     }));
     api.records.mockReturnValue(of([{ ...item, type: 'DESDOBRAMENTO', totalValue: undefined,
       quantity: undefined, newQuantity: 20, ratio: '1:2' }]));
-    api.incomes.mockReturnValue(of({ total: 25, groups: [{ period: '2026-T1', total: 25 }], items: [] }));
+    api.incomes.mockReturnValue(of({ total: 25, groups: [{ period: '2026-T1', total: 25 }], items: [{
+      id: 'income-1', assetId: 'asset-1', ticker: 'PETR4', category: 'ACAO', type: 'DIVIDENDO',
+      date: '2026-04-10', totalValue: 25
+    }] }));
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
     const text = fixture.nativeElement.textContent;
@@ -262,5 +283,7 @@ describe('DashboardComponent - lançamentos', () => {
     expect(text).toContain('20 un. · 1:2');
     expect(text).toContain('2026-01');
     expect(text).toContain('2026-T1');
+    expect(text).toContain('10/04/2026');
+    expect(text).toContain('Dividendos');
   });
 });

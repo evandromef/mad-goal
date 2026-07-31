@@ -1,6 +1,6 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService, AuthResponse } from '../core/api.service';
 import { SessionService } from '../core/session.service';
 
@@ -59,11 +59,12 @@ declare global {
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LoginComponent implements AfterViewInit {
+export class LoginComponent implements OnInit, AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   readonly mode = signal<'login' | 'register' | 'confirm' | 'forgot' | 'reset'>('login');
   readonly loading = signal(false);
   readonly error = signal('');
@@ -71,6 +72,15 @@ export class LoginComponent implements AfterViewInit {
   readonly form = this.fb.nonNullable.group({
     name: [''], email: ['', [Validators.email]], password: [''], accountToken: ['']
   });
+
+  ngOnInit(): void {
+    const requestedMode = this.route.snapshot.queryParamMap.get('mode');
+    const token = this.route.snapshot.queryParamMap.get('token');
+    if ((requestedMode === 'confirm' || requestedMode === 'reset') && token) {
+      this.mode.set(requestedMode);
+      this.form.controls.accountToken.setValue(token);
+    }
+  }
 
   ngAfterViewInit(): void {
     this.api.authConfig().subscribe(({ googleClientId }) => {

@@ -176,6 +176,9 @@ import { SessionService } from '../core/session.service';
           <article class="panel">
             <p class="eyebrow">Proventos</p><h2>Análise por período</h2>
             <form [formGroup]="incomeForm" class="filter-grid" (ngSubmit)="loadIncomes()">
+              <label>Ativo<select formControlName="assetId"><option value="">Todos</option>
+                @for (asset of incomeAssets(); track asset.id) { <option [value]="asset.id">{{ asset.ticker }}</option> }
+              </select></label>
               <label>Categoria<select formControlName="category"><option value="">Todas</option><option value="ACAO">Ações</option><option value="FII">FIIs</option></select></label>
               <label>Tipo<select formControlName="type"><option value="">Todos</option><option value="DIVIDENDO">Dividendos</option><option value="JCP">JCP</option></select></label>
               <label>De<input type="date" formControlName="from"></label><label>Até<input type="date" formControlName="to"></label>
@@ -187,6 +190,15 @@ import { SessionService } from '../core/session.service';
               @for (group of income.groups; track group.period) {
                 <div class="category-row"><span>{{ group.period }}</span><strong>{{ group.total | currency:'BRL' }}</strong></div>
               }
+              <div class="table-scroll income-history"><table>
+                <thead><tr><th>Data</th><th>Ativo</th><th>Tipo</th><th>Valor</th></tr></thead>
+                <tbody>
+                  @for (item of income.items; track item.id) {
+                    <tr><td>{{ item.date | date:'dd/MM/yyyy':'UTC' }}</td><td>{{ item.ticker }}</td><td>{{ label(item.type) }}</td><td>{{ item.totalValue | currency:'BRL' }}</td></tr>
+                  }
+                </tbody>
+              </table></div>
+              @if (!income.items.length) { <p class="empty-copy compact">Nenhum provento encontrado.</p> }
             }
           </article>
         </section>
@@ -215,13 +227,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly userName = signal(localStorage.getItem('mad_user') ?? 'Investidor');
   readonly userInitial = computed(() => this.userName().charAt(0).toUpperCase());
   readonly reversedRecords = computed(() => [...this.records()].reverse());
+  readonly incomeAssets = computed(() => {
+    const ids = new Set(this.records().map(item => item.assetId));
+    return this.assets().filter(asset => ids.has(asset.id));
+  });
   availableAssets(): Asset[] {
     if (this.recordForm.controls.type.value === 'COMPRA') return this.assets();
     const walletAssetIds = new Set(this.records().map(item => item.assetId));
     return this.assets().filter(asset => walletAssetIds.has(asset.id));
   }
   readonly walletForm = this.fb.nonNullable.group({ name: ['', [Validators.required, Validators.maxLength(80)]] });
-  readonly incomeForm = this.fb.nonNullable.group({ category: '', type: '', from: '', to: '', groupBy: 'MONTHLY' });
+  readonly incomeForm = this.fb.nonNullable.group({ assetId: '', category: '', type: '', from: '', to: '', groupBy: 'MONTHLY' });
   readonly recordForm = this.fb.group({
     type: this.fb.nonNullable.control('COMPRA', Validators.required),
     assetId: this.fb.nonNullable.control('', Validators.required),

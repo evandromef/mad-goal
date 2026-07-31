@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mad}
+      POSTGRES_USER: ${POSTGRES_USER:-mad}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mad_local_password}
+    volumes:
+      - mad_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-mad}
+      POSTGRES_USER: ${POSTGRES_USER:-mad}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mad_local_password}
+      JWT_SECRET: ${JWT_SECRET:-change-this-local-development-secret-with-at-least-32-characters}
+      JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES:-480}
+      CORS_ALLOWED_ORIGIN: http://localhost:4200
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1/ | grep -q 'app-root'"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    ports:
+      - "4200:80"
+    restart: unless-stopped
+
+volumes:
+  mad_postgres_data:

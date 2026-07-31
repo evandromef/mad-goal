@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: mad-backend
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/mad}
+    username: ${POSTGRES_USER:mad}
+    password: ${POSTGRES_PASSWORD:mad_local_password}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+server:
+  port: ${SERVER_PORT:8080}
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-this-local-development-secret-with-at-least-32-characters}
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}
+  cors:
+    allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:4200}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+

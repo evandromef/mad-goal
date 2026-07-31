@@ -36,6 +36,8 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await page.getByLabel('Valor total').fill('1000.12345678');
   await page.getByRole('button', { name: 'Salvar lançamento' }).click();
   await expect(page.getByRole('status')).toContainText('sucesso');
+  await expect(page.locator('.metric').filter({ hasText: 'Custo de aquisição' }).locator('strong'))
+    .toHaveText(/R\$\s*1\.000,12/);
   await form.getByLabel('Tipo').selectOption('VENDA');
   await form.getByLabel('Ativo').selectOption(petr4!);
   await form.getByLabel('Quantidade').fill('999999');

@@ -168,8 +168,8 @@ import { SessionService } from '../core/session.service';
               </select>
             </div>
             <div class="evolution">
-              @for (point of data.evolution; track point.period) {
-                <div><span>{{ point.period }}</span><i [style.width.%]="evolutionWidth(point.acquisitionCost)"></i><strong>{{ point.acquisitionCost | currency:'BRL' }}</strong></div>
+              @for (point of visibleEvolution(); track point.period) {
+                <div><span>{{ periodLabel(point.period) }}</span><i [style.width.%]="evolutionWidth(point.acquisitionCost)"></i><strong>{{ point.acquisitionCost | currency:'BRL' }}</strong></div>
               } @empty { <p class="empty-copy">Sem dados de evolução.</p> }
             </div>
           </article>
@@ -188,7 +188,7 @@ import { SessionService } from '../core/session.service';
             @if (incomeData(); as income) {
               <p class="income-total">Total filtrado <strong>{{ income.total | currency:'BRL' }}</strong></p>
               @for (group of income.groups; track group.period) {
-                <div class="category-row"><span>{{ group.period }}</span><strong>{{ group.total | currency:'BRL' }}</strong></div>
+                <div class="category-row"><span>{{ periodLabel(group.period) }}</span><strong>{{ group.total | currency:'BRL' }}</strong></div>
               }
               <div class="table-scroll income-history"><table>
                 <thead><tr><th>Data</th><th>Ativo</th><th>Tipo</th><th>Valor</th></tr></thead>
@@ -227,6 +227,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly userName = signal(localStorage.getItem('mad_user') ?? 'Investidor');
   readonly userInitial = computed(() => this.userName().charAt(0).toUpperCase());
   readonly reversedRecords = computed(() => [...this.records()].reverse());
+  readonly visibleEvolution = computed(() => [...(this.dashboard()?.evolution.slice(-24) ?? [])].reverse());
   readonly incomeAssets = computed(() => {
     const ids = new Set(this.records().map(item => item.assetId));
     return this.assets().filter(asset => ids.has(asset.id));
@@ -321,8 +322,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.api.incomes(walletId, filters).subscribe(data => this.incomeData.set(data));
   }
   evolutionWidth(value: number): number {
-    const max = Math.max(...(this.dashboard()?.evolution.map(item => item.acquisitionCost) ?? [1]), 1);
+    const max = Math.max(...this.visibleEvolution().map(item => item.acquisitionCost), 1);
     return Math.max(2, value / max * 100);
+  }
+  periodLabel(period: string): string {
+    const month = /^(\d{4})-(\d{2})$/.exec(period);
+    if (month) {
+      const monthIndex = Number(month[2]) - 1;
+      if (monthIndex >= 0 && monthIndex <= 11) {
+        return new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+          .format(new Date(Date.UTC(Number(month[1]), monthIndex, 1)));
+      }
+    }
+    const quarter = /^(\d{4})-T([1-4])$/.exec(period);
+    if (quarter) return `${quarter[2]}º trimestre de ${quarter[1]}`;
+    return period;
   }
   recordValue(item: LedgerItem): string {
     if (item.totalValue != null) {

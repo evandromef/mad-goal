@@ -148,6 +148,20 @@ describe('DashboardComponent - lançamentos', () => {
     expect(component.evolutionWidth(10)).toBeGreaterThan(0);
   });
 
+  it('exibe somente os 24 períodos mais recentes da evolução', () => {
+    const component = TestBed.createComponent(DashboardComponent).componentInstance;
+    const evolution = Array.from({ length: 30 }, (_, index) => ({
+      period: `período-${index + 1}`,
+      acquisitionCost: index + 1
+    }));
+    component.dashboard.set({ ...dashboard, evolution });
+
+    expect(component.visibleEvolution()).toHaveLength(24);
+    expect(component.visibleEvolution()[0].period).toBe('período-30');
+    expect(component.visibleEvolution()[23].period).toBe('período-7');
+    expect(component.evolutionWidth(30)).toBe(100);
+  });
+
   it('cria lançamento e apresenta corretamente eventos corporativos', () => {
     const component = TestBed.createComponent(DashboardComponent).componentInstance;
     component.selectedWalletId.set('wallet-1');
@@ -281,9 +295,19 @@ describe('DashboardComponent - lançamentos', () => {
     expect(text).toContain('Indisponível');
     expect(text).toContain('PETR4');
     expect(text).toContain('20 un. · 1:2');
-    expect(text).toContain('2026-01');
-    expect(text).toContain('2026-T1');
+    expect(text).toContain('janeiro de 2026');
+    expect(text).toContain('1º trimestre de 2026');
     expect(text).toContain('10/04/2026');
     expect(text).toContain('Dividendos');
+  });
+
+  it('formata períodos mensais, trimestrais e anuais em português', () => {
+    const component = TestBed.createComponent(DashboardComponent).componentInstance;
+
+    expect(component.periodLabel('2026-01')).toBe('janeiro de 2026');
+    expect(component.periodLabel('2026-12')).toBe('dezembro de 2026');
+    expect(component.periodLabel('2026-T3')).toBe('3º trimestre de 2026');
+    expect(component.periodLabel('2026')).toBe('2026');
+    expect(component.periodLabel('período inválido')).toBe('período inválido');
   });
 });

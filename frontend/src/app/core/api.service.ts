@@ -21,7 +21,8 @@ export interface Dashboard {
 }
 export interface LedgerItem {
   id: string; walletId: string; assetId: string; ticker: string; type: string; date: string;
-  quantity?: number; totalValue?: number; newQuantity?: number; description?: string;
+  quantity?: number; unitPrice?: number; fees?: number; totalValue?: number;
+  newQuantity?: number; ratio?: string; description?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -45,5 +46,10 @@ export class ApiService {
   createRecord(body: Record<string, unknown>): Observable<LedgerItem> {
     return this.http.post<LedgerItem>('/api/records', body);
   }
+  updateRecord(id: string, body: Record<string, unknown>): Observable<LedgerItem> {
+    return this.http.put<LedgerItem>(`/api/records/${id}`, body);
+  }
+  deleteRecord(id: string): Observable<void> {
+    return this.http.delete<void>(`/api/records/${id}`);
+  }
 }
-

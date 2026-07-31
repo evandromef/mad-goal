@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -13,6 +13,9 @@ import { ApiService, Asset, Dashboard, LedgerItem, Wallet } from '../core/api.se
       <nav><a href="#posicoes">Posições</a><a href="#lancamentos">Lançamentos</a></nav>
       <div class="user"><span>{{ userInitial() }}</span><button class="text-button" (click)="logout()">Sair</button></div>
     </header>
+    @if (successMessage()) {
+      <div class="success-toast" role="status" aria-live="polite">{{ successMessage() }}</div>
+    }
     <main class="workspace">
       <section class="hero-row">
         <div>
@@ -84,12 +87,13 @@ import { ApiService, Asset, Dashboard, LedgerItem, Wallet } from '../core/api.se
 
         <section class="content-grid" id="lancamentos">
           <article class="panel">
-            <p class="eyebrow">Novo registro</p><h2>Adicionar lançamento</h2>
-            <form [formGroup]="recordForm" (ngSubmit)="createRecord()" class="stack-form">
+            <p class="eyebrow">{{ editingId() ? 'Editando registro' : 'Novo registro' }}</p>
+            <h2>{{ editingId() ? 'Editar lançamento' : 'Adicionar lançamento' }}</h2>
+            <form [formGroup]="recordForm" (ngSubmit)="saveRecord()" class="stack-form">
               <label>Tipo<select formControlName="type">
                 @for (type of recordTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }
               </select></label>
-              <label>Ativo<select formControlName="assetId"><option value="">Selecione</option>
+              <label>Ativo<select formControlName="assetId" [class.readonly]="editingId()"><option value="">Selecione</option>
                 @for (asset of assets(); track asset.id) { <option [value]="asset.id">{{ asset.ticker }} · {{ asset.name }}</option> }
               </select></label>
               <label>Data<input type="date" formControlName="date"></label>
@@ -98,11 +102,18 @@ import { ApiService, Asset, Dashboard, LedgerItem, Wallet } from '../core/api.se
                 <label>Proporção<input formControlName="ratio" placeholder="Ex.: 1:2"></label>
               } @else {
                 @if (!isIncome()) { <label>Quantidade<input type="number" min="0.000001" step="0.000001" formControlName="quantity"></label> }
-                @if (!isBonus()) { <label>Valor total<input type="number" min="0.01" step="0.01" formControlName="totalValue"></label> }
+                @if (!isBonus()) { <label class="total-value">Valor total<input type="number" min="0.01" step="0.01" formControlName="totalValue"></label> }
+                @if (!isBonus()) { <label class="unit-price">Preço unitário <span>(opcional)</span><input type="number" min="0" step="0.01" formControlName="unitPrice"></label> }
+                @if (isOperation()) { <label class="fees">Taxas <span>(opcional)</span><input type="number" min="0" step="0.01" formControlName="fees"></label> }
               }
               <label>Descrição <span>(opcional)</span><textarea formControlName="description" rows="2"></textarea></label>
-              @if (message()) { <p class="alert" [class.success]="message().startsWith('Lançamento')">{{ message() }}</p> }
-              <button class="button primary" type="submit" [disabled]="recordForm.invalid">Salvar lançamento</button>
+              @if (message()) { <p class="alert">{{ message() }}</p> }
+              <div class="form-actions">
+                <button class="button primary" type="submit" [disabled]="recordForm.invalid">
+                  {{ editingId() ? 'Salvar alterações' : 'Salvar lançamento' }}
+                </button>
+                @if (editingId()) { <button class="button secondary" type="button" (click)="cancelEdit()">Cancelar</button> }
+              </div>
             </form>
           </article>
           <article class="panel wide">
@@ -110,7 +121,15 @@ import { ApiService, Asset, Dashboard, LedgerItem, Wallet } from '../core/api.se
             @if (records().length) {
               <div class="activity-list">
                 @for (item of reversedRecords(); track item.id) {
-                  <div class="activity"><span class="activity-icon">{{ icon(item.type) }}</span><div><strong>{{ label(item.type) }} · {{ item.ticker }}</strong><small>{{ item.date | date:'dd/MM/yyyy':'UTC' }}</small></div><b>{{ item.totalValue ? (item.totalValue | currency:'BRL') : (item.quantity | number:'1.0-6') }}</b></div>
+                  <div class="activity" [class.editing]="editingId() === item.id">
+                    <span class="activity-icon">{{ icon(item.type) }}</span>
+                    <div><strong>{{ label(item.type) }} · {{ item.ticker }}</strong><small>{{ item.date | date:'dd/MM/yyyy':'UTC' }}</small></div>
+                    <b>{{ item.totalValue ? (item.totalValue | currency:'BRL') : (item.quantity | number:'1.0-6') }}</b>
+                    <div class="activity-actions">
+                      <button type="button" (click)="editRecord(item)" aria-label="Editar lançamento">Editar</button>
+                      <button class="danger" type="button" (click)="deleteRecord(item)" aria-label="Excluir lançamento">Excluir</button>
+                    </div>
+                  </div>
                 }
               </div>
             } @else { <p class="empty-copy">Nenhum lançamento nesta carteira.</p> }
@@ -121,7 +140,7 @@ import { ApiService, Asset, Dashboard, LedgerItem, Wallet } from '../core/api.se
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
@@ -132,6 +151,9 @@ export class DashboardComponent implements OnInit {
   readonly records = signal<LedgerItem[]>([]);
   readonly showWalletForm = signal(false);
   readonly message = signal('');
+  readonly successMessage = signal('');
+  readonly editingId = signal<string | null>(null);
+  private successTimer: ReturnType<typeof setTimeout> | null = null;
   readonly userName = signal(localStorage.getItem('mad_user') ?? 'Investidor');
   readonly userInitial = computed(() => this.userName().charAt(0).toUpperCase());
   readonly reversedRecords = computed(() => [...this.records()].reverse().slice(0, 12));
@@ -141,6 +163,8 @@ export class DashboardComponent implements OnInit {
     assetId: this.fb.nonNullable.control('', Validators.required),
     date: this.fb.nonNullable.control(new Date().toISOString().slice(0, 10), Validators.required),
     quantity: this.fb.control<number | null>(null),
+    unitPrice: this.fb.control<number | null>(null),
+    fees: this.fb.control<number | null>(null),
     totalValue: this.fb.control<number | null>(null),
     newQuantity: this.fb.control<number | null>(null),
     ratio: this.fb.nonNullable.control(''),
@@ -157,6 +181,9 @@ export class DashboardComponent implements OnInit {
     this.api.assets().subscribe((assets) => this.assets.set(assets));
     this.loadWallets();
   }
+  ngOnDestroy(): void {
+    if (this.successTimer) clearTimeout(this.successTimer);
+  }
   loadWallets(): void {
     this.api.wallets().subscribe((wallets) => {
       this.wallets.set(wallets);
@@ -164,6 +191,7 @@ export class DashboardComponent implements OnInit {
     });
   }
   selectWallet(id: string): void {
+    if (id !== this.selectedWalletId()) this.cancelEdit(false);
     this.selectedWalletId.set(id);
     if (!id) return;
     this.api.dashboard(id).subscribe((data) => this.dashboard.set(data));
@@ -175,20 +203,117 @@ export class DashboardComponent implements OnInit {
       this.walletForm.reset(); this.showWalletForm.set(false); this.loadWallets(); this.selectWallet(wallet.id);
     });
   }
-  createRecord(): void {
+  saveRecord(): void {
     const walletId = this.selectedWalletId();
     if (!walletId || this.recordForm.invalid) return;
-    const value = this.recordForm.getRawValue();
-    const body = Object.fromEntries(Object.entries({ ...value, walletId }).filter(([, field]) => field !== null && field !== ''));
-    this.api.createRecord(body).subscribe({
+    const body = this.recordPayload(walletId);
+    const editingId = this.editingId();
+    const request = editingId
+      ? this.api.updateRecord(editingId, body)
+      : this.api.createRecord(body);
+    request.subscribe({
       next: () => {
-        this.message.set('Lançamento salvo com sucesso.');
-        this.recordForm.patchValue({ quantity: null, totalValue: null, newQuantity: null, ratio: '', description: '' });
+        this.showSuccess(editingId ? 'Lançamento atualizado com sucesso.' : 'Lançamento salvo com sucesso.');
+        this.editingId.set(null);
+        this.resetRecordForm();
         this.selectWallet(walletId);
       },
-      error: (response) => this.message.set(response.error?.message ?? 'Não foi possível salvar o lançamento.')
+      error: (response) => this.showError(response.error?.message ?? 'Não foi possível salvar o lançamento.')
     });
   }
+  editRecord(item: LedgerItem): void {
+    this.editingId.set(item.id);
+    this.message.set('');
+    this.clearSuccess();
+    this.recordForm.reset({
+      type: item.type,
+      assetId: item.assetId,
+      date: item.date,
+      quantity: item.quantity ?? null,
+      unitPrice: item.unitPrice ?? null,
+      fees: item.fees ?? null,
+      totalValue: item.totalValue ?? null,
+      newQuantity: item.newQuantity ?? null,
+      ratio: item.ratio ?? '',
+      description: item.description ?? ''
+    });
+    this.recordForm.controls.assetId.disable();
+    document.getElementById('lancamentos')?.scrollIntoView({ behavior: 'smooth' });
+  }
+  deleteRecord(item: LedgerItem): void {
+    if (!window.confirm(`Excluir o lançamento ${this.label(item.type)} de ${item.ticker}?`)) return;
+    this.api.deleteRecord(item.id).subscribe({
+      next: () => {
+        if (this.editingId() === item.id) this.cancelEdit(false);
+        this.showSuccess('Lançamento excluído com sucesso.');
+        this.selectWallet(this.selectedWalletId());
+      },
+      error: (response) => this.showError(response.error?.message ?? 'Não foi possível excluir o lançamento.')
+    });
+  }
+  cancelEdit(clearMessage = true): void {
+    this.editingId.set(null);
+    this.resetRecordForm();
+    if (clearMessage) {
+      this.message.set('');
+      this.clearSuccess();
+    }
+  }
+  private showSuccess(message: string): void {
+    this.message.set('');
+    this.clearSuccess();
+    this.successMessage.set(message);
+    this.successTimer = setTimeout(() => {
+      this.successMessage.set('');
+      this.successTimer = null;
+    }, 3500);
+  }
+  private showError(message: string): void {
+    this.clearSuccess();
+    this.message.set(message);
+  }
+  private clearSuccess(): void {
+    if (this.successTimer) clearTimeout(this.successTimer);
+    this.successTimer = null;
+    this.successMessage.set('');
+  }
+  private recordPayload(walletId: string): Record<string, unknown> {
+    const value = this.recordForm.getRawValue();
+    const payload: Record<string, unknown> = {
+      walletId, assetId: value.assetId, type: value.type, date: value.date
+    };
+    if (value.description) payload['description'] = value.description;
+    if (this.isOperation() || this.isIncome()) {
+      if (value.totalValue !== null) payload['totalValue'] = value.totalValue;
+      if (value.unitPrice !== null) payload['unitPrice'] = value.unitPrice;
+    }
+    if (this.isOperation()) {
+      if (value.quantity !== null) payload['quantity'] = value.quantity;
+      if (value.fees !== null) payload['fees'] = value.fees;
+    }
+    if (this.isBonus() && value.quantity !== null) payload['quantity'] = value.quantity;
+    if (this.isCorporateEvent()) {
+      if (value.newQuantity !== null) payload['newQuantity'] = value.newQuantity;
+      if (value.ratio) payload['ratio'] = value.ratio;
+    }
+    return payload;
+  }
+  private resetRecordForm(): void {
+    this.recordForm.controls.assetId.enable({ emitEvent: false });
+    this.recordForm.reset({
+      type: 'COMPRA',
+      assetId: '',
+      date: new Date().toISOString().slice(0, 10),
+      quantity: null,
+      unitPrice: null,
+      fees: null,
+      totalValue: null,
+      newQuantity: null,
+      ratio: '',
+      description: ''
+    });
+  }
+  isOperation(): boolean { return ['COMPRA', 'VENDA', 'SUBSCRICAO'].includes(this.recordForm.controls.type.value); }
   isIncome(): boolean { return ['DIVIDENDO', 'JCP'].includes(this.recordForm.controls.type.value); }
   isBonus(): boolean { return this.recordForm.controls.type.value === 'BONIFICACAO'; }
   isCorporateEvent(): boolean { return ['DESDOBRAMENTO', 'GRUPAMENTO'].includes(this.recordForm.controls.type.value); }
@@ -196,4 +321,3 @@ export class DashboardComponent implements OnInit {
   label(type: string): string { return this.recordTypes.find((item) => item.value === type)?.label ?? type; }
   logout(): void { localStorage.clear(); void this.router.navigate(['/login']); }
 }
-

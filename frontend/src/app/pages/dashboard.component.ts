@@ -97,29 +97,46 @@ import { SessionService } from '../core/session.service';
             <p class="eyebrow">{{ editingId() ? 'Editando registro' : 'Novo registro' }}</p>
             <h2>{{ editingId() ? 'Editar lançamento' : 'Adicionar lançamento' }}</h2>
             <form [formGroup]="recordForm" (ngSubmit)="saveRecord()" class="stack-form">
-              <label>Tipo<select formControlName="type">
-                @for (type of recordTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }
-              </select></label>
-              <label>Ativo<select formControlName="assetId" [class.readonly]="editingId()"><option value="">Selecione</option>
-                @for (asset of assets(); track asset.id) { <option [value]="asset.id">{{ asset.ticker }} · {{ asset.name }}</option> }
-              </select></label>
-              <label>Data<input type="date" formControlName="date"></label>
+              <div class="form-row">
+                <label>Tipo<select formControlName="type" (change)="onRecordTypeChange()">
+                  @for (type of recordTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }
+                </select></label>
+                <label>Ativo<select formControlName="assetId" [class.readonly]="editingId()"><option value="">Selecione</option>
+                  @for (asset of availableAssets(); track asset.id) { <option [value]="asset.id">{{ asset.ticker }} · {{ asset.name }}</option> }
+                </select></label>
+              </div>
+              <div class="form-row">
+                <label>Data<input type="date" formControlName="date"></label>
+                @if (isCorporateEvent()) {
+                  <label>Nova quantidade<input type="number" min="0.000001" step="0.000001" formControlName="newQuantity"></label>
+                } @else if (isIncome()) {
+                  <label class="total-value income-total-value">Valor total<input type="number" min="0.01" step="0.01" formControlName="totalValue"></label>
+                } @else {
+                  <label>Quantidade<input type="number" min="0.000001" step="0.000001" formControlName="quantity"></label>
+                }
+              </div>
               @if (isCorporateEvent()) {
-                <label>Nova quantidade<input type="number" min="0.000001" step="0.000001" formControlName="newQuantity"></label>
-                <label>Proporção<input formControlName="ratio" placeholder="Ex.: 1:2"></label>
+                <div class="form-row"><label>Proporção<input formControlName="ratio" placeholder="Ex.: 1:2"></label></div>
               } @else {
-                @if (!isIncome()) { <label>Quantidade<input type="number" min="0.000001" step="0.000001" formControlName="quantity"></label> }
-                @if (!isBonus()) { <label class="total-value">Valor total<input type="number" min="0.01" step="0.01" formControlName="totalValue"></label> }
-                @if (!isBonus()) { <label class="unit-price">Preço unitário <span>(opcional)</span><input type="number" min="0" step="0.01" formControlName="unitPrice"></label> }
-                @if (isOperation()) { <label class="fees">Taxas <span>(opcional)</span><input type="number" min="0" step="0.01" formControlName="fees"></label> }
+                @if (isOperation()) {
+                  <div class="form-row"><label class="total-value">Valor total<input type="number" min="0.01" step="0.01" formControlName="totalValue"></label></div>
+                }
+                @if (!isBonus()) {
+                  <div class="form-row">
+                    <label>Preço unitário <span>(opcional)</span><input type="number" min="0" step="0.01" formControlName="unitPrice"></label>
+                    @if (isOperation()) { <label>Taxas <span>(opcional)</span><input type="number" min="0" step="0.01" formControlName="fees"></label> }
+                  </div>
+                }
               }
-              <label>Descrição <span>(opcional)</span><textarea formControlName="description" rows="2"></textarea></label>
-              @if (message()) { <p class="alert">{{ message() }}</p> }
+              <label class="record-description">Descrição <span>(opcional)</span><textarea formControlName="description" rows="2"></textarea></label>
               <div class="form-actions">
                 <button class="button primary" type="submit" [disabled]="recordForm.invalid">
                   {{ editingId() ? 'Salvar alterações' : 'Salvar lançamento' }}
                 </button>
                 @if (editingId()) { <button class="button secondary" type="button" (click)="cancelEdit()">Cancelar</button> }
+              </div>
+              <div class="form-message-slot" aria-live="polite">
+                @if (message()) { <p class="alert">{{ message() }}</p> }
               </div>
             </form>
           </article>
@@ -198,6 +215,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly userName = signal(localStorage.getItem('mad_user') ?? 'Investidor');
   readonly userInitial = computed(() => this.userName().charAt(0).toUpperCase());
   readonly reversedRecords = computed(() => [...this.records()].reverse());
+  availableAssets(): Asset[] {
+    if (this.recordForm.controls.type.value === 'COMPRA') return this.assets();
+    const walletAssetIds = new Set(this.records().map(item => item.assetId));
+    return this.assets().filter(asset => walletAssetIds.has(asset.id));
+  }
   readonly walletForm = this.fb.nonNullable.group({ name: ['', [Validators.required, Validators.maxLength(80)]] });
   readonly incomeForm = this.fb.nonNullable.group({ category: '', type: '', from: '', to: '', groupBy: 'MONTHLY' });
   readonly recordForm = this.fb.group({
@@ -292,6 +314,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
     if (item.newQuantity != null) return `${item.newQuantity} un. · ${item.ratio ?? 'sem proporção'}`;
     return `${item.quantity ?? 0} un.`;
+  }
+  onRecordTypeChange(): void {
+    const selectedAssetId = this.recordForm.controls.assetId.value;
+    if (selectedAssetId && !this.availableAssets().some(asset => asset.id === selectedAssetId)) {
+      this.recordForm.controls.assetId.setValue('');
+    }
   }
   saveRecord(): void {
     const walletId = this.selectedWalletId();

@@ -78,10 +78,12 @@ td small { display: block; color: var(--muted); margin-top: .2rem; }
 .category-details { display: flex; flex-wrap: wrap; gap: .35rem 1rem; color: var(--muted); margin-bottom: .6rem; }
 .highlight { margin-top: 2rem; padding: 1rem; background: var(--paper); border-radius: 10px; display: flex; justify-content: space-between; }
 .highlight span { color: var(--muted); }
-.stack-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0 .8rem; }
-.stack-form label:nth-last-of-type(1), .stack-form .alert, .stack-form .form-actions { grid-column: 1 / -1; }
-.stack-form .total-value, .stack-form .unit-price { grid-column: 1; }
-.stack-form .fees { grid-column: 2; }
+.stack-form { display: flex; flex-direction: column; gap: .35rem; height: 554px; }
+.stack-form label { margin-bottom: 0; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+.stack-form .record-description { width: 100%; }
+.form-message-slot { height: 64px; flex: 0 0 64px; overflow: auto; }
+.form-message-slot .alert { margin: .6rem 0 0; }
 .form-actions { display: flex; gap: .6rem; }
 .form-actions .button { flex: 1; }
 .readonly { color: #52615c; background: #f0f2ed; }
@@ -129,8 +131,9 @@ td small { display: block; color: var(--muted); margin-top: .2rem; }
   .wallet-control { align-items: stretch; flex-direction: column; }
   .wallet-control label { min-width: 0; }
   .metrics { grid-template-columns: 1fr; }
-  .stack-form { grid-template-columns: 1fr; }
-  .stack-form > * { grid-column: 1 !important; }
+  .stack-form { height: 850px; }
+  .form-row { grid-template-columns: 1fr; }
+  .form-message-slot { height: 64px; }
   .activity { grid-template-columns: auto 1fr auto; }
   .activity > b { grid-column: 2; }
   .activity-actions { grid-column: 2 / -1; }

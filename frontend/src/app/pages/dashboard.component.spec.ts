@@ -168,6 +168,43 @@ describe('DashboardComponent - lançamentos', () => {
     component.cancelEdit();
   });
 
+  it('lista o catálogo na compra e somente ativos da carteira nos demais tipos', () => {
+    const component = TestBed.createComponent(DashboardComponent).componentInstance;
+    component.assets.set([
+      { id: 'asset-1', ticker: 'PETR4', name: 'Petrobras', category: 'ACAO', currentPrice: 30, priceDate: '2026-07-31' },
+      { id: 'asset-2', ticker: 'VALE3', name: 'Vale', category: 'ACAO', currentPrice: 60, priceDate: '2026-07-31' }
+    ]);
+    component.records.set([item]);
+
+    expect(component.availableAssets().map(asset => asset.id)).toEqual(['asset-1', 'asset-2']);
+
+    component.recordForm.patchValue({ type: 'VENDA', assetId: 'asset-2' });
+    component.onRecordTypeChange();
+
+    expect(component.availableAssets().map(asset => asset.id)).toEqual(['asset-1']);
+    expect(component.recordForm.controls.assetId.value).toBe('');
+  });
+
+  it('posiciona valor total ao lado da data em dividendos e JCP', () => {
+    const fixture = TestBed.createComponent(DashboardComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+    component.recordForm.controls.type.setValue('DIVIDENDO');
+    fixture.detectChanges();
+
+    const totalValue = fixture.nativeElement.querySelector('.total-value');
+    expect(totalValue.classList.contains('income-total-value')).toBe(true);
+
+    component.recordForm.controls.type.setValue('COMPRA');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.total-value').classList.contains('income-total-value')).toBe(false);
+
+    const actions = fixture.nativeElement.querySelector('.form-actions');
+    const messageSlot = fixture.nativeElement.querySelector('.form-message-slot');
+    expect(actions.compareDocumentPosition(messageSlot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(messageSlot).not.toBeNull();
+  });
+
   it('monta payloads de provento, bonificação e evento e trata erros', () => {
     const component = TestBed.createComponent(DashboardComponent).componentInstance;
     component.selectedWalletId.set('wallet-1');

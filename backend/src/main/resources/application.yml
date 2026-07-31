@@ -23,6 +23,16 @@ app:
     expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}
   cors:
     allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:4200}
+  market-data:
+    enabled: ${MARKET_DATA_ENABLED:true}
+    base-url: ${MARKET_DATA_BASE_URL:https://brapi.dev}
+    token: ${BRAPI_API_TOKEN:}
+    catalog-cron: ${MARKET_DATA_CATALOG_CRON:0 0 3 * * SUN}
+    quote-cron: ${MARKET_DATA_QUOTE_CRON:0 0 20 * * MON-FRI}
+  account:
+    expose-tokens: ${EXPOSE_ACCOUNT_TOKENS:true}
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
 management:
   endpoints:
     web:
@@ -32,4 +42,3 @@ management:
     health:
       probes:
         enabled: true
-

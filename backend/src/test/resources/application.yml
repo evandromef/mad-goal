@@ -14,4 +14,10 @@ app:
     expiration-minutes: 60
   cors:
     allowed-origin: http://localhost:4200
-
+  market-data:
+    enabled: false
+    base-url: http://localhost
+  account:
+    expose-tokens: true
+  google:
+    client-id: ""

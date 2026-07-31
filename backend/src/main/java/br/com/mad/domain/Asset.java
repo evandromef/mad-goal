@@ -19,7 +19,7 @@ public class Asset {
     private Category category;
     @Column(nullable = false)
     private boolean active = true;
-    @Column(precision = 19, scale = 6)
+    @Column(precision = 19, scale = 8)
     private BigDecimal currentPrice;
     private LocalDate priceDate;
 
@@ -39,5 +39,10 @@ public class Asset {
     public boolean isActive() { return active; }
     public BigDecimal getCurrentPrice() { return currentPrice; }
     public LocalDate getPriceDate() { return priceDate; }
+    public void updateCatalog(String name, Category category, boolean active) {
+        this.name = name; this.category = category; this.active = active;
+    }
+    public void updateQuote(BigDecimal currentPrice, LocalDate priceDate) {
+        this.currentPrice = currentPrice; this.priceDate = priceDate;
+    }
 }
-

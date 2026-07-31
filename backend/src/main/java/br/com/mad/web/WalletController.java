@@ -5,6 +5,7 @@ import br.com.mad.domain.Wallet;
 import br.com.mad.repository.LedgerRecordRepository;
 import br.com.mad.repository.UserRepository;
 import br.com.mad.repository.WalletRepository;
+import br.com.mad.service.PortfolioService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @RestController
@@ -22,17 +24,17 @@ public class WalletController {
     private final WalletRepository wallets;
     private final UserRepository users;
     private final LedgerRecordRepository records;
-    public WalletController(WalletRepository wallets, UserRepository users, LedgerRecordRepository records) {
-        this.wallets = wallets; this.users = users; this.records = records;
+    private final PortfolioService portfolio;
+    public WalletController(WalletRepository wallets, UserRepository users, LedgerRecordRepository records,
+                            PortfolioService portfolio) {
+        this.wallets = wallets; this.users = users; this.records = records; this.portfolio = portfolio;
     }
     public record WalletRequest(@NotBlank @Size(max = 80) String name) {}
-    public record WalletResponse(UUID id, String name) {
-        static WalletResponse of(Wallet wallet) { return new WalletResponse(wallet.getId(), wallet.getName()); }
-    }
+    public record WalletResponse(UUID id, String name, BigDecimal currentValue) {}
 
     @GetMapping
     public List<WalletResponse> list(Authentication auth) {
-        return wallets.findByUserIdOrderByName(userId(auth)).stream().map(WalletResponse::of).toList();
+        return wallets.findByUserIdOrderByName(userId(auth)).stream().map(this::response).toList();
     }
 
     @PostMapping
@@ -44,7 +46,7 @@ public class WalletController {
         if (wallets.existsByUserIdAndNameIgnoreCase(userId, name))
             throw new ApiException(HttpStatus.CONFLICT, "Já existe uma carteira com esse nome.");
         User user = users.getReferenceById(userId);
-        return WalletResponse.of(wallets.save(new Wallet(user, name)));
+        return response(wallets.save(new Wallet(user, name)));
     }
 
     @PutMapping("/{id}")
@@ -56,7 +58,7 @@ public class WalletController {
                 && wallets.existsByUserIdAndNameIgnoreCase(userId(auth), name))
             throw new ApiException(HttpStatus.CONFLICT, "Já existe uma carteira com esse nome.");
         wallet.setName(name);
-        return WalletResponse.of(wallet);
+        return response(wallet);
     }
 
     @DeleteMapping("/{id}")
@@ -76,5 +78,13 @@ public class WalletController {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Carteira não encontrada."));
     }
     static UUID userId(Authentication auth) { return (UUID) auth.getPrincipal(); }
+    private WalletResponse response(Wallet wallet) {
+        var positions = portfolio.positions(wallet.getId()).values();
+        BigDecimal currentValue = positions.stream().anyMatch(position -> position.currentValue() == null)
+                ? null
+                : positions.stream().map(PortfolioService.Position::currentValue)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return new WalletResponse(wallet.getId(), wallet.getName(),
+                currentValue == null ? null : PortfolioService.money(currentValue));
+    }
 }
-

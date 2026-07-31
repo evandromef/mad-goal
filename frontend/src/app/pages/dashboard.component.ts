@@ -1,17 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { ApiService, Asset, Dashboard, LedgerItem, Wallet } from '../core/api.service';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ApiService, Asset, Dashboard, IncomeResponse, LedgerItem, Wallet } from '../core/api.service';
+import { SessionService } from '../core/session.service';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [ReactiveFormsModule, CurrencyPipe, DecimalPipe, DatePipe],
+  imports: [ReactiveFormsModule, CurrencyPipe, DecimalPipe, DatePipe, RouterLink],
   template: `
     <header class="topbar">
       <a class="brand dark" href="/"><span>M</span> MAD</a>
       <nav><a href="#posicoes">Posições</a><a href="#lancamentos">Lançamentos</a></nav>
-      <div class="user"><span>{{ userInitial() }}</span><button class="text-button" (click)="logout()">Sair</button></div>
+      <div class="user"><span>{{ userInitial() }}</span><a routerLink="/profile">Perfil</a><button class="text-button" (click)="logout()">Sair</button></div>
     </header>
     @if (successMessage()) {
       <div class="success-toast" role="status" aria-live="polite">{{ successMessage() }}</div>
@@ -26,10 +27,14 @@ import { ApiService, Asset, Dashboard, LedgerItem, Wallet } from '../core/api.se
         <div class="wallet-control">
           <label>Carteira
             <select [value]="selectedWalletId()" (change)="selectWallet($any($event.target).value)">
-              @for (wallet of wallets(); track wallet.id) { <option [value]="wallet.id">{{ wallet.name }}</option> }
+              @for (wallet of wallets(); track wallet.id) { <option [value]="wallet.id">{{ wallet.name }} · {{ wallet.currentValue == null ? 'indisponível' : (wallet.currentValue | currency:'BRL') }}</option> }
             </select>
           </label>
           <button class="button secondary" (click)="showWalletForm.set(!showWalletForm())">+ Carteira</button>
+          @if (selectedWalletId()) {
+            <button class="button secondary" (click)="renameWallet()">Renomear</button>
+            <button class="button danger-button" (click)="deleteWallet()">Excluir</button>
+          }
         </div>
       </section>
 
@@ -48,9 +53,9 @@ import { ApiService, Asset, Dashboard, LedgerItem, Wallet } from '../core/api.se
         </section>
       } @else if (dashboard(); as data) {
         <section class="metrics">
-          <article class="metric featured"><span>Patrimônio atual</span><strong>{{ data.currentValue | currency:'BRL' }}</strong><small>Última posição consolidada</small></article>
+          <article class="metric featured"><span>Patrimônio atual</span><strong>{{ data.currentValue == null ? 'Indisponível' : (data.currentValue | currency:'BRL') }}</strong><small>Última posição consolidada</small></article>
           <article class="metric"><span>Custo de aquisição</span><strong>{{ data.acquisitionCost | currency:'BRL' }}</strong><small>Capital alocado</small></article>
-          <article class="metric"><span>Resultado</span><strong [class.negative]="data.profitLoss < 0">{{ data.profitLoss | currency:'BRL' }}</strong><small>{{ data.returnPercentage ?? 0 | number:'1.2-2' }}% de rentabilidade</small></article>
+          <article class="metric"><span>Resultado</span><strong [class.negative]="data.profitLoss != null && data.profitLoss < 0">{{ data.profitLoss == null ? 'Indisponível' : (data.profitLoss | currency:'BRL') }}</strong><small>{{ data.returnPercentage == null ? 'Rentabilidade indisponível' : ((data.returnPercentage | number:'1.2-2') + '% de rentabilidade') }}</small></article>
           <article class="metric"><span>Proventos</span><strong>{{ data.totalIncome | currency:'BRL' }}</strong><small>Recebidos no histórico</small></article>
         </section>
 
@@ -59,16 +64,17 @@ import { ApiService, Asset, Dashboard, LedgerItem, Wallet } from '../core/api.se
             <div class="panel-title"><div><p class="eyebrow">Composição</p><h2>Posições da carteira</h2></div><span class="chip">{{ data.positions.length }} ativos</span></div>
             @if (data.positions.length) {
               <div class="table-scroll"><table>
-                <thead><tr><th>Ativo</th><th>Qtd.</th><th>Custo</th><th>Valor atual</th><th>Resultado</th><th>Alocação</th></tr></thead>
+                <thead><tr><th>Ativo</th><th>Qtd.</th><th>Custo</th><th>Valor atual</th><th>Resultado</th><th>Rentabilidade</th><th>Alocação</th></tr></thead>
                 <tbody>
                   @for (position of data.positions; track position.assetId) {
                     <tr>
-                      <td><strong>{{ position.ticker }}</strong><small>{{ position.category === 'ACAO' ? 'Ação' : 'FII' }}</small></td>
-                      <td>{{ position.quantity | number:'1.0-6' }}</td>
+                      <td><a [routerLink]="['/assets', selectedWalletId(), position.assetId]"><strong>{{ position.ticker }}</strong></a><small>{{ position.category === 'ACAO' ? 'Ação' : 'FII' }}</small></td>
+                      <td>{{ position.quantity | number:'1.0-8' }}</td>
                       <td>{{ position.acquisitionCost | currency:'BRL' }}</td>
-                      <td>{{ position.currentValue | currency:'BRL' }}</td>
-                      <td [class.negative]="position.profitLoss < 0">{{ position.profitLoss | currency:'BRL' }}</td>
-                      <td><div class="allocation"><i [style.width.%]="position.allocationPercentage"></i></div>{{ position.allocationPercentage }}%</td>
+                      <td>{{ position.currentValue == null ? 'Indisponível' : (position.currentValue | currency:'BRL') }}</td>
+                      <td [class.negative]="position.profitLoss != null && position.profitLoss < 0">{{ position.profitLoss == null ? 'Indisponível' : (position.profitLoss | currency:'BRL') }}</td>
+                      <td>{{ position.returnPercentage == null ? 'Indisponível' : ((position.returnPercentage | number:'1.2-2') + '%') }}</td>
+                      <td><div class="allocation"><i [style.width.%]="position.allocationPercentage ?? 0"></i></div>{{ position.allocationPercentage == null ? '—' : ((position.allocationPercentage | number:'1.2-2') + '%') }}</td>
                     </tr>
                   }
                 </tbody>
@@ -78,8 +84,9 @@ import { ApiService, Asset, Dashboard, LedgerItem, Wallet } from '../core/api.se
           <aside class="panel">
             <p class="eyebrow">Distribuição</p><h2>Por categoria</h2>
             @for (category of data.categories; track category.category) {
-              <div class="category-row"><span>{{ category.category === 'ACAO' ? 'Ações' : 'FIIs' }}</span><strong>{{ category.allocationPercentage }}%</strong></div>
-              <div class="allocation large"><i [style.width.%]="category.allocationPercentage"></i></div>
+              <div class="category-row"><span>{{ category.category === 'ACAO' ? 'Ações' : 'FIIs' }}</span><strong>{{ category.allocationPercentage == null ? '—' : ((category.allocationPercentage | number:'1.2-2') + '%') }}</strong></div>
+              <div class="category-details"><small>Custo {{ category.acquisitionCost | currency:'BRL' }}</small><small>Atual {{ category.currentValue == null ? 'indisponível' : (category.currentValue | currency:'BRL') }}</small><small>Retorno {{ category.returnPercentage == null ? 'indisponível' : ((category.returnPercentage | number:'1.2-2') + '%') }}</small></div>
+              <div class="allocation large"><i [style.width.%]="category.allocationPercentage ?? 0"></i></div>
             }
             <div class="highlight"><span>Maior posição</span><strong>{{ data.largestPosition ?? '—' }}</strong></div>
           </aside>
@@ -117,14 +124,14 @@ import { ApiService, Asset, Dashboard, LedgerItem, Wallet } from '../core/api.se
             </form>
           </article>
           <article class="panel wide">
-            <div class="panel-title"><div><p class="eyebrow">Histórico</p><h2>Últimos lançamentos</h2></div></div>
+            <div class="panel-title"><div><p class="eyebrow">Histórico completo</p><h2>Lançamentos</h2></div></div>
             @if (records().length) {
               <div class="activity-list">
                 @for (item of reversedRecords(); track item.id) {
                   <div class="activity" [class.editing]="editingId() === item.id">
                     <span class="activity-icon">{{ icon(item.type) }}</span>
                     <div><strong>{{ label(item.type) }} · {{ item.ticker }}</strong><small>{{ item.date | date:'dd/MM/yyyy':'UTC' }}</small></div>
-                    <b>{{ item.totalValue ? (item.totalValue | currency:'BRL') : (item.quantity | number:'1.0-6') }}</b>
+                    <b>{{ recordValue(item) }}</b>
                     <div class="activity-actions">
                       <button type="button" (click)="editRecord(item)" aria-label="Editar lançamento">Editar</button>
                       <button class="danger" type="button" (click)="deleteRecord(item)" aria-label="Excluir lançamento">Excluir</button>
@@ -135,6 +142,37 @@ import { ApiService, Asset, Dashboard, LedgerItem, Wallet } from '../core/api.se
             } @else { <p class="empty-copy">Nenhum lançamento nesta carteira.</p> }
           </article>
         </section>
+
+        <section class="content-grid analytics">
+          <article class="panel">
+            <div class="panel-title"><div><p class="eyebrow">Evolução</p><h2>Custo de aquisição</h2></div>
+              <select class="compact-select" [value]="granularity()" (change)="changeGranularity($any($event.target).value)">
+                <option value="MONTHLY">Mensal</option><option value="YEARLY">Anual</option>
+              </select>
+            </div>
+            <div class="evolution">
+              @for (point of data.evolution; track point.period) {
+                <div><span>{{ point.period }}</span><i [style.width.%]="evolutionWidth(point.acquisitionCost)"></i><strong>{{ point.acquisitionCost | currency:'BRL' }}</strong></div>
+              } @empty { <p class="empty-copy">Sem dados de evolução.</p> }
+            </div>
+          </article>
+          <article class="panel">
+            <p class="eyebrow">Proventos</p><h2>Análise por período</h2>
+            <form [formGroup]="incomeForm" class="filter-grid" (ngSubmit)="loadIncomes()">
+              <label>Categoria<select formControlName="category"><option value="">Todas</option><option value="ACAO">Ações</option><option value="FII">FIIs</option></select></label>
+              <label>Tipo<select formControlName="type"><option value="">Todos</option><option value="DIVIDENDO">Dividendos</option><option value="JCP">JCP</option></select></label>
+              <label>De<input type="date" formControlName="from"></label><label>Até<input type="date" formControlName="to"></label>
+              <label>Agrupar<select formControlName="groupBy"><option value="MONTHLY">Mensal</option><option value="QUARTERLY">Trimestral</option><option value="YEARLY">Anual</option></select></label>
+              <button class="button secondary">Aplicar</button>
+            </form>
+            @if (incomeData(); as income) {
+              <p class="income-total">Total filtrado <strong>{{ income.total | currency:'BRL' }}</strong></p>
+              @for (group of income.groups; track group.period) {
+                <div class="category-row"><span>{{ group.period }}</span><strong>{{ group.total | currency:'BRL' }}</strong></div>
+              }
+            }
+          </article>
+        </section>
       }
     </main>
   `,
@@ -143,7 +181,8 @@ import { ApiService, Asset, Dashboard, LedgerItem, Wallet } from '../core/api.se
 export class DashboardComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
-  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly session = inject(SessionService);
   readonly wallets = signal<Wallet[]>([]);
   readonly assets = signal<Asset[]>([]);
   readonly selectedWalletId = signal('');
@@ -153,11 +192,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly message = signal('');
   readonly successMessage = signal('');
   readonly editingId = signal<string | null>(null);
+  readonly granularity = signal<'MONTHLY' | 'YEARLY'>('MONTHLY');
+  readonly incomeData = signal<IncomeResponse | null>(null);
   private successTimer: ReturnType<typeof setTimeout> | null = null;
   readonly userName = signal(localStorage.getItem('mad_user') ?? 'Investidor');
   readonly userInitial = computed(() => this.userName().charAt(0).toUpperCase());
-  readonly reversedRecords = computed(() => [...this.records()].reverse().slice(0, 12));
+  readonly reversedRecords = computed(() => [...this.records()].reverse());
   readonly walletForm = this.fb.nonNullable.group({ name: ['', [Validators.required, Validators.maxLength(80)]] });
+  readonly incomeForm = this.fb.nonNullable.group({ category: '', type: '', from: '', to: '', groupBy: 'MONTHLY' });
   readonly recordForm = this.fb.group({
     type: this.fb.nonNullable.control('COMPRA', Validators.required),
     assetId: this.fb.nonNullable.control('', Validators.required),
@@ -187,21 +229,69 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loadWallets(): void {
     this.api.wallets().subscribe((wallets) => {
       this.wallets.set(wallets);
-      if (wallets.length && !this.selectedWalletId()) this.selectWallet(wallets[0].id);
+      if (wallets.length && !this.selectedWalletId()) {
+        const requested = this.route.snapshot.queryParamMap.get('wallet');
+        this.selectWallet(wallets.some(item => item.id === requested) ? requested! : wallets[0].id);
+        const asset = this.route.snapshot.queryParamMap.get('asset');
+        const type = this.route.snapshot.queryParamMap.get('type');
+        if (asset) this.recordForm.controls.assetId.setValue(asset);
+        if (type && this.recordTypes.some(item => item.value === type)) this.recordForm.controls.type.setValue(type);
+      }
     });
   }
   selectWallet(id: string): void {
     if (id !== this.selectedWalletId()) this.cancelEdit(false);
     this.selectedWalletId.set(id);
     if (!id) return;
-    this.api.dashboard(id).subscribe((data) => this.dashboard.set(data));
+    this.api.dashboard(id, this.granularity()).subscribe((data) => this.dashboard.set(data));
     this.api.records(id).subscribe((items) => this.records.set(items));
+    this.loadIncomes();
   }
   createWallet(): void {
     if (this.walletForm.invalid) return;
     this.api.createWallet(this.walletForm.getRawValue().name).subscribe((wallet) => {
       this.walletForm.reset(); this.showWalletForm.set(false); this.loadWallets(); this.selectWallet(wallet.id);
     });
+  }
+  renameWallet(): void {
+    const wallet = this.wallets().find(item => item.id === this.selectedWalletId());
+    const name = wallet && window.prompt('Novo nome da carteira:', wallet.name)?.trim();
+    if (!wallet || !name) return;
+    this.api.updateWallet(wallet.id, name).subscribe(() => {
+      this.showSuccess('Carteira atualizada.');
+      this.loadWallets();
+    });
+  }
+  deleteWallet(): void {
+    const id = this.selectedWalletId();
+    if (!id || !window.confirm('Excluir esta carteira e todo o histórico?')) return;
+    this.api.deleteWallet(id).subscribe(() => {
+      this.selectedWalletId.set('');
+      this.dashboard.set(null);
+      this.records.set([]);
+      this.loadWallets();
+    });
+  }
+  changeGranularity(value: 'MONTHLY' | 'YEARLY'): void {
+    this.granularity.set(value);
+    this.selectWallet(this.selectedWalletId());
+  }
+  loadIncomes(): void {
+    const walletId = this.selectedWalletId();
+    if (!walletId) return;
+    const filters = Object.fromEntries(Object.entries(this.incomeForm.getRawValue()).filter(([, value]) => value));
+    this.api.incomes(walletId, filters).subscribe(data => this.incomeData.set(data));
+  }
+  evolutionWidth(value: number): number {
+    const max = Math.max(...(this.dashboard()?.evolution.map(item => item.acquisitionCost) ?? [1]), 1);
+    return Math.max(2, value / max * 100);
+  }
+  recordValue(item: LedgerItem): string {
+    if (item.totalValue != null) {
+      return item.totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    if (item.newQuantity != null) return `${item.newQuantity} un. · ${item.ratio ?? 'sem proporção'}`;
+    return `${item.quantity ?? 0} un.`;
   }
   saveRecord(): void {
     const walletId = this.selectedWalletId();
@@ -319,5 +409,5 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isCorporateEvent(): boolean { return ['DESDOBRAMENTO', 'GRUPAMENTO'].includes(this.recordForm.controls.type.value); }
   icon(type: string): string { return ['COMPRA', 'SUBSCRICAO', 'BONIFICACAO'].includes(type) ? '+' : type === 'VENDA' ? '−' : '•'; }
   label(type: string): string { return this.recordTypes.find((item) => item.value === type)?.label ?? type; }
-  logout(): void { localStorage.clear(); void this.router.navigate(['/login']); }
+  logout(): void { this.session.clear(); }
 }

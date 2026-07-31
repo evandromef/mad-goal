@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ApiService, Dashboard, LedgerItem } from '../core/api.service';
 import { DashboardComponent } from './dashboard.component';
+import { SessionService } from '../core/session.service';
 
 describe('DashboardComponent - lançamentos', () => {
   const dashboard: Dashboard = {
@@ -34,8 +35,15 @@ describe('DashboardComponent - lançamentos', () => {
     deleteRecord: vi.fn(),
     createRecord: vi.fn(),
     dashboard: vi.fn(),
-    records: vi.fn()
+    records: vi.fn(),
+    incomes: vi.fn(),
+    assets: vi.fn(),
+    wallets: vi.fn(),
+    createWallet: vi.fn(),
+    updateWallet: vi.fn(),
+    deleteWallet: vi.fn()
   };
+  const session = { clear: vi.fn() };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -43,11 +51,19 @@ describe('DashboardComponent - lançamentos', () => {
     api.deleteRecord.mockReturnValue(of(undefined));
     api.dashboard.mockReturnValue(of(dashboard));
     api.records.mockReturnValue(of([]));
+    api.incomes.mockReturnValue(of({ total: 0, groups: [], items: [] }));
+    api.assets.mockReturnValue(of([]));
+    api.wallets.mockReturnValue(of([{ id: 'wallet-1', name: 'Principal', currentValue: 0 }]));
+    api.createWallet.mockReturnValue(of({ id: 'wallet-2', name: 'Nova', currentValue: 0 }));
+    api.updateWallet.mockReturnValue(of({ id: 'wallet-1', name: 'Renomeada', currentValue: 0 }));
+    api.deleteWallet.mockReturnValue(of(undefined));
+    api.createRecord.mockReturnValue(of(item));
     await TestBed.configureTestingModule({
       imports: [DashboardComponent],
       providers: [
         provideRouter([]),
-        { provide: ApiService, useValue: api }
+        { provide: ApiService, useValue: api },
+        { provide: SessionService, useValue: session }
       ]
     }).compileComponents();
   });
@@ -100,9 +116,114 @@ describe('DashboardComponent - lançamentos', () => {
     component.deleteRecord(item);
 
     expect(api.deleteRecord).toHaveBeenCalledWith('record-1');
-    expect(api.dashboard).toHaveBeenCalledWith('wallet-1');
+    expect(api.dashboard).toHaveBeenCalledWith('wallet-1', 'MONTHLY');
     expect(api.records).toHaveBeenCalledWith('wallet-1');
     expect(component.successMessage()).toBe('Lançamento excluído com sucesso.');
     expect(component.message()).toBe('');
+  });
+
+  it('carrega dados, gerencia carteira e alterna análises', () => {
+    const component = TestBed.createComponent(DashboardComponent).componentInstance;
+    component.ngOnInit();
+    expect(component.selectedWalletId()).toBe('wallet-1');
+    expect(api.assets).toHaveBeenCalled();
+    expect(api.incomes).toHaveBeenCalled();
+
+    component.walletForm.setValue({ name: 'Nova' });
+    component.createWallet();
+    expect(api.createWallet).toHaveBeenCalledWith('Nova');
+
+    vi.spyOn(window, 'prompt').mockReturnValue('Renomeada');
+    component.selectedWalletId.set('wallet-1');
+    component.renameWallet();
+    expect(api.updateWallet).toHaveBeenCalledWith('wallet-1', 'Renomeada');
+
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    component.deleteWallet();
+    expect(api.deleteWallet).toHaveBeenCalledWith('wallet-1');
+
+    component.selectedWalletId.set('wallet-1');
+    component.changeGranularity('YEARLY');
+    expect(api.dashboard).toHaveBeenCalledWith('wallet-1', 'YEARLY');
+    expect(component.evolutionWidth(10)).toBeGreaterThan(0);
+  });
+
+  it('cria lançamento e apresenta corretamente eventos corporativos', () => {
+    const component = TestBed.createComponent(DashboardComponent).componentInstance;
+    component.selectedWalletId.set('wallet-1');
+    component.recordForm.patchValue({
+      type: 'COMPRA', assetId: 'asset-1', quantity: 1, totalValue: 100
+    });
+    component.saveRecord();
+    expect(api.createRecord).toHaveBeenCalledWith(expect.objectContaining({ quantity: 1, totalValue: 100 }));
+    expect(component.recordValue({ ...item, totalValue: undefined, quantity: undefined,
+      type: 'DESDOBRAMENTO', newQuantity: 20, ratio: '1:2' })).toBe('20 un. · 1:2');
+    component.recordForm.controls.type.setValue('JCP');
+    expect(component.isIncome()).toBe(true);
+    component.recordForm.controls.type.setValue('BONIFICACAO');
+    expect(component.isBonus()).toBe(true);
+    component.recordForm.controls.type.setValue('GRUPAMENTO');
+    expect(component.isCorporateEvent()).toBe(true);
+    expect(component.icon('VENDA')).toBe('−');
+    component.cancelEdit();
+  });
+
+  it('monta payloads de provento, bonificação e evento e trata erros', () => {
+    const component = TestBed.createComponent(DashboardComponent).componentInstance;
+    component.selectedWalletId.set('wallet-1');
+    component.recordForm.patchValue({ type: 'JCP', assetId: 'asset-1', totalValue: 25, unitPrice: 2.5,
+      description: 'Provento' });
+    component.saveRecord();
+    expect(api.createRecord).toHaveBeenLastCalledWith(expect.objectContaining({
+      type: 'JCP', totalValue: 25, unitPrice: 2.5, description: 'Provento'
+    }));
+
+    component.recordForm.patchValue({ type: 'BONIFICACAO', assetId: 'asset-1', quantity: 3 });
+    component.saveRecord();
+    expect(api.createRecord).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'BONIFICACAO', quantity: 3 }));
+
+    component.recordForm.patchValue({ type: 'DESDOBRAMENTO', assetId: 'asset-1', newQuantity: 30, ratio: '1:3' });
+    component.saveRecord();
+    expect(api.createRecord).toHaveBeenLastCalledWith(expect.objectContaining({ newQuantity: 30, ratio: '1:3' }));
+
+    api.createRecord.mockReturnValueOnce(throwError(() => ({ error: { message: 'Falhou' } })));
+    component.recordForm.patchValue({ type: 'COMPRA', assetId: 'asset-1', quantity: 1, totalValue: 1 });
+    component.saveRecord();
+    expect(component.message()).toBe('Falhou');
+
+    api.deleteRecord.mockReturnValueOnce(throwError(() => ({ error: {} })));
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    component.deleteRecord(item);
+    expect(component.message()).toBe('Não foi possível excluir o lançamento.');
+    expect(component.recordValue({ ...item, totalValue: undefined, quantity: 2 })).toBe('2 un.');
+    expect(component.label('DESCONHECIDO')).toBe('DESCONHECIDO');
+    component.logout();
+    expect(session.clear).toHaveBeenCalled();
+  });
+
+  it('renderiza estados indisponíveis, indicadores, evolução e evento corporativo', () => {
+    api.assets.mockReturnValueOnce(of([{ id: 'asset-1', ticker: 'PETR4', name: 'Petrobras',
+      category: 'ACAO', currentPrice: null, priceDate: null }]));
+    api.dashboard.mockReturnValue(of({
+      acquisitionCost: 1000, currentValue: null, profitLoss: null, returnPercentage: null,
+      totalIncome: 25, largestPosition: null,
+      categories: [{ category: 'ACAO', acquisitionCost: 1000, currentValue: null,
+        profitLoss: null, returnPercentage: null, allocationPercentage: null }],
+      positions: [{ assetId: 'asset-1', ticker: 'PETR4', name: 'Petrobras', category: 'ACAO',
+        quantity: 20, acquisitionCost: 1000, currentPrice: null, currentValue: null,
+        profitLoss: null, returnPercentage: null, allocationPercentage: null, priceDate: null }],
+      evolution: [{ period: '2026-01', acquisitionCost: 1000 }]
+    }));
+    api.records.mockReturnValue(of([{ ...item, type: 'DESDOBRAMENTO', totalValue: undefined,
+      quantity: undefined, newQuantity: 20, ratio: '1:2' }]));
+    api.incomes.mockReturnValue(of({ total: 25, groups: [{ period: '2026-T1', total: 25 }], items: [] }));
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('Indisponível');
+    expect(text).toContain('PETR4');
+    expect(text).toContain('20 un. · 1:2');
+    expect(text).toContain('2026-01');
+    expect(text).toContain('2026-T1');
   });
 });

@@ -31,7 +31,8 @@ public class DashboardController {
                                    BigDecimal currentValue, BigDecimal profitLoss, BigDecimal returnPercentage,
                                    BigDecimal allocationPercentage, Object priceDate) {}
     public record CategoryResponse(Asset.Category category, BigDecimal acquisitionCost,
-                                   BigDecimal currentValue, BigDecimal allocationPercentage) {}
+                                   BigDecimal currentValue, BigDecimal profitLoss,
+                                   BigDecimal returnPercentage, BigDecimal allocationPercentage) {}
     public record DashboardResponse(BigDecimal acquisitionCost, BigDecimal currentValue,
                                     BigDecimal profitLoss, BigDecimal returnPercentage,
                                     BigDecimal totalIncome, String largestPosition,
@@ -46,36 +47,40 @@ public class DashboardController {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Carteira não encontrada."));
         Collection<PortfolioService.Position> source = portfolio.positions(walletId).values();
         BigDecimal totalCost = sum(source, PortfolioService.Position::acquisitionCost);
-        BigDecimal totalValue = sum(source, PortfolioService.Position::currentValue);
-        BigDecimal pnl = totalValue.subtract(totalCost, MC);
-        BigDecimal returnPct = totalCost.signum() == 0 ? null
+        BigDecimal totalValue = nullableSum(source, PortfolioService.Position::currentValue);
+        BigDecimal pnl = totalValue == null ? null : totalValue.subtract(totalCost, MC);
+        BigDecimal returnPct = totalCost.signum() == 0 || pnl == null ? null
                 : pnl.divide(totalCost, MC).multiply(BigDecimal.valueOf(100), MC);
 
         List<PositionResponse> positions = source.stream()
                 .map(position -> new PositionResponse(position.asset().getId(), position.asset().getTicker(),
                         position.asset().getName(), position.asset().getCategory(), position.quantity(),
                         PortfolioService.money(position.acquisitionCost()), position.asset().getCurrentPrice(),
-                        PortfolioService.money(position.currentValue()), PortfolioService.money(position.profitLoss()),
+                        nullableMoney(position.currentValue()), nullableMoney(position.profitLoss()),
                         nullableMoney(position.returnPercentage()), percentage(position.currentValue(), totalValue),
                         position.asset().getPriceDate()))
-                .sorted(Comparator.comparing(PositionResponse::currentValue).reversed())
+                .sorted(Comparator.comparing(PositionResponse::currentValue,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
                 .toList();
 
         List<CategoryResponse> categories = Arrays.stream(Asset.Category.values()).map(category -> {
             List<PortfolioService.Position> filtered = source.stream()
                     .filter(position -> position.asset().getCategory() == category).toList();
             BigDecimal cost = sum(filtered, PortfolioService.Position::acquisitionCost);
-            BigDecimal value = sum(filtered, PortfolioService.Position::currentValue);
-            return new CategoryResponse(category, PortfolioService.money(cost), PortfolioService.money(value),
-                    percentage(value, totalValue));
+            BigDecimal value = nullableSum(filtered, PortfolioService.Position::currentValue);
+            BigDecimal categoryPnl = value == null ? null : value.subtract(cost, MC);
+            BigDecimal categoryReturn = cost.signum() == 0 || categoryPnl == null ? null
+                    : categoryPnl.divide(cost, MC).multiply(BigDecimal.valueOf(100), MC);
+            return new CategoryResponse(category, PortfolioService.money(cost), nullableMoney(value),
+                    nullableMoney(categoryPnl), nullableMoney(categoryReturn), percentage(value, totalValue));
         }).toList();
 
         BigDecimal income = records.findByWalletIdOrderByDateAscCreatedAtAsc(walletId).stream()
                 .filter(item -> item.getType() == LedgerRecord.Type.DIVIDENDO || item.getType() == LedgerRecord.Type.JCP)
                 .map(LedgerRecord::getTotalValue).filter(Objects::nonNull).reduce(ZERO, BigDecimal::add);
-        String largest = positions.isEmpty() ? null : positions.getFirst().ticker();
-        return new DashboardResponse(PortfolioService.money(totalCost), PortfolioService.money(totalValue),
-                PortfolioService.money(pnl), nullableMoney(returnPct), PortfolioService.money(income), largest,
+        String largest = totalValue == null || positions.isEmpty() ? null : positions.getFirst().ticker();
+        return new DashboardResponse(PortfolioService.money(totalCost), nullableMoney(totalValue),
+                nullableMoney(pnl), nullableMoney(returnPct), PortfolioService.money(income), largest,
                 categories, positions, portfolio.evolution(walletId, granularity));
     }
 
@@ -83,12 +88,16 @@ public class DashboardController {
                            java.util.function.Function<PortfolioService.Position, BigDecimal> mapper) {
         return positions.stream().map(mapper).reduce(ZERO, BigDecimal::add);
     }
+    private BigDecimal nullableSum(Collection<PortfolioService.Position> positions,
+                                   java.util.function.Function<PortfolioService.Position, BigDecimal> mapper) {
+        if (positions.stream().map(mapper).anyMatch(Objects::isNull)) return null;
+        return sum(positions, mapper);
+    }
     private BigDecimal percentage(BigDecimal value, BigDecimal total) {
-        return total.signum() == 0 ? ZERO.setScale(2) : PortfolioService.money(
+        return value == null || total == null ? null : total.signum() == 0 ? ZERO.setScale(2) : PortfolioService.money(
                 value.divide(total, MC).multiply(BigDecimal.valueOf(100), MC));
     }
     private BigDecimal nullableMoney(BigDecimal value) {
         return value == null ? null : PortfolioService.money(value);
     }
 }
-

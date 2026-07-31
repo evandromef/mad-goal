@@ -24,12 +24,16 @@ public class PortfolioService {
 
     public record Position(Asset asset, BigDecimal quantity, BigDecimal acquisitionCost) {
         public BigDecimal currentValue() {
-            return asset.getCurrentPrice() == null ? ZERO : quantity.multiply(asset.getCurrentPrice(), MC);
+            return asset.getCurrentPrice() == null ? null : quantity.multiply(asset.getCurrentPrice(), MC);
         }
-        public BigDecimal profitLoss() { return currentValue().subtract(acquisitionCost, MC); }
+        public BigDecimal profitLoss() {
+            BigDecimal currentValue = currentValue();
+            return currentValue == null ? null : currentValue.subtract(acquisitionCost, MC);
+        }
         public BigDecimal returnPercentage() {
-            return acquisitionCost.signum() == 0 ? null
-                    : profitLoss().divide(acquisitionCost, MC).multiply(BigDecimal.valueOf(100), MC);
+            BigDecimal profitLoss = profitLoss();
+            return acquisitionCost.signum() == 0 || profitLoss == null ? null
+                    : profitLoss.divide(acquisitionCost, MC).multiply(BigDecimal.valueOf(100), MC);
         }
     }
 
@@ -106,7 +110,7 @@ public class PortfolioService {
                     .map(Position::acquisitionCost).reduce(ZERO, BigDecimal::add);
             monthly.add(Map.of("period", month.toString(), "acquisitionCost", money(total)));
         }
-        if (!"ANUAL".equalsIgnoreCase(granularity)) return monthly;
+        if (!"ANUAL".equalsIgnoreCase(granularity) && !"YEARLY".equalsIgnoreCase(granularity)) return monthly;
         Map<String, Map<String, Object>> years = new LinkedHashMap<>();
         monthly.forEach(point -> years.put(point.get("period").toString().substring(0, 4),
                 Map.of("period", point.get("period").toString().substring(0, 4),

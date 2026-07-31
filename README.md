@@ -8,7 +8,7 @@ MVP web para controle de carteiras brasileiras de ações e FIIs. A aplicação 
 - Angular 21
 - PostgreSQL 17
 - Maven, npm, Docker e Docker Compose
-- JUnit, MockMvc, AssertJ e Vitest
+- JUnit, MockMvc, AssertJ, Vitest, JaCoCo e Playwright
 
 ## Executar com Docker
 
@@ -75,8 +75,11 @@ mvn clean verify
 
 cd ../frontend
 npm ci
-npm test
+npm run test:coverage
 npm run build
+
+# Com a stack Docker em execução
+npm run e2e
 ```
 
 ## Configuração
@@ -90,8 +93,21 @@ Nenhum segredo real é versionado. As seguintes variáveis podem ser definidas n
 | `POSTGRES_PASSWORD` | Senha do PostgreSQL |
 | `JWT_SECRET` | Chave de assinatura dos tokens, com ao menos 32 caracteres |
 | `JWT_EXPIRATION_MINUTES` | Duração do token |
+| `BRAPI_API_TOKEN` | Token opcional da Brapi |
+| `MARKET_DATA_ENABLED` | Habilita sincronização real de catálogo e cotações |
+| `GOOGLE_CLIENT_ID` | Client ID público para login Google |
+| `EXPOSE_ACCOUNT_TOKENS` | Exibe tokens de confirmação/recuperação na resposta para desenvolvimento local |
 
-O catálogo recebe uma carga inicial idempotente de ativos conhecidos para permitir uso local sem depender de uma API externa. As cotações são dados demonstrativos com data de referência explícita; a arquitetura mantém uma única cotação atual por ativo.
+O catálogo recebe uma carga inicial idempotente para permitir uso offline e, quando
+`MARKET_DATA_ENABLED=true`, é sincronizado semanalmente com a Brapi. Cotações são
+atualizadas nos dias úteis somente para ativos referenciados em lançamentos, uma
+requisição por ticker; uma falha preserva a última cotação válida. Defina
+`BRAPI_API_TOKEN` se o plano da API exigir autenticação.
+
+No ambiente local, `EXPOSE_ACCOUNT_TOKENS=true` permite concluir confirmação de
+e-mail e recuperação de senha sem um servidor SMTP: o token é preenchido
+automaticamente na tela. Em ambientes compartilhados, mantenha essa opção desativada
+e entregue o token por um provedor de e-mail.
 
 ## API REST
 
@@ -100,7 +116,13 @@ Os endpoints, exceto cadastro/login e saúde, exigem `Authorization: Bearer <tok
 | Método e rota | Função |
 | --- | --- |
 | `POST /api/auth/register` | Cadastro local |
+| `POST /api/auth/confirm-email` | Confirmação de e-mail |
 | `POST /api/auth/login` | Autenticação |
+| `POST /api/auth/google` | Login Google por ID token |
+| `POST /api/auth/forgot-password` | Início da recuperação de senha |
+| `POST /api/auth/reset-password` | Redefinição de senha |
+| `POST /api/auth/refresh` | Rotação do refresh token |
+| `POST /api/auth/logout` | Revogação do refresh token |
 | `GET /api/auth/me` | Usuário atual |
 | `PUT/DELETE /api/profile` | Edição/exclusão da conta |
 | `GET/POST /api/wallets` | Listagem/criação de carteiras |
@@ -109,11 +131,16 @@ Os endpoints, exceto cadastro/login e saúde, exigem `Authorization: Bearer <tok
 | `GET/POST /api/records` | Histórico e cadastro de lançamentos |
 | `PUT/DELETE /api/records/{id}` | Edição/exclusão com recálculo |
 | `GET /api/dashboard/{walletId}` | Consolidação da carteira |
+| `GET /api/incomes` | Proventos filtrados e agrupados |
 | `GET/POST /api/notes` | Notas por carteira/ativo |
 | `PUT/DELETE /api/notes/{id}` | Edição/exclusão de nota |
 
 Tipos de lançamento: `COMPRA`, `VENDA`, `SUBSCRICAO`, `DIVIDENDO`, `JCP`, `BONIFICACAO`, `DESDOBRAMENTO` e `GRUPAMENTO`.
 
-## Decisões do MVP local
+## Cobertura automatizada
 
-Integrações que dependem de contas externas — login Google, envio de e-mail e atualização real pela API financeira — não recebem credenciais fictícias. O núcleo local oferece cadastro por e-mail/senha e catálogo/cotações demonstrativos. Isso preserva execução determinística e evita armazenar segredos; provedores reais devem ser habilitados por configuração em um ambiente que forneça as respectivas credenciais.
+Os comandos de verificação falham abaixo de 80% de linhas/instruções no backend
+e abaixo de 80% de linhas/statements/funções no frontend. O E2E percorre cadastro,
+confirmação, criação de carteira, lançamento, detalhe do ativo e nota usando a stack
+real. Integrações externas não recebem credenciais fictícias; Google e Brapi são
+habilitados somente pelas variáveis de ambiente acima.

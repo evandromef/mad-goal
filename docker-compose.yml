@@ -24,6 +24,10 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-this-local-development-secret-with-at-least-32-characters}
       JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES:-480}
       CORS_ALLOWED_ORIGIN: http://localhost:4200
+      BRAPI_API_TOKEN: ${BRAPI_API_TOKEN:-}
+      MARKET_DATA_ENABLED: ${MARKET_DATA_ENABLED:-true}
+      EXPOSE_ACCOUNT_TOKENS: ${EXPOSE_ACCOUNT_TOKENS:-true}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     depends_on:
       db:
         condition: service_healthy

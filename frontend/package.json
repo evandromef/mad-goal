@@ -5,7 +5,9 @@
   "scripts": {
     "start": "ng serve --proxy-config proxy.conf.json",
     "build": "ng build",
-    "test": "ng test --watch=false"
+    "test": "ng test --watch=false",
+    "test:coverage": "ng test --watch=false --coverage",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@angular/common": "^21.2.0",
@@ -22,7 +24,9 @@
     "@angular/build": "^21.2.0",
     "@angular/cli": "^21.2.0",
     "@angular/compiler-cli": "^21.2.0",
+    "@playwright/test": "^1.62.1",
     "@types/node": "^24.0.0",
+    "@vitest/coverage-v8": "^4.1.10",
     "jsdom": "^26.1.0",
     "typescript": "~5.9.2",
     "vitest": "^4.0.0"

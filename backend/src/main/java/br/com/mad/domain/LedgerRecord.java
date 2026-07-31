@@ -20,15 +20,15 @@ public class LedgerRecord extends AuditedEntity {
     private Type type;
     @Column(name = "event_date", nullable = false)
     private LocalDate date;
-    @Column(precision = 19, scale = 6)
+    @Column(precision = 19, scale = 8)
     private BigDecimal quantity;
-    @Column(precision = 19, scale = 6)
+    @Column(precision = 19, scale = 8)
     private BigDecimal unitPrice;
-    @Column(precision = 19, scale = 6)
+    @Column(precision = 19, scale = 8)
     private BigDecimal fees;
-    @Column(precision = 19, scale = 6)
+    @Column(precision = 19, scale = 8)
     private BigDecimal totalValue;
-    @Column(precision = 19, scale = 6)
+    @Column(precision = 19, scale = 8)
     private BigDecimal newQuantity;
     @Column(length = 30)
     private String ratio;
@@ -61,4 +61,3 @@ public class LedgerRecord extends AuditedEntity {
     public String getRatio() { return ratio; }
     public String getDescription() { return description; }
 }
-

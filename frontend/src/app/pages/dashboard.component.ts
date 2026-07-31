@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService, Asset, Dashboard, IncomeResponse, LedgerItem, Wallet } from '../core/api.service';
 import { SessionService } from '../core/session.service';
+import { ModalService } from '../core/modal.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -159,7 +160,7 @@ import { SessionService } from '../core/session.service';
               <div class="activity-list">
                 @for (item of reversedRecords(); track item.id) {
                   <div class="activity" [class.editing]="editingId() === item.id">
-                    <span class="activity-icon">{{ icon(item.type) }}</span>
+                    <span class="activity-icon">{{ typeInitial(item.type) }}</span>
                     <div><strong>{{ label(item.type) }} · {{ item.ticker }}</strong><small>{{ item.date | date:'dd/MM/yyyy':'UTC' }}</small></div>
                     <b>{{ recordValue(item) }}</b>
                     <div class="activity-actions">
@@ -225,6 +226,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly session = inject(SessionService);
+  private readonly modal = inject(ModalService);
   readonly wallets = signal<Wallet[]>([]);
   readonly assets = signal<Asset[]>([]);
   readonly selectedWalletId = signal('');
@@ -315,18 +317,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.walletForm.reset(); this.showWalletForm.set(false); this.loadWallets(); this.selectWallet(wallet.id);
     });
   }
-  renameWallet(): void {
+  async renameWallet(): Promise<void> {
     const wallet = this.wallets().find(item => item.id === this.selectedWalletId());
-    const name = wallet && window.prompt('Novo nome da carteira:', wallet.name)?.trim();
-    if (!wallet || !name) return;
+    if (!wallet) return;
+    const name = (await this.modal.prompt({
+      title: 'Renomear carteira',
+      message: `Escolha um novo nome para “${wallet.name}”.`,
+      inputLabel: 'Novo nome',
+      initialValue: wallet.name,
+      placeholder: 'Nome da carteira',
+      confirmLabel: 'Salvar nome'
+    }))?.trim();
+    if (!name) return;
     this.api.updateWallet(wallet.id, name).subscribe(() => {
       this.showSuccess('Carteira atualizada.');
       this.loadWallets();
     });
   }
-  deleteWallet(): void {
+  async deleteWallet(): Promise<void> {
     const id = this.selectedWalletId();
-    if (!id || !window.confirm('Excluir esta carteira e todo o histórico?')) return;
+    const wallet = this.wallets().find(item => item.id === id);
+    if (!id || !await this.modal.confirm({
+      title: 'Excluir carteira?',
+      message: `A carteira “${wallet?.name ?? ''}” e todo o histórico dela serão removidos definitivamente.`,
+      confirmLabel: 'Excluir carteira',
+      cancelLabel: 'Manter carteira',
+      danger: true
+    })) return;
     this.api.deleteWallet(id).subscribe(() => {
       this.selectedWalletId.set('');
       this.dashboard.set(null);
@@ -424,8 +441,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.syncPurchaseAssetQuery();
     document.getElementById('lancamentos')?.scrollIntoView({ behavior: 'smooth' });
   }
-  deleteRecord(item: LedgerItem): void {
-    if (!window.confirm(`Excluir o lançamento ${this.label(item.type)} de ${item.ticker}?`)) return;
+  async deleteRecord(item: LedgerItem): Promise<void> {
+    if (!await this.modal.confirm({
+      title: 'Excluir lançamento?',
+      message: `${this.label(item.type)} de ${item.ticker} em ${new Date(item.date + 'T00:00:00').toLocaleDateString('pt-BR')} será removido do histórico.`,
+      confirmLabel: 'Excluir lançamento',
+      cancelLabel: 'Manter lançamento',
+      danger: true
+    })) return;
     this.api.deleteRecord(item.id).subscribe({
       next: () => {
         if (this.editingId() === item.id) this.cancelEdit(false);
@@ -506,7 +529,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isIncome(): boolean { return ['DIVIDENDO', 'JCP'].includes(this.recordForm.controls.type.value); }
   isBonus(): boolean { return this.recordForm.controls.type.value === 'BONIFICACAO'; }
   isCorporateEvent(): boolean { return ['DESDOBRAMENTO', 'GRUPAMENTO'].includes(this.recordForm.controls.type.value); }
-  icon(type: string): string { return ['COMPRA', 'SUBSCRICAO', 'BONIFICACAO'].includes(type) ? '+' : type === 'VENDA' ? '−' : '•'; }
+  typeInitial(type: string): string { return this.label(type).charAt(0).toUpperCase(); }
   label(type: string): string { return this.recordTypes.find((item) => item.value === type)?.label ?? type; }
   logout(): void { this.session.clear(); }
 }

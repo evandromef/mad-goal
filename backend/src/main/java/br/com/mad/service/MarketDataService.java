@@ -63,7 +63,11 @@ public class MarketDataService {
         }
         assets.findAll().stream()
                 .filter(asset -> !eligibleTickers.contains(asset.getTicker().toUpperCase(Locale.ROOT)))
-                .forEach(Asset::deactivate);
+                .filter(Asset::isActive)
+                .forEach(asset -> {
+                    asset.deactivate();
+                    assets.save(asset);
+                });
         log.info("Catálogo sincronizado com {} ativos elegíveis", synchronizedCount);
         return synchronizedCount;
     }

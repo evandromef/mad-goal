@@ -2,6 +2,9 @@ import { expect, test } from '@playwright/test';
 
 test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ page }) => {
   const email = `e2e-${Date.now()}@example.com`;
+  await page.goto('/login?mode=reset&token=token-do-link', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { name: 'Redefinir senha' })).toBeVisible();
+  await expect(page.getByLabel('Token')).toHaveValue('token-do-link');
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: /cadastre-se/i }).click();
   await page.getByLabel('Nome').fill('Pessoa E2E');
@@ -34,8 +37,27 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await page.getByLabel('Valor total').fill('1000.12345678');
   await page.getByRole('button', { name: 'Salvar lançamento' }).click();
   await expect(page.getByRole('status')).toContainText('sucesso');
+  await expect(page.locator('.activity-icon').first()).toHaveText('C');
   await expect(page.locator('.metric').filter({ hasText: 'Custo de aquisição' }).locator('strong'))
     .toHaveText(/R\$\s*1\.000,12/);
+  const deleteTrigger = page.getByRole('button', { name: 'Excluir lançamento' });
+  await deleteTrigger.focus();
+  await page.keyboard.press('Enter');
+  const deleteModal = page.getByRole('dialog');
+  await expect(deleteModal).toBeVisible();
+  await expect(deleteModal.getByRole('heading', { name: 'Excluir lançamento?' })).toBeVisible();
+  await expect(deleteModal).toContainText('PETR4');
+  const cancelDeletion = deleteModal.getByRole('button', { name: 'Manter lançamento' });
+  const confirmDeletion = deleteModal.getByRole('button', { name: 'Excluir lançamento' });
+  await expect(cancelDeletion).toBeFocused();
+  await confirmDeletion.focus();
+  await page.keyboard.press('Tab');
+  await expect(cancelDeletion).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(confirmDeletion).toBeFocused();
+  await cancelDeletion.click();
+  await expect(deleteModal).not.toBeVisible();
+  await expect(deleteTrigger).toBeFocused();
   await form.getByLabel('Tipo').selectOption('VENDA');
   const petr4 = await form.locator('select[formcontrolname="assetId"] option', { hasText: /^PETR4 ·/ })
     .getAttribute('value');

@@ -39,7 +39,8 @@ class MarketDataServiceTest {
         MarketDataService service = new MarketDataService(repository, builder, "https://brapi.test", "", true);
 
         assertThat(service.synchronizeCatalog()).isEqualTo(2);
-        verify(repository, times(2)).save(any(Asset.class));
+        verify(repository, times(3)).save(any(Asset.class));
+        verify(repository).save(removed);
         assertThat(removed.isActive()).isFalse();
         server.verify();
     }
@@ -60,6 +61,25 @@ class MarketDataServiceTest {
         assertThat(service.updateReferencedQuotes()).isEqualTo(1);
         assertThat(asset.getCurrentPrice()).isEqualByComparingTo("15.12345678");
         verify(repository).save(asset);
+        server.verify();
+    }
+
+    @Test
+    void persisteDesativacaoQuandoSincronizacaoParteDoAgendamento() {
+        AssetRepository repository = mock(AssetRepository.class);
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        Asset removed = new Asset("OLD3", "Removido", Asset.Category.ACAO, null);
+        when(repository.findAll()).thenReturn(List.of(removed));
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        server.expect(requestTo("https://brapi.test/api/quote/list?limit=1000"))
+                .andRespond(withSuccess("{\"stocks\":[]}", MediaType.APPLICATION_JSON));
+        MarketDataService service = new MarketDataService(repository, builder, "https://brapi.test", "", true);
+
+        service.scheduledCatalogSynchronization();
+
+        assertThat(removed.isActive()).isFalse();
+        verify(repository).save(removed);
         server.verify();
     }
 

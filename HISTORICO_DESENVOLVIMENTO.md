@@ -1,0 +1,260 @@
+# Histórico de desenvolvimento do MAD
+
+Este documento registra o trabalho realizado no repositório desde o início da
+implementação executável do MAD (Meus Ativos Digitais) até 31 de julho de 2026.
+O histórico foi reconstruído a partir dos commits locais, documentos de revisão,
+alterações ainda não commitadas e verificações executadas durante o desenvolvimento.
+
+## Estado inicial do repositório
+
+O repositório continha os requisitos e as especificações funcionais do produto:
+
+- `ers.md`, com requisitos funcionais, regras de negócio e requisitos não funcionais;
+- `escopo_mvp.md`, com os limites do MVP;
+- `espec_template.md`, com o modelo obrigatório de especificações;
+- `especs/ESPEC_01` a `ESPEC_09`, cobrindo conta, carteiras, operações,
+  proventos, eventos corporativos, dashboard, detalhe do ativo e catálogo.
+
+Ainda não havia aplicação executável, gerenciadores de dependências ou testes
+automatizados de código.
+
+## 30 de julho de 2026
+
+### MVP completo e executável
+
+Commit `f6a4a6b` — `feat: implementa MVP web do MAD`
+
+Foi criada a primeira versão completa da aplicação:
+
+- backend em Java 21 com Spring Boot, Maven, Spring Security, JWT, JPA e Flyway;
+- frontend em Angular com rotas, autenticação, dashboard e formulários;
+- banco PostgreSQL executado em container;
+- API REST para autenticação, perfil, carteiras, ativos, lançamentos e notas;
+- migração inicial do banco e carga idempotente do catálogo de ativos;
+- cálculo de posições, custo de aquisição, patrimônio, resultado, rentabilidade,
+  alocação, proventos e evolução da carteira;
+- cadastro, autenticação local e proteção das rotas privadas;
+- criação e exclusão de carteiras;
+- cadastro e exclusão de compras, vendas, subscrições, proventos,
+  bonificações, desdobramentos e grupamentos;
+- notas por ativo;
+- Dockerfiles do backend e do frontend;
+- Nginx para servir o Angular e encaminhar a API;
+- `docker-compose.yml` com frontend, backend e PostgreSQL, health checks e volume;
+- `.env.example` com credenciais exclusivamente locais e variáveis de ambiente;
+- testes básicos de autenticação e consolidação de carteira;
+- `README.md` com execução local, Docker, configuração, API e testes.
+
+As dependências Maven e npm foram instaladas, os builds e testes foram executados
+e a stack foi validada localmente com Docker Compose.
+
+Não foi criado usuário ou senha padrão. O acesso ao sistema é feito por cadastro;
+no ambiente local, os tokens de confirmação podem ser expostos somente para
+desenvolvimento por meio de `EXPOSE_ACCOUNT_TOKENS=true`.
+
+### Edição de lançamentos
+
+Commit `d9dab45` — `feat: adiciona edição de lançamentos`
+
+- inclusão do endpoint e cliente para alteração de lançamentos;
+- reaproveitamento do formulário de lançamento no modo de edição;
+- preenchimento dos dados existentes no formulário;
+- bloqueio dos campos que não podem mudar durante a edição;
+- ações de salvar alterações e cancelar edição;
+- recálculo da carteira após a alteração;
+- testes do fluxo de criação, edição, cancelamento e exclusão.
+
+### Conclusão das primeiras pendências de revisão
+
+Commit `365ad8e` — `feat: conclui pendencias da revisao do MVP`
+
+- criação do documento da primeira revisão (`REVIEW.md`);
+- confirmação de e-mail, recuperação e redefinição de senha;
+- refresh token com rotação e logout com revogação;
+- login Google configurável;
+- precisão ampliada para quantidades e valores financeiros;
+- nova migração de banco para segurança de conta e precisão;
+- integração configurável com dados de mercado;
+- sincronização de catálogo e atualização de cotações;
+- consulta de proventos com filtros e agrupamento;
+- tela de perfil com alteração de dados e exclusão da conta;
+- tela de detalhe do ativo com indicadores, histórico e notas;
+- ações contextuais partindo do detalhe do ativo;
+- serviço de sessão, interceptor e guard de autenticação;
+- ampliação dos testes unitários, de integração e de fluxo de API;
+- configuração de cobertura mínima automatizada;
+- inclusão do E2E Playwright cobrindo o fluxo principal da stack real.
+
+## 31 de julho de 2026
+
+### Estabilização visual do formulário de lançamentos
+
+Commit `dad8b8f` — `fix(frontend): estabiliza formulario de lancamentos`
+
+Foram aplicados os ajustes solicitados ao formulário:
+
+- mensagem de sucesso temporária em formato de toast, sem movimentar elementos;
+- `Valor total` isolado em sua própria linha para operações;
+- `Preço unitário` e `Taxas` na linha seguinte;
+- largura de `Valor total` igual à dos demais campos, sem ocupar duas colunas;
+- `Valor total` ao lado de `Data` em dividendos e JCP;
+- altura estável do formulário ao alternar o tipo de lançamento;
+- espaço reservado abaixo dos botões para mensagens de erro;
+- correção da sobreposição do label de descrição com o campo de preço unitário;
+- remoção de espaços verticais indevidos quando linhas condicionais desaparecem;
+- testes unitários e E2E para dimensões, alinhamento e mensagens.
+
+### Correções da segunda revisão
+
+Commit `0a48f85` — `fix(review-02): resolve pendencias do MVP`
+
+- documentação dos dez apontamentos em `REVIEW_02.md`;
+- remoção de cotações fictícias da carga inicial;
+- envio configurável de e-mails de confirmação e recuperação via SMTP;
+- revogação dos refresh tokens após redefinição de senha;
+- validade de 30 minutos para tokens de recuperação;
+- indicadores adicionais no detalhe do ativo: cotação, data, P&L e alocação;
+- ações contextuais completas no detalhe do ativo;
+- filtro por ativo e histórico detalhado de proventos;
+- inativação de ativos que deixam de ser elegíveis no catálogo sincronizado;
+- cobertura do frontend configurada para incluir todos os fontes;
+- restauração do template obrigatório de especificações;
+- novas variáveis de ambiente e atualização da documentação;
+- novos testes de e-mail, tokens, guard, interceptor e páginas Angular.
+
+### Formatação monetária e evolução
+
+Commit `f221fc7` — `fix(frontend): formata valores e limita evolucao`
+
+- configuração da localização `pt-BR` no Angular;
+- valores monetários apresentados em BRL;
+- meses e anos formatados em português nas listas de evolução e proventos;
+- evolução limitada aos 24 períodos mais recentes na tela inicial;
+- ordenação decrescente da evolução, do período mais recente para o mais antigo;
+- testes unitários e E2E para moeda, períodos, limite e ordenação.
+
+### Busca de ativo durante uma compra
+
+Commit `a50c75d` — `feat(frontend): adiciona busca de ativo na compra`
+
+- substituição do select de ativo por campo digitável com filtro nas compras;
+- pesquisa por ticker ou nome e sugestões do catálogo;
+- manutenção do select para venda, subscrição, proventos e eventos;
+- nesses demais tipos, exibição somente dos ativos já pertencentes ao usuário;
+- sincronização do campo pesquisável ao editar ou preencher uma ação contextual;
+- testes unitários e E2E do novo comportamento.
+
+## Alterações atuais ainda não commitadas
+
+### Terceira revisão
+
+Foi criado `REVIEW_03.md` com dois novos apontamentos:
+
+1. processamento dos parâmetros `mode` e `token` dos links de confirmação e
+   recuperação enviados por e-mail;
+2. persistência explícita da desativação de ativos feita pela sincronização agendada.
+
+O frontend já processava os parâmetros dos links. Foram acrescentados testes
+unitários para o link de redefinição e uma verificação direta no E2E.
+
+No backend, a sincronização passou a salvar explicitamente cada ativo desativado,
+inclusive quando chamada pelo agendamento e sem depender da autoinvocação de um
+método `@Transactional`. Foi incluído teste específico desse caminho.
+
+### Modais personalizados
+
+Os diálogos nativos `window.confirm` e `window.prompt` foram substituídos por um
+componente único com identidade visual do MAD:
+
+- serviço central de confirmação e entrada de texto;
+- fundo escurecido com desfoque;
+- cartão responsivo, animações e marca visual;
+- estilo diferenciado para ações destrutivas;
+- títulos, mensagens e rótulos contextualizados;
+- fechamento por `Escape` ou clique no fundo;
+- renomeação de carteira por campo de texto personalizado;
+- migração das confirmações de exclusão de carteira, lançamento, nota e conta;
+- testes unitários do serviço e componente;
+- validação do modal de exclusão no fluxo E2E.
+
+### Acessibilidade dos modais
+
+Após revisão de acessibilidade, foram corrigidos o gerenciamento de foco e os
+landmarks da aplicação:
+
+- foco inicial no campo de texto ou na ação segura de cancelar/manter;
+- ciclo de `Tab` e `Shift+Tab` restrito aos controles do diálogo;
+- conteúdo roteado marcado como `inert` enquanto o modal está aberto;
+- devolução do foco ao elemento que abriu o diálogo;
+- indicador visual de foco nos botões;
+- teste unitário para foco inicial, focus trap e restauração;
+- teste E2E do mesmo fluxo acionado pelo teclado;
+- uso de um `div` neutro como limite do `inert`, evitando `<main>` aninhados;
+- teste estrutural que renderiza uma rota e garante exatamente um landmark `<main>`.
+
+### Iniciais dos tipos de lançamento
+
+O símbolo genérico da lista de atividades foi substituído pela inicial do tipo:
+
+| Tipo | Inicial |
+| --- | --- |
+| Compra | C |
+| Venda | V |
+| Subscrição | S |
+| Dividendo | D |
+| JCP | J |
+| Bonificação | B |
+| Desdobramento | D |
+| Grupamento | G |
+
+O mapeamento foi coberto por teste unitário e o E2E verifica a inicial `C` após
+registrar uma compra.
+
+## Verificações executadas
+
+Ao longo do desenvolvimento foram usados os comandos canônicos:
+
+```bash
+cd backend
+mvn clean verify
+
+cd ../frontend
+npm ci
+npm run test:coverage
+npm run build
+npm run e2e
+
+cd ..
+docker compose build
+docker compose up -d
+docker compose ps
+git diff --check
+```
+
+No último ciclo de validação registrado:
+
+- os 29 testes do frontend passaram;
+- a cobertura do frontend ficou em 89,11% de statements, 78,86% de branches,
+  82,85% de funções e 95,06% de linhas;
+- o build Angular passou localmente e dentro do Docker;
+- o E2E Playwright passou usando a stack real;
+- frontend, backend e PostgreSQL ficaram saudáveis no Docker Compose;
+- o endpoint de saúde do backend respondeu com `status: UP`;
+- `git diff --check` não encontrou erros de whitespace;
+- nenhum push para repositório remoto foi realizado;
+- nenhum segredo real foi armazenado no repositório.
+
+## Commits existentes
+
+| Commit | Data | Descrição |
+| --- | --- | --- |
+| `f6a4a6b` | 30/07/2026 22:47 | Implementação inicial do MVP web |
+| `d9dab45` | 30/07/2026 23:18 | Edição de lançamentos |
+| `365ad8e` | 30/07/2026 23:49 | Pendências da primeira revisão |
+| `dad8b8f` | 31/07/2026 14:08 | Estabilização do formulário |
+| `0a48f85` | 31/07/2026 14:41 | Correções da segunda revisão |
+| `f221fc7` | 31/07/2026 16:27 | BRL, períodos e evolução |
+| `a50c75d` | 31/07/2026 18:10 | Busca de ativo na compra |
+
+As seções posteriores ao último commit representam o estado atual do diretório
+de trabalho e ainda precisam ser incluídas em um commit.

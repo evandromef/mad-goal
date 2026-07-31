@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ApiService, LedgerItem, Note, Position } from '../core/api.service';
+import { ModalService } from '../core/modal.service';
 import { AssetDetailComponent } from './asset-detail.component';
 
 describe('AssetDetailComponent', () => {
@@ -14,6 +15,7 @@ describe('AssetDetailComponent', () => {
     createdAt: '2026-07-30T10:00:00Z', updatedAt: '2026-07-30T10:00:00Z' };
   const api = { dashboard: vi.fn(), records: vi.fn(), notes: vi.fn(), createNote: vi.fn(),
     updateNote: vi.fn(), deleteNote: vi.fn() };
+  const modal = { confirm: vi.fn() };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -22,8 +24,10 @@ describe('AssetDetailComponent', () => {
     api.notes.mockReturnValue(of([note]));
     api.createNote.mockReturnValue(of(note)); api.updateNote.mockReturnValue(of(note));
     api.deleteNote.mockReturnValue(of(undefined));
+    modal.confirm.mockResolvedValue(true);
     await TestBed.configureTestingModule({ imports: [AssetDetailComponent], providers: [
       provideRouter([]), { provide: ApiService, useValue: api },
+      { provide: ModalService, useValue: modal },
       { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ walletId: 'w1', assetId: 'a1' }) } } }
     ] }).compileComponents();
   });
@@ -39,7 +43,7 @@ describe('AssetDetailComponent', () => {
     expect(fixture.componentInstance.context('VENDA')).toEqual({ wallet: 'w1', asset: 'a1', type: 'VENDA' });
   });
 
-  it('filtra históricos e executa CRUD de notas', () => {
+  it('filtra históricos e executa CRUD de notas', async () => {
     const component = TestBed.createComponent(AssetDetailComponent).componentInstance;
     component.ngOnInit();
     component.filter.set('PROVENTOS');
@@ -51,7 +55,7 @@ describe('AssetDetailComponent', () => {
     expect(api.createNote).toHaveBeenCalled();
     component.editNote(note); component.noteForm.setValue({ content: 'Editada' }); component.saveNote();
     expect(api.updateNote).toHaveBeenCalledWith('n1', expect.objectContaining({ content: 'Editada' }));
-    vi.spyOn(window, 'confirm').mockReturnValue(true); component.deleteNote(note);
+    await component.deleteNote(note);
     expect(api.deleteNote).toHaveBeenCalledWith('n1');
   });
 });

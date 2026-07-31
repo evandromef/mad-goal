@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { SessionService } from '../core/session.service';
+import { ModalService } from '../core/modal.service';
 
 @Component({
   selector: 'app-profile',
@@ -32,6 +33,7 @@ export class ProfileComponent implements OnInit {
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly modal = inject(ModalService);
   readonly message = signal('');
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(120)]],
@@ -47,8 +49,14 @@ export class ProfileComponent implements OnInit {
       this.message.set('Perfil atualizado com sucesso.');
     });
   }
-  remove(): void {
-    if (!window.confirm('Excluir definitivamente sua conta e todos os dados?')) return;
+  async remove(): Promise<void> {
+    if (!await this.modal.confirm({
+      title: 'Excluir conta permanentemente?',
+      message: 'Todas as carteiras, operações, proventos e notas serão apagados. Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir minha conta',
+      cancelLabel: 'Manter minha conta',
+      danger: true
+    })) return;
     this.api.deleteProfile().subscribe(() => { this.session.clear(); void this.router.navigate(['/login']); });
   }
 }

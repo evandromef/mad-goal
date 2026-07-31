@@ -4,6 +4,7 @@ import { of, throwError } from 'rxjs';
 import { ApiService, Dashboard, LedgerItem } from '../core/api.service';
 import { DashboardComponent } from './dashboard.component';
 import { SessionService } from '../core/session.service';
+import { ModalService } from '../core/modal.service';
 
 describe('DashboardComponent - lançamentos', () => {
   const dashboard: Dashboard = {
@@ -44,6 +45,7 @@ describe('DashboardComponent - lançamentos', () => {
     deleteWallet: vi.fn()
   };
   const session = { clear: vi.fn() };
+  const modal = { confirm: vi.fn(), prompt: vi.fn() };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -58,12 +60,15 @@ describe('DashboardComponent - lançamentos', () => {
     api.updateWallet.mockReturnValue(of({ id: 'wallet-1', name: 'Renomeada', currentValue: 0 }));
     api.deleteWallet.mockReturnValue(of(undefined));
     api.createRecord.mockReturnValue(of(item));
+    modal.confirm.mockResolvedValue(true);
+    modal.prompt.mockResolvedValue('Renomeada');
     await TestBed.configureTestingModule({
       imports: [DashboardComponent],
       providers: [
         provideRouter([]),
         { provide: ApiService, useValue: api },
-        { provide: SessionService, useValue: session }
+        { provide: SessionService, useValue: session },
+        { provide: ModalService, useValue: modal }
       ]
     }).compileComponents();
   });
@@ -108,12 +113,10 @@ describe('DashboardComponent - lançamentos', () => {
     vi.useRealTimers();
   });
 
-  it('exclui após confirmação e recarrega a carteira', () => {
+  it('exclui após confirmação e recarrega a carteira', async () => {
     const component = TestBed.createComponent(DashboardComponent).componentInstance;
     component.selectedWalletId.set('wallet-1');
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
-
-    component.deleteRecord(item);
+    await component.deleteRecord(item);
 
     expect(api.deleteRecord).toHaveBeenCalledWith('record-1');
     expect(api.dashboard).toHaveBeenCalledWith('wallet-1', 'MONTHLY');
@@ -122,7 +125,7 @@ describe('DashboardComponent - lançamentos', () => {
     expect(component.message()).toBe('');
   });
 
-  it('carrega dados, gerencia carteira e alterna análises', () => {
+  it('carrega dados, gerencia carteira e alterna análises', async () => {
     const component = TestBed.createComponent(DashboardComponent).componentInstance;
     component.ngOnInit();
     expect(component.selectedWalletId()).toBe('wallet-1');
@@ -133,13 +136,11 @@ describe('DashboardComponent - lançamentos', () => {
     component.createWallet();
     expect(api.createWallet).toHaveBeenCalledWith('Nova');
 
-    vi.spyOn(window, 'prompt').mockReturnValue('Renomeada');
     component.selectedWalletId.set('wallet-1');
-    component.renameWallet();
+    await component.renameWallet();
     expect(api.updateWallet).toHaveBeenCalledWith('wallet-1', 'Renomeada');
 
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
-    component.deleteWallet();
+    await component.deleteWallet();
     expect(api.deleteWallet).toHaveBeenCalledWith('wallet-1');
 
     component.selectedWalletId.set('wallet-1');
@@ -178,7 +179,8 @@ describe('DashboardComponent - lançamentos', () => {
     expect(component.isBonus()).toBe(true);
     component.recordForm.controls.type.setValue('GRUPAMENTO');
     expect(component.isCorporateEvent()).toBe(true);
-    expect(component.icon('VENDA')).toBe('−');
+    expect(component.recordTypes.map(type => component.typeInitial(type.value)))
+      .toEqual(['C', 'V', 'S', 'D', 'J', 'B', 'D', 'G']);
     component.cancelEdit();
   });
 
@@ -242,7 +244,7 @@ describe('DashboardComponent - lançamentos', () => {
     });
   });
 
-  it('monta payloads de provento, bonificação e evento e trata erros', () => {
+  it('monta payloads de provento, bonificação e evento e trata erros', async () => {
     const component = TestBed.createComponent(DashboardComponent).componentInstance;
     component.selectedWalletId.set('wallet-1');
     component.recordForm.patchValue({ type: 'JCP', assetId: 'asset-1', totalValue: 25, unitPrice: 2.5,
@@ -266,8 +268,7 @@ describe('DashboardComponent - lançamentos', () => {
     expect(component.message()).toBe('Falhou');
 
     api.deleteRecord.mockReturnValueOnce(throwError(() => ({ error: {} })));
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
-    component.deleteRecord(item);
+    await component.deleteRecord(item);
     expect(component.message()).toBe('Não foi possível excluir o lançamento.');
     expect(component.recordValue({ ...item, totalValue: undefined, quantity: 2 })).toBe('2 un.');
     expect(component.label('DESCONHECIDO')).toBe('DESCONHECIDO');

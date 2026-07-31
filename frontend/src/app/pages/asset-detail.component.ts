@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService, LedgerItem, Note, Position } from '../core/api.service';
+import { ModalService } from '../core/modal.service';
 
 @Component({
   selector: 'app-asset-detail',
@@ -73,6 +74,7 @@ export class AssetDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
+  private readonly modal = inject(ModalService);
   readonly walletId = this.route.snapshot.paramMap.get('walletId') ?? '';
   readonly assetId = this.route.snapshot.paramMap.get('assetId') ?? '';
   readonly position = signal<Position | null>(null);
@@ -113,8 +115,14 @@ export class AssetDetailComponent implements OnInit {
   }
   editNote(note: Note): void { this.editingNote.set(note); this.noteForm.setValue({ content: note.content }); }
   cancelNote(): void { this.editingNote.set(null); this.noteForm.reset(); }
-  deleteNote(note: Note): void {
-    if (window.confirm('Excluir esta nota?')) this.api.deleteNote(note.id).subscribe(() => this.loadNotes());
+  async deleteNote(note: Note): Promise<void> {
+    if (await this.modal.confirm({
+      title: 'Excluir nota?',
+      message: 'Esta anotação pessoal será removida definitivamente do histórico do ativo.',
+      confirmLabel: 'Excluir nota',
+      cancelLabel: 'Manter nota',
+      danger: true
+    })) this.api.deleteNote(note.id).subscribe(() => this.loadNotes());
   }
   private loadNotes(): void { this.api.notes(this.walletId, this.assetId).subscribe(items => this.notes.set(items)); }
 }

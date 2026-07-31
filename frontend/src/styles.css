@@ -34,6 +34,7 @@ input, select, textarea { width: 100%; border: 1px solid var(--line); border-rad
 input:focus, select:focus, textarea:focus { border-color: #6d8e81; box-shadow: 0 0 0 3px #dce9e2; }
 .button { border: 0; border-radius: 10px; padding: .82rem 1.2rem; font-weight: 700; cursor: pointer; }
 .button:disabled { opacity: .5; cursor: not-allowed; }
+.button:focus-visible { outline: 3px solid #6d8e81; outline-offset: 3px; }
 .button.primary { color: var(--ink); background: var(--lime); }
 .button.secondary { color: var(--ink); background: white; border: 1px solid var(--line); }
 .auth-card .button { width: 100%; margin-top: .4rem; }
@@ -41,6 +42,17 @@ input:focus, select:focus, textarea:focus { border-color: #6d8e81; box-shadow: 0
 .auth-card .text-button { width: 100%; }
 .alert { padding: .75rem; border-radius: 8px; background: #f9e4e1; color: #8d312b; font-size: .85rem; }
 .notice { padding: .75rem; border-radius: 8px; background: #edf7d9; color: #344f1d; font-size: .85rem; }
+.modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 1rem; background: rgba(9, 23, 18, .62); backdrop-filter: blur(5px); animation: modal-fade .16s ease-out; }
+.system-modal { width: min(100%, 480px); padding: 1.6rem; border: 1px solid rgba(255, 255, 255, .7); border-radius: 18px; background: var(--card); box-shadow: 0 30px 80px rgba(8, 24, 18, .32); animation: modal-rise .2s ease-out; }
+.modal-mark { width: 46px; height: 46px; display: grid; place-items: center; margin-bottom: 1.25rem; border-radius: 13px; background: var(--lime); color: var(--ink); font: 800 1.15rem 'Manrope'; }
+.modal-mark.danger { background: #f9e4e1; color: var(--red); }
+.modal-copy h2 { margin-bottom: .65rem; font-size: 1.65rem; }
+.modal-copy > p:last-child { margin-bottom: 1.35rem; color: var(--muted); line-height: 1.55; }
+.system-modal label { margin-bottom: 1.35rem; }
+.modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
+.modal-actions .button { width: 100%; }
+@keyframes modal-fade { from { opacity: 0; } }
+@keyframes modal-rise { from { opacity: 0; transform: translateY(12px) scale(.98); } }
 .google-button { min-height: 44px; display: grid; place-items: center; margin: .8rem 0; }
 .success-toast { position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 20; min-width: min(360px, calc(100vw - 3rem)); padding: 1rem 1.15rem; border: 1px solid #bfd68e; border-radius: 11px; background: #edf7d9; color: #344f1d; box-shadow: 0 14px 35px rgba(19, 35, 30, .18); font-size: .9rem; font-weight: 600; animation: toast-in .2s ease-out; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -128,6 +140,8 @@ td small { display: block; color: var(--muted); margin-top: .2rem; }
   .analytics, .detail-metrics { grid-template-columns: 1fr 1fr !important; }
 }
 @media (max-width: 620px) {
+  .system-modal { padding: 1.25rem; border-radius: 15px; }
+  .modal-actions { grid-template-columns: 1fr; }
   .success-toast { right: .75rem; bottom: .75rem; left: .75rem; min-width: 0; }
   .topbar nav { display: none; }
   .workspace { width: min(100% - 1.5rem, 1450px); padding-top: 2rem; }

@@ -29,9 +29,7 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
     }
   }
   await form.getByLabel('Tipo').selectOption('COMPRA');
-  const petr4 = await form.locator('select[formcontrolname="assetId"] option', { hasText: /^PETR4 ·/ })
-    .getAttribute('value');
-  await form.getByLabel('Ativo').selectOption(petr4!);
+  await form.getByLabel('Ativo').fill('PETR4');
   await page.getByLabel('Quantidade').fill('10.12345678');
   await page.getByLabel('Valor total').fill('1000.12345678');
   await page.getByRole('button', { name: 'Salvar lançamento' }).click();
@@ -39,6 +37,8 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await expect(page.locator('.metric').filter({ hasText: 'Custo de aquisição' }).locator('strong'))
     .toHaveText(/R\$\s*1\.000,12/);
   await form.getByLabel('Tipo').selectOption('VENDA');
+  const petr4 = await form.locator('select[formcontrolname="assetId"] option', { hasText: /^PETR4 ·/ })
+    .getAttribute('value');
   await form.getByLabel('Ativo').selectOption(petr4!);
   await form.getByLabel('Quantidade').fill('999999');
   await form.getByLabel('Valor total').fill('1');

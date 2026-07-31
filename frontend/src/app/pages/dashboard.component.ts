@@ -101,9 +101,22 @@ import { SessionService } from '../core/session.service';
                 <label>Tipo<select formControlName="type" (change)="onRecordTypeChange()">
                   @for (type of recordTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }
                 </select></label>
-                <label>Ativo<select formControlName="assetId" [class.readonly]="editingId()"><option value="">Selecione</option>
-                  @for (asset of availableAssets(); track asset.id) { <option [value]="asset.id">{{ asset.ticker }} · {{ asset.name }}</option> }
-                </select></label>
+                @if (recordForm.controls.type.value === 'COMPRA') {
+                  <label>Ativo<input type="text" list="purchase-assets" autocomplete="off"
+                    placeholder="Digite o ticker ou nome" [value]="purchaseAssetQuery()"
+                    [disabled]="recordForm.controls.assetId.disabled" [class.readonly]="editingId()"
+                    (input)="onPurchaseAssetInput($any($event.target).value)">
+                    <datalist id="purchase-assets">
+                      @for (asset of filteredPurchaseAssets(); track asset.id) {
+                        <option [value]="assetDisplay(asset)"></option>
+                      }
+                    </datalist>
+                  </label>
+                } @else {
+                  <label>Ativo<select formControlName="assetId" [class.readonly]="editingId()"><option value="">Selecione</option>
+                    @for (asset of availableAssets(); track asset.id) { <option [value]="asset.id">{{ asset.ticker }} · {{ asset.name }}</option> }
+                  </select></label>
+                }
               </div>
               <div class="form-row">
                 <label>Data<input type="date" formControlName="date"></label>
@@ -228,6 +241,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly userInitial = computed(() => this.userName().charAt(0).toUpperCase());
   readonly reversedRecords = computed(() => [...this.records()].reverse());
   readonly visibleEvolution = computed(() => [...(this.dashboard()?.evolution.slice(-24) ?? [])].reverse());
+  readonly purchaseAssetQuery = signal('');
+  readonly filteredPurchaseAssets = computed(() => {
+    const query = this.purchaseAssetQuery().trim().toLocaleLowerCase('pt-BR');
+    if (!query) return this.assets();
+    return this.assets().filter(asset => this.assetDisplay(asset).toLocaleLowerCase('pt-BR').includes(query));
+  });
   readonly incomeAssets = computed(() => {
     const ids = new Set(this.records().map(item => item.assetId));
     return this.assets().filter(asset => ids.has(asset.id));
@@ -259,7 +278,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
-    this.api.assets().subscribe((assets) => this.assets.set(assets));
+    this.api.assets().subscribe((assets) => {
+      this.assets.set(assets);
+      this.syncPurchaseAssetQuery();
+    });
     this.loadWallets();
   }
   ngOnDestroy(): void {
@@ -275,6 +297,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         const type = this.route.snapshot.queryParamMap.get('type');
         if (asset) this.recordForm.controls.assetId.setValue(asset);
         if (type && this.recordTypes.some(item => item.value === type)) this.recordForm.controls.type.setValue(type);
+        this.syncPurchaseAssetQuery();
       }
     });
   }
@@ -346,10 +369,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return `${item.quantity ?? 0} un.`;
   }
   onRecordTypeChange(): void {
+    if (this.recordForm.controls.type.value === 'COMPRA') {
+      this.syncPurchaseAssetQuery();
+      return;
+    }
     const selectedAssetId = this.recordForm.controls.assetId.value;
     if (selectedAssetId && !this.availableAssets().some(asset => asset.id === selectedAssetId)) {
       this.recordForm.controls.assetId.setValue('');
     }
+  }
+  assetDisplay(asset: Asset): string { return `${asset.ticker} · ${asset.name}`; }
+  onPurchaseAssetInput(value: string): void {
+    this.purchaseAssetQuery.set(value);
+    const normalized = value.trim().toLocaleLowerCase('pt-BR');
+    const selected = this.assets().find(asset => asset.ticker.toLocaleLowerCase('pt-BR') === normalized
+      || this.assetDisplay(asset).toLocaleLowerCase('pt-BR') === normalized);
+    this.recordForm.controls.assetId.setValue(selected?.id ?? '');
   }
   saveRecord(): void {
     const walletId = this.selectedWalletId();
@@ -386,6 +421,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       description: item.description ?? ''
     });
     this.recordForm.controls.assetId.disable();
+    this.syncPurchaseAssetQuery();
     document.getElementById('lancamentos')?.scrollIntoView({ behavior: 'smooth' });
   }
   deleteRecord(item: LedgerItem): void {
@@ -460,6 +496,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
       ratio: '',
       description: ''
     });
+    this.purchaseAssetQuery.set('');
+  }
+  private syncPurchaseAssetQuery(): void {
+    const selected = this.assets().find(asset => asset.id === this.recordForm.controls.assetId.value);
+    this.purchaseAssetQuery.set(selected ? this.assetDisplay(selected) : '');
   }
   isOperation(): boolean { return ['COMPRA', 'VENDA', 'SUBSCRICAO'].includes(this.recordForm.controls.type.value); }
   isIncome(): boolean { return ['DIVIDENDO', 'JCP'].includes(this.recordForm.controls.type.value); }

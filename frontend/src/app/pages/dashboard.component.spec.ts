@@ -191,6 +191,11 @@ describe('DashboardComponent - lançamentos', () => {
     component.records.set([item]);
 
     expect(component.availableAssets().map(asset => asset.id)).toEqual(['asset-1', 'asset-2']);
+    component.onPurchaseAssetInput('vale');
+    expect(component.filteredPurchaseAssets().map(asset => asset.id)).toEqual(['asset-2']);
+    expect(component.recordForm.controls.assetId.value).toBe('');
+    component.onPurchaseAssetInput('VALE3');
+    expect(component.recordForm.controls.assetId.value).toBe('asset-2');
 
     component.recordForm.patchValue({ type: 'VENDA', assetId: 'asset-2' });
     component.onRecordTypeChange();

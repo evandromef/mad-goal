@@ -9,7 +9,12 @@ import { ModalService } from '../core/modal.service';
   selector: 'app-asset-detail',
   imports: [CurrencyPipe, DatePipe, DecimalPipe, ReactiveFormsModule, RouterLink],
   template: `
-    <header class="topbar"><a class="brand dark" routerLink="/"><span>M</span> MAD</a><a routerLink="/">Voltar à carteira</a></header>
+    <header class="topbar"><a class="brand dark" routerLink="/"><span>M</span> MAD</a>
+      <nav class="topbar-menu"><a routerLink="/">Visão geral</a>
+        <a [routerLink]="['/wallets', walletId, 'positions']">Posições</a>
+        <a [routerLink]="['/wallets', walletId, 'records']">Lançamentos</a>
+        <a [routerLink]="['/wallets', walletId, 'incomes']">Proventos</a></nav>
+      <a routerLink="/">Voltar à carteira</a></header>
     <main class="workspace">
       @if (position(); as item) {
         <section class="hero-row"><div><p class="eyebrow">{{ item.category }}</p><h1>{{ item.ticker }}</h1><p>{{ item.name }}</p></div>

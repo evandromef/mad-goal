@@ -9,7 +9,9 @@ import { ModalService } from '../core/modal.service';
   selector: 'app-profile',
   imports: [ReactiveFormsModule, RouterLink],
   template: `
-    <header class="topbar"><a class="brand dark" routerLink="/"><span>M</span> MAD</a><a routerLink="/">Voltar</a></header>
+    <header class="topbar"><a class="brand dark" routerLink="/"><span>M</span> MAD</a>
+      <nav class="topbar-menu"><a routerLink="/">Visão geral</a><a routerLink="/profile">Perfil</a></nav>
+      <a routerLink="/">Voltar</a></header>
     <main class="narrow-page">
       <p class="eyebrow">Sua conta</p><h1>Perfil</h1>
       <section class="panel">

@@ -163,6 +163,28 @@ describe('DashboardComponent - lançamentos', () => {
     expect(component.evolutionWidth(30)).toBe(100);
   });
 
+  it('exibe os 20 lançamentos mais recentes e links para o histórico completo', () => {
+    const fixture = TestBed.createComponent(DashboardComponent);
+    const component = fixture.componentInstance;
+    component.wallets.set([{ id: 'wallet-1', name: 'Principal', currentValue: 0 }]);
+    component.selectedWalletId.set('wallet-1');
+    component.dashboard.set(dashboard);
+    component.records.set(Array.from({ length: 25 }, (_, index) => ({
+      ...item, id: `record-${index}`, date: `2026-07-${String(index + 1).padStart(2, '0')}`
+    })));
+    fixture.detectChanges();
+
+    expect(component.recentRecords()).toHaveLength(20);
+    expect(component.recentRecords()[0].id).toBe('record-24');
+    expect(component.recentRecords()[19].id).toBe('record-5');
+    expect(fixture.nativeElement.querySelectorAll('.activity-list .activity')).toHaveLength(20);
+    expect(fixture.nativeElement.querySelector('.topbar-menu a[href="/wallets/wallet-1/records"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.records-title-link[href="/wallets/wallet-1/records"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.records-link[href="/wallets/wallet-1/records"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('a[href="/wallets/wallet-1/positions"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('a[href="/wallets/wallet-1/incomes"]')).toBeTruthy();
+  });
+
   it('cria lançamento e apresenta corretamente eventos corporativos', () => {
     const component = TestBed.createComponent(DashboardComponent).componentInstance;
     component.selectedWalletId.set('wallet-1');
@@ -173,6 +195,11 @@ describe('DashboardComponent - lançamentos', () => {
     expect(api.createRecord).toHaveBeenCalledWith(expect.objectContaining({ quantity: 1, totalValue: 100 }));
     expect(component.recordValue({ ...item, totalValue: undefined, quantity: undefined,
       type: 'DESDOBRAMENTO', newQuantity: 20, ratio: '1:2' })).toBe('20 un. · 1:2');
+    expect(component.operationDetails(item)).toBe('10 un. · Preço unitário R$ 9,50');
+    expect(component.operationDetails({ ...item, type: 'VENDA', unitPrice: undefined })).toBe('10 un.');
+    expect(component.operationDetails({ ...item, type: 'SUBSCRICAO' }))
+      .toBe('10 un. · Preço unitário R$ 9,50');
+    expect(component.operationDetails({ ...item, type: 'DIVIDENDO' })).toBe('');
     component.recordForm.controls.type.setValue('JCP');
     expect(component.isIncome()).toBe(true);
     component.recordForm.controls.type.setValue('BONIFICACAO');

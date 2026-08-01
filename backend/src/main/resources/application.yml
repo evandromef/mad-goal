@@ -39,6 +39,11 @@ app:
     quote-cron: ${MARKET_DATA_QUOTE_CRON:0 0 20 * * MON-FRI}
   account:
     expose-tokens: ${EXPOSE_ACCOUNT_TOKENS:true}
+  demo-data:
+    enabled: ${DEMO_DATA_ENABLED:false}
+    name: ${DEMO_USER_NAME:Marina Oliveira}
+    email: ${DEMO_USER_EMAIL:demonstracao@mad.local}
+    password: ${DEMO_USER_PASSWORD:Mad@12345}
   google:
     client-id: ${GOOGLE_CLIENT_ID:}
   mail:

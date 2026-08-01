@@ -5,12 +5,14 @@ import br.com.mad.repository.AssetRepository;
 import br.com.mad.service.MarketDataService;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Component
+@Order(0)
 public class AssetCatalogInitializer implements ApplicationRunner {
     private final AssetRepository assets;
     private final MarketDataService marketData;

@@ -33,6 +33,18 @@ Pré-requisito: Docker com o plugin Compose.
    - API: http://localhost:8080/api
    - Saúde do backend: http://localhost:8080/actuator/health
 
+A stack local ativa o perfil Spring `dev` e cria automaticamente um perfil completo para avaliação de UI/UX,
+com sete ativos e lançamentos distribuídos pelos últimos cinco anos. Os FIIs
+recebem dividendos mensais a partir do mês seguinte à primeira aquisição:
+
+- E-mail: `demonstracao@mad.local`
+- Senha: `Mad@12345`
+
+A carga é idempotente, só é aplicada quando o e-mail ainda não existe e o
+inicializador nem sequer é carregado fora do perfil `dev`. Para desativá-la no
+desenvolvimento, defina `DEMO_DATA_ENABLED=false`. Em outros ambientes, use um
+perfil diferente em `SPRING_PROFILES_ACTIVE`.
+
 Para acompanhar logs ou encerrar:
 
 ```bash
@@ -93,10 +105,13 @@ Nenhum segredo real é versionado. As seguintes variáveis podem ser definidas n
 | `POSTGRES_PASSWORD` | Senha do PostgreSQL |
 | `JWT_SECRET` | Chave de assinatura dos tokens, com ao menos 32 caracteres |
 | `JWT_EXPIRATION_MINUTES` | Duração do token |
+| `SPRING_PROFILES_ACTIVE` | Perfil Spring; o Compose local usa `dev` |
 | `BRAPI_API_TOKEN` | Token opcional da Brapi |
 | `MARKET_DATA_ENABLED` | Habilita sincronização real de catálogo e cotações |
 | `GOOGLE_CLIENT_ID` | Client ID público para login Google |
 | `EXPOSE_ACCOUNT_TOKENS` | Exibe tokens de confirmação/recuperação na resposta para desenvolvimento local |
+| `DEMO_DATA_ENABLED` | Cria o perfil local de demonstração com cinco anos de histórico |
+| `DEMO_USER_NAME` / `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD` | Credenciais configuráveis do perfil de demonstração |
 | `SMTP_HOST` / `SMTP_PORT` | Servidor SMTP usado para mensagens de conta |
 | `SMTP_USER` / `SMTP_PASSWORD` | Credenciais SMTP, quando exigidas pelo provedor |
 | `SMTP_AUTH` / `SMTP_STARTTLS` | Habilita autenticação e STARTTLS no SMTP |

@@ -2,18 +2,28 @@
 
 ## Project Structure & Module Organization
 
-This repository currently contains the requirements and feature specifications for MAD (Meus Ativos Digitais).
+This repository contains the requirements, feature specifications, and the MAD application.
 
 - `ers.md`: system requirements, business rules, glossary, and non-functional requirements.
 - `escopo_mvp.md`: features included in and excluded from the MVP.
 - `espec_template.md`: required structure for new feature specifications.
 - `especs/`: numbered, self-contained specifications such as `ESPEC_03_operacoes.md`.
+- `backend/`: Spring Boot API, Flyway migrations, and backend tests.
+- `frontend/`: Angular application, component tests, and Playwright flows.
 
 Keep cross-document identifiers aligned. Every RF, RN, or RNF referenced by an ESPEC must exist in `ers.md`, and MVP claims must agree with `escopo_mvp.md`.
 
 ## Build, Test, and Development Commands
 
-There is currently no application build, dependency manager, or automated test suite. Use lightweight checks when editing documentation:
+Use the canonical application checks when changing executable code:
+
+```bash
+cd backend && mvn clean verify
+cd frontend && npm ci && npm run test:coverage && npm run build
+cd frontend && npm run e2e # requires the Docker stack
+```
+
+Use lightweight checks when editing documentation:
 
 ```bash
 rg --files

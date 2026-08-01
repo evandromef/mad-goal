@@ -144,7 +144,9 @@ Commit `a50c75d` — `feat(frontend): adiciona busca de ativo na compra`
 - sincronização do campo pesquisável ao editar ou preencher uma ação contextual;
 - testes unitários e E2E do novo comportamento.
 
-## Alterações atuais ainda não commitadas
+## Revisão 03 e aprimoramentos de interface
+
+Commit `5f2d7d3` — `feat: aprimora interface e conclui revisao 03`
 
 ### Terceira revisão
 
@@ -210,6 +212,63 @@ O símbolo genérico da lista de atividades foi substituído pela inicial do tip
 O mapeamento foi coberto por teste unitário e o E2E verifica a inicial `C` após
 registrar uma compra.
 
+## Alterações posteriores ainda não commitadas
+
+### Quantidade e preço unitário no histórico
+
+- compras, vendas e subscrições passaram a exibir a quantidade registrada no histórico;
+- o preço unitário também é apresentado quando estiver disponível;
+- o valor total permanece em destaque, com os novos detalhes logo abaixo;
+- quantidades respeitam até oito casas decimais e preços usam BRL;
+- o layout foi ajustado para desktop e dispositivos móveis;
+- a classificação de operação foi centralizada para formulário e histórico;
+- testes unitários cobrem compra, venda, subscrição e tipos sem detalhes de operação;
+- o E2E valida quantidade e preço unitário após uma compra real.
+
+### Página de histórico completo
+
+- o dashboard passou a mostrar somente os 20 lançamentos mais recentes;
+- o título `Lançamentos` passou a navegar para o histórico completo da carteira;
+- foi adicionado outro link de acesso ao final da lista recente;
+- uma nova rota protegida apresenta todos os lançamentos, do mais recente para o mais antigo;
+- a página detalha data, tipo, ativo, quantidade, preço unitário, taxas, valor total,
+  evento corporativo e descrição;
+- filtros combináveis permitem consultar por período inicial/final, tipo e ativo;
+- a ação `Novo lançamento` leva ao formulário incorporado na própria página;
+- testes unitários verificam o limite, os links, a ordenação e os estados da nova página;
+- o E2E percorre a navegação, os filtros e o retorno ao cadastro de lançamento.
+
+### Páginas de posições e proventos
+
+- foi criada uma página protegida com todas as posições e indicadores por ativo;
+- foi criada uma página protegida de proventos com filtros, agrupamentos, total e histórico;
+- títulos do dashboard navegam diretamente para as novas páginas;
+- um formulário reutilizável de lançamento foi incorporado às páginas de posições,
+  proventos e histórico completo;
+- a página de posições aceita registros que alteram posição e a página de proventos
+  restringe o formulário a dividendo e JCP;
+- salvamentos atualizam imediatamente os dados da página atual;
+- testes unitários cobrem as páginas e os diferentes tipos do formulário;
+- o E2E navega pelas três páginas e cadastra um provento pelo formulário reutilizável.
+
+### Navegação principal e layout de lançamentos
+
+- a topbar das páginas autenticadas passou a oferecer acesso a Visão geral,
+  Posições, Lançamentos e Proventos, preservando a carteira atual;
+- na página de lançamentos, o formulário passou para a coluna esquerda;
+- filtros e histórico permanecem juntos na coluna direita;
+- o layout só volta a empilhar as seções em telas menores;
+- testes unitários e E2E verificam a estrutura e o posicionamento em desktop.
+
+### Dados de demonstração restritos ao desenvolvimento
+
+- o inicializador de demonstração passou a existir somente no perfil Spring `dev`;
+- o Docker Compose local ativa explicitamente esse perfil;
+- a flag `DEMO_DATA_ENABLED` continua permitindo desligar a carga mesmo em desenvolvimento;
+- um teste com perfil `dev` valida a carga completa e idempotente;
+- outro teste com perfil `test` e flag ligada comprova que o bean e o usuário de
+  demonstração não são criados fora do ambiente de desenvolvimento.
+
 ## Verificações executadas
 
 Ao longo do desenvolvimento foram usados os comandos canônicos:
@@ -233,9 +292,10 @@ git diff --check
 
 No último ciclo de validação registrado:
 
-- os 29 testes do frontend passaram;
-- a cobertura do frontend ficou em 89,11% de statements, 78,86% de branches,
-  82,85% de funções e 95,06% de linhas;
+- os 19 testes do backend e os 39 testes do frontend passaram;
+- a cobertura do frontend ficou em 91,05% de statements, 79,18% de branches,
+  83,85% de funções e 95,85% de linhas;
+- todas as verificações de cobertura do backend foram atendidas;
 - o build Angular passou localmente e dentro do Docker;
 - o E2E Playwright passou usando a stack real;
 - frontend, backend e PostgreSQL ficaram saudáveis no Docker Compose;
@@ -255,6 +315,7 @@ No último ciclo de validação registrado:
 | `0a48f85` | 31/07/2026 14:41 | Correções da segunda revisão |
 | `f221fc7` | 31/07/2026 16:27 | BRL, períodos e evolução |
 | `a50c75d` | 31/07/2026 18:10 | Busca de ativo na compra |
+| `5f2d7d3` | 31/07/2026 20:47 | Revisão 03, modais acessíveis e histórico |
 
-As seções posteriores ao último commit representam o estado atual do diretório
-de trabalho e ainda precisam ser incluídas em um commit.
+A seção de alterações posteriores representa o estado atual do diretório de
+trabalho e ainda precisa ser incluída em um commit.

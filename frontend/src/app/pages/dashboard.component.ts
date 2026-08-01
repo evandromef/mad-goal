@@ -12,7 +12,13 @@ import { ModalService } from '../core/modal.service';
   template: `
     <header class="topbar">
       <a class="brand dark" href="/"><span>M</span> MAD</a>
-      <nav><a href="#posicoes">Posições</a><a href="#lancamentos">Lançamentos</a></nav>
+      <nav class="topbar-menu"><a routerLink="/">Visão geral</a>
+        @if (selectedWalletId()) {
+          <a [routerLink]="['/wallets', selectedWalletId(), 'positions']">Posições</a>
+          <a [routerLink]="['/wallets', selectedWalletId(), 'records']">Lançamentos</a>
+          <a [routerLink]="['/wallets', selectedWalletId(), 'incomes']">Proventos</a>
+        }
+      </nav>
       <div class="user"><span>{{ userInitial() }}</span><a routerLink="/profile">Perfil</a><button class="text-button" (click)="logout()">Sair</button></div>
     </header>
     @if (successMessage()) {
@@ -62,7 +68,9 @@ import { ModalService } from '../core/modal.service';
 
         <section class="content-grid" id="posicoes">
           <article class="panel wide">
-            <div class="panel-title"><div><p class="eyebrow">Composição</p><h2>Posições da carteira</h2></div><span class="chip">{{ data.positions.length }} ativos</span></div>
+            <div class="panel-title"><div><p class="eyebrow">Composição</p>
+              <h2><a class="records-title-link" [routerLink]="['/wallets', selectedWalletId(), 'positions']">Posições da carteira</a></h2>
+            </div><span class="chip">{{ data.positions.length }} ativos</span></div>
             @if (data.positions.length) {
               <div class="table-scroll"><table>
                 <thead><tr><th>Ativo</th><th>Qtd.</th><th>Custo</th><th>Valor atual</th><th>Resultado</th><th>Rentabilidade</th><th>Alocação</th></tr></thead>
@@ -155,14 +163,19 @@ import { ModalService } from '../core/modal.service';
             </form>
           </article>
           <article class="panel wide">
-            <div class="panel-title"><div><p class="eyebrow">Histórico completo</p><h2>Lançamentos</h2></div></div>
+            <div class="panel-title"><div><p class="eyebrow">Atividade recente</p>
+              <h2><a class="records-title-link" [routerLink]="['/wallets', selectedWalletId(), 'records']">Lançamentos</a></h2>
+            </div></div>
             @if (records().length) {
               <div class="activity-list">
-                @for (item of reversedRecords(); track item.id) {
+                @for (item of recentRecords(); track item.id) {
                   <div class="activity" [class.editing]="editingId() === item.id">
                     <span class="activity-icon">{{ typeInitial(item.type) }}</span>
                     <div><strong>{{ label(item.type) }} · {{ item.ticker }}</strong><small>{{ item.date | date:'dd/MM/yyyy':'UTC' }}</small></div>
-                    <b>{{ recordValue(item) }}</b>
+                    <div class="activity-value">
+                      <b>{{ recordValue(item) }}</b>
+                      @if (operationDetails(item); as details) { <small>{{ details }}</small> }
+                    </div>
                     <div class="activity-actions">
                       <button type="button" (click)="editRecord(item)" aria-label="Editar lançamento">Editar</button>
                       <button class="danger" type="button" (click)="deleteRecord(item)" aria-label="Excluir lançamento">Excluir</button>
@@ -170,6 +183,9 @@ import { ModalService } from '../core/modal.service';
                   </div>
                 }
               </div>
+              <a class="records-link" [routerLink]="['/wallets', selectedWalletId(), 'records']">
+                Ver histórico completo <span aria-hidden="true">→</span>
+              </a>
             } @else { <p class="empty-copy">Nenhum lançamento nesta carteira.</p> }
           </article>
         </section>
@@ -188,7 +204,8 @@ import { ModalService } from '../core/modal.service';
             </div>
           </article>
           <article class="panel">
-            <p class="eyebrow">Proventos</p><h2>Análise por período</h2>
+            <p class="eyebrow">Análise por período</p>
+            <h2><a class="records-title-link" [routerLink]="['/wallets', selectedWalletId(), 'incomes']">Proventos</a></h2>
             <form [formGroup]="incomeForm" class="filter-grid" (ngSubmit)="loadIncomes()">
               <label>Ativo<select formControlName="assetId"><option value="">Todos</option>
                 @for (asset of incomeAssets(); track asset.id) { <option [value]="asset.id">{{ asset.ticker }}</option> }
@@ -241,7 +258,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private successTimer: ReturnType<typeof setTimeout> | null = null;
   readonly userName = signal(localStorage.getItem('mad_user') ?? 'Investidor');
   readonly userInitial = computed(() => this.userName().charAt(0).toUpperCase());
-  readonly reversedRecords = computed(() => [...this.records()].reverse());
+  readonly recentRecords = computed(() => [...this.records()].reverse().slice(0, 20));
   readonly visibleEvolution = computed(() => [...(this.dashboard()?.evolution.slice(-24) ?? [])].reverse());
   readonly purchaseAssetQuery = signal('');
   readonly filteredPurchaseAssets = computed(() => {
@@ -385,6 +402,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (item.newQuantity != null) return `${item.newQuantity} un. · ${item.ratio ?? 'sem proporção'}`;
     return `${item.quantity ?? 0} un.`;
   }
+  operationDetails(item: LedgerItem): string {
+    if (!this.isOperationType(item.type)) return '';
+    const details: string[] = [];
+    if (item.quantity != null) {
+      details.push(`${item.quantity.toLocaleString('pt-BR', { maximumFractionDigits: 8 })} un.`);
+    }
+    if (item.unitPrice != null) {
+      const unitPrice = item.unitPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      details.push(`Preço unitário ${unitPrice}`);
+    }
+    return details.join(' · ');
+  }
   onRecordTypeChange(): void {
     if (this.recordForm.controls.type.value === 'COMPRA') {
       this.syncPurchaseAssetQuery();
@@ -525,7 +554,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const selected = this.assets().find(asset => asset.id === this.recordForm.controls.assetId.value);
     this.purchaseAssetQuery.set(selected ? this.assetDisplay(selected) : '');
   }
-  isOperation(): boolean { return ['COMPRA', 'VENDA', 'SUBSCRICAO'].includes(this.recordForm.controls.type.value); }
+  isOperation(): boolean { return this.isOperationType(this.recordForm.controls.type.value); }
+  isOperationType(type: string): boolean { return ['COMPRA', 'VENDA', 'SUBSCRICAO'].includes(type); }
   isIncome(): boolean { return ['DIVIDENDO', 'JCP'].includes(this.recordForm.controls.type.value); }
   isBonus(): boolean { return this.recordForm.controls.type.value === 'BONIFICACAO'; }
   isCorporateEvent(): boolean { return ['DESDOBRAMENTO', 'GRUPAMENTO'].includes(this.recordForm.controls.type.value); }

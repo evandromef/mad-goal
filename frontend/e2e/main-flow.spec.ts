@@ -35,12 +35,56 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await form.getByLabel('Ativo').fill('PETR4');
   await page.getByLabel('Quantidade').fill('10.12345678');
   await page.getByLabel('Valor total').fill('1000.12345678');
+  await page.getByLabel('Preço unitário (opcional)').fill('98.79');
   await page.getByRole('button', { name: 'Salvar lançamento' }).click();
   await expect(page.getByRole('status')).toContainText('sucesso');
   await expect(page.locator('.activity-icon').first()).toHaveText('C');
+  await expect(page.locator('.activity-value').first())
+    .toContainText('10,12345678 un. · Preço unitário R$ 98,79');
   await expect(page.locator('.metric').filter({ hasText: 'Custo de aquisição' }).locator('strong'))
     .toHaveText(/R\$\s*1\.000,12/);
-  const deleteTrigger = page.getByRole('button', { name: 'Excluir lançamento' });
+  await page.getByRole('link', { name: 'Posições da carteira', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Posições da carteira' })).toBeVisible();
+  await expect(page.locator('app-record-form')).toBeVisible();
+  await expect(page.locator('tbody')).toContainText('PETR4');
+  await page.getByRole('link', { name: 'Voltar à carteira' }).click();
+  await page.getByRole('link', { name: 'Proventos', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Proventos' })).toBeVisible();
+  const incomeRecordForm = page.locator('app-record-form');
+  await expect(incomeRecordForm.getByLabel('Tipo').locator('option')).toHaveCount(2);
+  const incomeAsset = incomeRecordForm.getByLabel('Ativo');
+  const incomeAssetId = await incomeAsset.locator('option', { hasText: /^PETR4 ·/ }).getAttribute('value');
+  await incomeAsset.selectOption(incomeAssetId!);
+  await incomeRecordForm.getByLabel('Valor total').fill('10');
+  await incomeRecordForm.getByLabel('Preço unitário (opcional)').fill('1');
+  await incomeRecordForm.getByRole('button', { name: 'Salvar lançamento' }).click();
+  await expect(incomeRecordForm.getByRole('status')).toContainText('sucesso');
+  await expect(page.locator('.income-page-history tbody')).toContainText('PETR4');
+  await page.getByRole('link', { name: 'Voltar à carteira' }).click();
+  const recordsPanel = page.locator('#lancamentos .panel.wide');
+  await expect(recordsPanel.getByRole('link', { name: 'Lançamentos', exact: true }))
+    .toHaveAttribute('href', /\/wallets\/[^/]+\/records/);
+  await recordsPanel.getByRole('link', { name: /Ver histórico completo/ }).click();
+  await expect(page.getByRole('heading', { name: 'Histórico de lançamentos' })).toBeVisible();
+  await expect(page.locator('.topbar-menu').getByRole('link')).toHaveCount(4);
+  const recordFormPanel = (await page.locator('#novo-lancamento').boundingBox())!;
+  const recordsFilterPanel = (await page.locator('.records-filters').boundingBox())!;
+  expect(recordFormPanel.x).toBeLessThan(recordsFilterPanel.x);
+  await expect(page.locator('tbody tr')).toHaveCount(2);
+  await expect(page.locator('tbody')).toContainText('PETR4');
+  const recordsFilters = page.locator('.records-filter');
+  await recordsFilters.getByLabel('Tipo').selectOption('VENDA');
+  await page.getByRole('button', { name: 'Filtrar', exact: true }).click();
+  await expect(page.getByText('Nenhum lançamento encontrado para os filtros selecionados.')).toBeVisible();
+  await page.getByRole('button', { name: 'Limpar filtros' }).click();
+  await expect(page.locator('tbody tr')).toHaveCount(2);
+  await page.getByRole('link', { name: 'Novo lançamento' }).click();
+  await expect(page.getByRole('heading', { name: 'Adicionar lançamento' })).toBeVisible();
+  await expect(page.locator('app-record-form')).toBeVisible();
+  await page.getByRole('link', { name: 'Voltar à carteira' }).click();
+  await expect(page.locator('#lancamentos').getByRole('heading', { name: 'Lançamentos' })).toBeVisible();
+  const deleteTrigger = page.locator('.activity').filter({ hasText: 'Compra · PETR4' })
+    .getByRole('button', { name: 'Excluir lançamento' });
   await deleteTrigger.focus();
   await page.keyboard.press('Enter');
   const deleteModal = page.getByRole('dialog');

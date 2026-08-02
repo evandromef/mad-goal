@@ -3,6 +3,18 @@ import { expect, test } from '@playwright/test';
 test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ page }) => {
   const email = `e2e-${Date.now()}@example.com`;
   await page.goto('/login?mode=reset&token=token-do-link', { waitUntil: 'domcontentloaded' });
+  const themeToggle = page.getByRole('button', { name: 'Ativar tema claro' });
+  await expect(themeToggle).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'orbital');
+  const orbitalBackground = await page.locator('body').evaluate((element) => getComputedStyle(element).backgroundColor);
+  await themeToggle.click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'classic');
+  const classicBackground = await page.locator('body').evaluate((element) => getComputedStyle(element).backgroundColor);
+  expect(classicBackground).not.toBe(orbitalBackground);
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'classic');
+  await page.getByRole('button', { name: 'Ativar tema orbital' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'orbital');
   await expect(page.getByRole('heading', { name: 'Redefinir senha' })).toBeVisible();
   await expect(page.getByLabel('Token')).toHaveValue('token-do-link');
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
@@ -13,6 +25,11 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await page.getByRole('button', { name: 'Criar conta' }).click();
   await expect(page.getByRole('heading', { name: 'Confirme seu e-mail' })).toBeVisible();
   await page.getByRole('button', { name: 'Confirmar e entrar' }).click();
+
+  await page.getByRole('link', { name: 'Perfil' }).click();
+  await expect(page.getByRole('heading', { name: 'Perfil' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ativar tema claro' })).toBeVisible();
+  await page.getByRole('link', { name: 'Voltar', exact: true }).click();
 
   await page.getByRole('button', { name: 'Criar carteira' }).click();
   await page.getByPlaceholder('Nome da nova carteira').fill('Carteira E2E');
@@ -45,11 +62,13 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
     .toHaveText(/R\$\s*1\.000,12/);
   await page.getByRole('link', { name: 'Posições da carteira', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Posições da carteira' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ativar tema claro' })).toBeVisible();
   await expect(page.locator('app-record-form')).toBeVisible();
   await expect(page.locator('tbody')).toContainText('PETR4');
   await page.getByRole('link', { name: 'Voltar à carteira' }).click();
   await page.getByRole('link', { name: 'Proventos', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Proventos' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ativar tema claro' })).toBeVisible();
   const incomeRecordForm = page.locator('app-record-form');
   await expect(incomeRecordForm.getByLabel('Tipo').locator('option')).toHaveCount(2);
   const incomeAsset = incomeRecordForm.getByLabel('Ativo');
@@ -66,6 +85,7 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
     .toHaveAttribute('href', /\/wallets\/[^/]+\/records/);
   await recordsPanel.getByRole('link', { name: /Ver histórico completo/ }).click();
   await expect(page.getByRole('heading', { name: 'Histórico de lançamentos' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ativar tema claro' })).toBeVisible();
   await expect(page.locator('.topbar-menu').getByRole('link')).toHaveCount(4);
   const recordFormPanel = (await page.locator('#novo-lancamento').boundingBox())!;
   const recordsFilterPanel = (await page.locator('.records-filters').boundingBox())!;
@@ -113,6 +133,7 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   expect((await form.boundingBox())!.height).toBe(purchaseHeight);
   await page.getByRole('link', { name: 'PETR4' }).click();
   await expect(page.getByRole('heading', { name: 'PETR4' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ativar tema claro' })).toBeVisible();
   await page.getByLabel('Conteúdo').fill('Nota criada no fluxo E2E');
   await page.getByRole('button', { name: 'Adicionar' }).click();
   await expect(page.getByText('Nota criada no fluxo E2E')).toBeVisible();

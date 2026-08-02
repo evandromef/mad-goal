@@ -2,6 +2,14 @@
 
 MVP web para controle de carteiras brasileiras de ações e FIIs. A aplicação permite criar conta e múltiplas carteiras, registrar, editar e excluir operações, proventos, bonificações e eventos corporativos, manter notas por ativo e consultar posição, custo de aquisição, valor atual, P&L, rentabilidade, alocação e evolução do custo.
 
+## Temas da interface
+
+A interface inicia com o tema orbital, inspirado na linguagem visual aeroespacial:
+alto contraste, tipografia condensada, superfícies escuras e linhas técnicas. O botão
+fixado no topo alterna entre esse tema e o tema claro original em qualquer tela,
+inclusive no login. A escolha fica salva localmente no navegador e é restaurada nos
+próximos acessos.
+
 ## Tecnologias
 
 - Java 21, Spring Boot 3.5, Spring Security, JWT, JPA e Flyway

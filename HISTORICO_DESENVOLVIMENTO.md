@@ -269,6 +269,34 @@ registrar uma compra.
 - outro teste com perfil `test` e flag ligada comprova que o bean e o usuário de
   demonstração não são criados fora do ambiente de desenvolvimento.
 
+### Tema orbital e alternância de aparência
+
+- foi criada a branch `feat/tema-orbital` para isolar a nova identidade visual;
+- foi implementado um tema escuro inspirado em interfaces aeroespaciais, com alto
+  contraste, tipografia condensada, superfícies retas e detalhes técnicos;
+- o tema cobre login, dashboard, perfil, posições, lançamentos, proventos, detalhe
+  de ativo, formulários, tabelas, avisos e modais;
+- foi mantido o tema claro anterior como alternativa;
+- um botão global no topo permite alternar a aparência em qualquer rota;
+- a preferência é persistida no `localStorage`, com comportamento seguro quando o
+  armazenamento do navegador estiver indisponível;
+- o seletor possui nome acessível, estado `aria-pressed` e tamanho adequado para
+  interação por toque;
+- o tema orbital é usado por padrão quando ainda não existe uma preferência salva;
+- testes unitários verificam aplicação, alternância e persistência;
+- o fluxo E2E verifica a alternância, recarregamento e presença do controle nas
+  principais telas do sistema;
+- o resultado foi inspecionado visualmente em viewports desktop e mobile.
+
+### Compatibilidade com TypeScript 6 e 7
+
+- foram removidas as opções obsoletas `baseUrl` e `downlevelIteration` do
+  `frontend/tsconfig.json`;
+- `baseUrl` não possuía mapeamentos `paths` dependentes dele;
+- `downlevelIteration` não tinha efeito porque o frontend gera JavaScript ES2022;
+- a migração foi feita diretamente, sem mascarar os avisos com
+  `ignoreDeprecations`.
+
 ## Verificações executadas
 
 Ao longo do desenvolvimento foram usados os comandos canônicos:
@@ -292,9 +320,9 @@ git diff --check
 
 No último ciclo de validação registrado:
 
-- os 19 testes do backend e os 39 testes do frontend passaram;
-- a cobertura do frontend ficou em 91,05% de statements, 79,18% de branches,
-  83,85% de funções e 95,85% de linhas;
+- os 19 testes do backend e os 42 testes do frontend passaram;
+- a cobertura do frontend ficou em 91,44% de statements, 79,55% de branches,
+  84,24% de funções e 95,93% de linhas;
 - todas as verificações de cobertura do backend foram atendidas;
 - o build Angular passou localmente e dentro do Docker;
 - o E2E Playwright passou usando a stack real;
@@ -316,6 +344,7 @@ No último ciclo de validação registrado:
 | `f221fc7` | 31/07/2026 16:27 | BRL, períodos e evolução |
 | `a50c75d` | 31/07/2026 18:10 | Busca de ativo na compra |
 | `5f2d7d3` | 31/07/2026 20:47 | Revisão 03, modais acessíveis e histórico |
+| `1dbc4a8` | 31/07/2026 22:49 | Páginas completas da carteira e navegação principal |
 
 A seção de alterações posteriores representa o estado atual do diretório de
 trabalho e ainda precisa ser incluída em um commit.

@@ -29,4 +29,23 @@ describe('AppComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('main')).toHaveLength(1);
     expect(fixture.nativeElement.querySelector('.route-content')).toBeTruthy();
   });
+
+  it('disponibiliza a alternância de tema em todas as rotas', async () => {
+    localStorage.clear();
+    await TestBed.configureTestingModule({
+      imports: [AppComponent],
+      providers: [provideRouter([{ path: '', component: RoutedPageComponent }])]
+    }).compileComponents();
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+
+    const toggle: HTMLButtonElement = fixture.nativeElement.querySelector('.theme-toggle');
+    expect(toggle).toBeTruthy();
+    expect(toggle.getAttribute('aria-label')).toBe('Ativar tema claro');
+
+    toggle.click();
+    fixture.detectChanges();
+    expect(document.documentElement.dataset['theme']).toBe('classic');
+    expect(toggle.getAttribute('aria-label')).toBe('Ativar tema orbital');
+  });
 });

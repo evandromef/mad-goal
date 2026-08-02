@@ -1,12 +1,12 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './pages/login.component';
-import { DashboardComponent } from './pages/dashboard.component';
+import { LoginComponent } from './pages/login/login.component';
+import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { authGuard } from './core/auth.guard';
-import { AssetDetailComponent } from './pages/asset-detail.component';
-import { ProfileComponent } from './pages/profile.component';
-import { RecordsComponent } from './pages/records.component';
-import { PositionsComponent } from './pages/positions.component';
-import { IncomesComponent } from './pages/incomes.component';
+import { AssetDetailComponent } from './pages/asset-detail/asset-detail.component';
+import { ProfileComponent } from './pages/profile/profile.component';
+import { RecordsComponent } from './pages/records/records.component';
+import { PositionsComponent } from './pages/positions/positions.component';
+import { IncomesComponent } from './pages/incomes/incomes.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },

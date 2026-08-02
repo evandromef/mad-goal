@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
-import { ApiService, LedgerItem } from '../core/api.service';
+import { ApiService, LedgerItem } from '../../core/api.service';
 import { RecordsComponent } from './records.component';
 
 describe('RecordsComponent', () => {

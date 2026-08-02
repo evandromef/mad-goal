@@ -1,33 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { ApiService } from '../core/api.service';
-import { SessionService } from '../core/session.service';
-import { ModalService } from '../core/modal.service';
+import { ApiService } from '../../core/api.service';
+import { SessionService } from '../../core/session.service';
+import { ModalService } from '../../core/modal.service';
 
 @Component({
   selector: 'app-profile',
   imports: [ReactiveFormsModule, RouterLink],
-  template: `
-    <header class="topbar"><a class="brand dark" routerLink="/"><span>M</span> MAD</a>
-      <nav class="topbar-menu"><a routerLink="/">Visão geral</a><a routerLink="/profile">Perfil</a></nav>
-      <a routerLink="/">Voltar</a></header>
-    <main class="narrow-page">
-      <p class="eyebrow">Sua conta</p><h1>Perfil</h1>
-      <section class="panel">
-        <form [formGroup]="form" (ngSubmit)="save()" class="stack-single">
-          <label>Nome<input formControlName="name"></label>
-          <label>E-mail<input formControlName="email" type="email"></label>
-          @if (message()) { <p class="notice">{{ message() }}</p> }
-          <button class="button primary" [disabled]="form.invalid">Salvar perfil</button>
-        </form>
-      </section>
-      <section class="panel danger-zone">
-        <h2>Excluir conta</h2><p>Carteiras, lançamentos e notas serão removidos definitivamente.</p>
-        <button class="button danger-button" (click)="remove()">Excluir minha conta</button>
-      </section>
-    </main>
-  `,
+  templateUrl: './profile.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProfileComponent implements OnInit {

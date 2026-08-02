@@ -9,7 +9,10 @@ This repository contains the requirements, feature specifications, and the MAD a
 - `espec_template.md`: required structure for new feature specifications.
 - `especs/`: numbered, self-contained specifications such as `ESPEC_03_operacoes.md`.
 - `backend/`: Spring Boot API, Flyway migrations, and backend tests.
-- `frontend/`: Angular application, component tests, and Playwright flows.
+- `frontend/`: Angular application, component tests, and Playwright flows. Keep
+  each UI component in its own folder with its `.ts`, external `.html`, and
+  colocated `.spec.ts`; keep non-component services and guards directly under
+  `core/`.
 
 Keep cross-document identifiers aligned. Every RF, RN, or RNF referenced by an ESPEC must exist in `ers.md`, and MVP claims must agree with `escopo_mvp.md`.
 

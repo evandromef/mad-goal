@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
-import { ApiService, Dashboard } from '../core/api.service';
+import { ApiService, Dashboard } from '../../core/api.service';
 import { PositionsComponent } from './positions.component';
 
 describe('PositionsComponent', () => {

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { ApiService, Asset, LedgerItem } from '../core/api.service';
+import { ApiService, Asset, LedgerItem } from '../../core/api.service';
 import { RecordFormComponent } from './record-form.component';
 
 describe('RecordFormComponent', () => {

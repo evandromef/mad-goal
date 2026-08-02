@@ -311,6 +311,19 @@ registrar uma compra.
 - testes de integração, unitários e E2E validam o agregado, a apresentação e a
   nova proporção do layout.
 
+### Organização dos componentes Angular
+
+- cada componente de página passou a ter uma pasta própria em `app/pages`;
+- os componentes compartilhados `record-form`, `system-modal` e `theme-toggle`
+  também receberam diretórios próprios em suas respectivas camadas;
+- os testes foram movidos junto dos componentes correspondentes;
+- os onze templates de produção foram extraídos dos decoradores Angular para
+  arquivos `.component.html` externos;
+- o componente raiz ganhou `app.component.html` sem alterar sua posição na raiz
+  da aplicação;
+- rotas e imports relativos foram atualizados para a nova estrutura;
+- as diretrizes do repositório agora documentam a convenção de organização.
+
 ## Verificações executadas
 
 Ao longo do desenvolvimento foram usados os comandos canônicos:
@@ -334,9 +347,9 @@ git diff --check
 
 No último ciclo de validação registrado:
 
-- os 19 testes do backend e os 42 testes do frontend passaram;
-- a cobertura do frontend ficou em 91,48% de statements, 79,55% de branches,
-  84,24% de funções e 95,94% de linhas;
+- os 19 testes do backend e os 43 testes do frontend passaram;
+- a cobertura do frontend ficou em 94,78% de statements, 84,25% de branches,
+  96,80% de funções e 97,04% de linhas;
 - todas as verificações de cobertura do backend foram atendidas;
 - o build Angular passou localmente e dentro do Docker;
 - o E2E Playwright passou usando a stack real;
@@ -359,6 +372,8 @@ No último ciclo de validação registrado:
 | `a50c75d` | 31/07/2026 18:10 | Busca de ativo na compra |
 | `5f2d7d3` | 31/07/2026 20:47 | Revisão 03, modais acessíveis e histórico |
 | `1dbc4a8` | 31/07/2026 22:49 | Páginas completas da carteira e navegação principal |
+| `e00f09b` | 02/08/2026 09:07 | Tema orbital e compatibilidade com TypeScript 6 |
+| `2ee64a4` | 02/08/2026 09:56 | Proventos por posição e distribuição compacta |
 
 A seção de alterações posteriores representa o estado atual do diretório de
 trabalho e ainda precisa ser incluída em um commit.

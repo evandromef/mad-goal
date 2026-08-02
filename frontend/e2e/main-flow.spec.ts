@@ -66,7 +66,7 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await expect(page.locator('app-record-form')).toBeVisible();
   await expect(page.locator('tbody')).toContainText('PETR4');
   await page.getByRole('link', { name: 'Voltar à carteira' }).click();
-  await page.getByRole('link', { name: 'Proventos', exact: true }).click();
+  await page.locator('.topbar-menu').getByRole('link', { name: 'Proventos', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Proventos' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Ativar tema claro' })).toBeVisible();
   const incomeRecordForm = page.locator('app-record-form');

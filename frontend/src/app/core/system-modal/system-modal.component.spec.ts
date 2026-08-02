@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ModalService } from './modal.service';
+import { ModalService } from '../modal.service';
 import { SystemModalComponent } from './system-modal.component';
 
 describe('SystemModalComponent', () => {

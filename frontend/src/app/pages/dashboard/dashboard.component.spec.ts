@@ -1,10 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { ApiService, Dashboard, LedgerItem } from '../core/api.service';
+import { ApiService, Dashboard, LedgerItem } from '../../core/api.service';
 import { DashboardComponent } from './dashboard.component';
-import { SessionService } from '../core/session.service';
-import { ModalService } from '../core/modal.service';
+import { SessionService } from '../../core/session.service';
+import { ModalService } from '../../core/modal.service';
 
 describe('DashboardComponent - lançamentos', () => {
   const dashboard: Dashboard = {

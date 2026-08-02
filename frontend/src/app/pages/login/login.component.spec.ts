@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { ApiService } from '../core/api.service';
-import { SessionService } from '../core/session.service';
+import { ApiService } from '../../core/api.service';
+import { SessionService } from '../../core/session.service';
 import { LoginComponent } from './login.component';
 
 describe('LoginComponent', () => {

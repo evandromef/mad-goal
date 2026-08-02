@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { ApiService } from '../core/api.service';
-import { SessionService } from '../core/session.service';
-import { ModalService } from '../core/modal.service';
+import { ApiService } from '../../core/api.service';
+import { SessionService } from '../../core/session.service';
+import { ModalService } from '../../core/modal.service';
 import { ProfileComponent } from './profile.component';
 
 describe('ProfileComponent', () => {

@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
-import { ApiService, LedgerItem, Note, Position } from '../core/api.service';
-import { ModalService } from '../core/modal.service';
+import { ApiService, LedgerItem, Note, Position } from '../../core/api.service';
+import { ModalService } from '../../core/modal.service';
 import { AssetDetailComponent } from './asset-detail.component';
 
 describe('AssetDetailComponent', () => {

@@ -313,7 +313,7 @@ describe('DashboardComponent - lançamentos', () => {
         profitLoss: null, returnPercentage: null, allocationPercentage: null }],
       positions: [{ assetId: 'asset-1', ticker: 'PETR4', name: 'Petrobras', category: 'ACAO',
         quantity: 20, acquisitionCost: 1000, currentPrice: null, currentValue: null,
-        profitLoss: null, returnPercentage: null, allocationPercentage: null, priceDate: null }],
+        profitLoss: null, returnPercentage: null, allocationPercentage: null, totalIncome: 25, priceDate: null }],
       evolution: [{ period: '2026-01', acquisitionCost: 1000 }]
     }));
     api.records.mockReturnValue(of([{ ...item, type: 'DESDOBRAMENTO', totalValue: undefined,
@@ -332,6 +332,8 @@ describe('DashboardComponent - lançamentos', () => {
     expect(text).toContain('1º trimestre de 2026');
     expect(text).toContain('10/04/2026');
     expect(text).toContain('Dividendos');
+    expect(fixture.nativeElement.querySelector('.position-income').textContent).toMatch(/25[,.]00/);
+    expect(fixture.nativeElement.querySelector('#posicoes').classList.contains('positions-overview-grid')).toBe(true);
   });
 
   it('formata períodos mensais, trimestrais e anuais em português', () => {

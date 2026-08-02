@@ -8,7 +8,7 @@ import { AssetDetailComponent } from './asset-detail.component';
 describe('AssetDetailComponent', () => {
   const position: Position = { assetId: 'a1', ticker: 'PETR4', name: 'Petrobras', category: 'ACAO',
     quantity: 10, acquisitionCost: 200, currentPrice: 30, currentValue: 300, profitLoss: 100,
-    returnPercentage: 50, allocationPercentage: 25, priceDate: '2026-07-31' };
+    returnPercentage: 50, allocationPercentage: 25, totalIncome: 10, priceDate: '2026-07-31' };
   const record: LedgerItem = { id: 'r1', walletId: 'w1', assetId: 'a1', ticker: 'PETR4',
     type: 'DIVIDENDO', date: '2026-07-30', totalValue: 10 };
   const note: Note = { id: 'n1', walletId: 'w1', assetId: 'a1', ticker: 'PETR4', content: 'Tese',

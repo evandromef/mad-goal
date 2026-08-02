@@ -12,7 +12,7 @@ export interface Asset {
 export interface Position {
   assetId: string; ticker: string; name: string; category: string; quantity: number;
   acquisitionCost: number; currentPrice: number | null; currentValue: number | null; profitLoss: number | null;
-  returnPercentage: number | null; allocationPercentage: number | null; priceDate: string | null;
+  returnPercentage: number | null; allocationPercentage: number | null; totalIncome: number; priceDate: string | null;
 }
 export interface Dashboard {
   acquisitionCost: number; currentValue: number | null; profitLoss: number | null;

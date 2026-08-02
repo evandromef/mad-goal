@@ -297,6 +297,20 @@ registrar uma compra.
 - a migração foi feita diretamente, sem mascarar os avisos com
   `ignoreDeprecations`.
 
+### Proventos por posição e distribuição compacta
+
+- a API do dashboard passou a agregar dividendos e JCP por ativo usando os
+  lançamentos já carregados para o total geral;
+- cada posição agora expõe `totalIncome`, inclusive com valor zero quando ainda
+  não recebeu proventos;
+- as listas de posições do dashboard e da página completa exibem a nova coluna
+  Proventos em BRL;
+- a área de distribuição por categoria foi reduzida para aproximadamente um
+  quinto da grade de posições em desktop;
+- em telas menores, posições e distribuição continuam empilhadas;
+- testes de integração, unitários e E2E validam o agregado, a apresentação e a
+  nova proporção do layout.
+
 ## Verificações executadas
 
 Ao longo do desenvolvimento foram usados os comandos canônicos:
@@ -321,8 +335,8 @@ git diff --check
 No último ciclo de validação registrado:
 
 - os 19 testes do backend e os 42 testes do frontend passaram;
-- a cobertura do frontend ficou em 91,44% de statements, 79,55% de branches,
-  84,24% de funções e 95,93% de linhas;
+- a cobertura do frontend ficou em 91,48% de statements, 79,55% de branches,
+  84,24% de funções e 95,94% de linhas;
 - todas as verificações de cobertura do backend foram atendidas;
 - o build Angular passou localmente e dentro do Docker;
 - o E2E Playwright passou usando a stack real;

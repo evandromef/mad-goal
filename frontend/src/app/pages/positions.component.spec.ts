@@ -9,7 +9,7 @@ describe('PositionsComponent', () => {
     returnPercentage: 20, totalIncome: 5, largestPosition: 'PETR4', categories: [], evolution: [],
     positions: [{ assetId: 'a1', ticker: 'PETR4', name: 'Petrobras', category: 'ACAO', quantity: 2,
       acquisitionCost: 100, currentPrice: 60, currentValue: 120, profitLoss: 20,
-      returnPercentage: 20, allocationPercentage: 100, priceDate: '2026-08-01' }] };
+      returnPercentage: 20, allocationPercentage: 100, totalIncome: 35.5, priceDate: '2026-08-01' }] };
   const api = { dashboard: vi.fn(), wallets: vi.fn(), assets: vi.fn(), records: vi.fn(), createRecord: vi.fn() };
 
   beforeEach(async () => {
@@ -29,6 +29,7 @@ describe('PositionsComponent', () => {
     expect(fixture.componentInstance.walletName()).toBe('Principal');
     expect(fixture.nativeElement.textContent).toContain('PETR4');
     expect(fixture.nativeElement.textContent).toContain('R$');
+    expect(fixture.nativeElement.querySelector('.position-income').textContent).toMatch(/35[,.]50/);
     expect(fixture.nativeElement.querySelector('app-record-form')).toBeTruthy();
     expect(fixture.componentInstance.positionRecordTypes).not.toContain('DIVIDENDO');
   });

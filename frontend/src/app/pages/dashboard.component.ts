@@ -66,14 +66,14 @@ import { ModalService } from '../core/modal.service';
           <article class="metric"><span>Proventos</span><strong>{{ data.totalIncome | currency:'BRL' }}</strong><small>Recebidos no histórico</small></article>
         </section>
 
-        <section class="content-grid" id="posicoes">
+        <section class="content-grid positions-overview-grid" id="posicoes">
           <article class="panel wide">
             <div class="panel-title"><div><p class="eyebrow">Composição</p>
               <h2><a class="records-title-link" [routerLink]="['/wallets', selectedWalletId(), 'positions']">Posições da carteira</a></h2>
             </div><span class="chip">{{ data.positions.length }} ativos</span></div>
             @if (data.positions.length) {
               <div class="table-scroll"><table>
-                <thead><tr><th>Ativo</th><th>Qtd.</th><th>Custo</th><th>Valor atual</th><th>Resultado</th><th>Rentabilidade</th><th>Alocação</th></tr></thead>
+                <thead><tr><th>Ativo</th><th>Qtd.</th><th>Custo</th><th>Valor atual</th><th>Proventos</th><th>Resultado</th><th>Rentabilidade</th><th>Alocação</th></tr></thead>
                 <tbody>
                   @for (position of data.positions; track position.assetId) {
                     <tr>
@@ -81,6 +81,7 @@ import { ModalService } from '../core/modal.service';
                       <td>{{ position.quantity | number:'1.0-8' }}</td>
                       <td>{{ position.acquisitionCost | currency:'BRL' }}</td>
                       <td>{{ position.currentValue == null ? 'Indisponível' : (position.currentValue | currency:'BRL') }}</td>
+                      <td class="position-income">{{ position.totalIncome | currency:'BRL' }}</td>
                       <td [class.negative]="position.profitLoss != null && position.profitLoss < 0">{{ position.profitLoss == null ? 'Indisponível' : (position.profitLoss | currency:'BRL') }}</td>
                       <td>{{ position.returnPercentage == null ? 'Indisponível' : ((position.returnPercentage | number:'1.2-2') + '%') }}</td>
                       <td><div class="allocation"><i [style.width.%]="position.allocationPercentage ?? 0"></i></div>{{ position.allocationPercentage == null ? '—' : ((position.allocationPercentage | number:'1.2-2') + '%') }}</td>

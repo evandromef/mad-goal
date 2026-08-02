@@ -74,6 +74,7 @@ class ApiFlowIntegrationTest {
         mvc.perform(get("/api/dashboard/{id}", walletId).header("Authorization", bearer(token))
                 .param("granularity", "YEARLY"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.positions[0].ticker").value(asset.getTicker()))
+                .andExpect(jsonPath("$.positions[0].totalIncome").value(45.12))
                 .andExpect(jsonPath("$.positions[0].currentValue").doesNotExist());
         mvc.perform(get("/api/assets").header("Authorization", bearer(token)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$[0].ticker").isNotEmpty());

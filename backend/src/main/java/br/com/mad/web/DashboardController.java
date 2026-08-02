@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/dashboard")
@@ -29,7 +30,7 @@ public class DashboardController {
     public record PositionResponse(UUID assetId, String ticker, String name, Asset.Category category,
                                    BigDecimal quantity, BigDecimal acquisitionCost, BigDecimal currentPrice,
                                    BigDecimal currentValue, BigDecimal profitLoss, BigDecimal returnPercentage,
-                                   BigDecimal allocationPercentage, Object priceDate) {}
+                                   BigDecimal allocationPercentage, BigDecimal totalIncome, Object priceDate) {}
     public record CategoryResponse(Asset.Category category, BigDecimal acquisitionCost,
                                    BigDecimal currentValue, BigDecimal profitLoss,
                                    BigDecimal returnPercentage, BigDecimal allocationPercentage) {}
@@ -51,6 +52,12 @@ public class DashboardController {
         BigDecimal pnl = totalValue == null ? null : totalValue.subtract(totalCost, MC);
         BigDecimal returnPct = totalCost.signum() == 0 || pnl == null ? null
                 : pnl.divide(totalCost, MC).multiply(BigDecimal.valueOf(100), MC);
+        List<LedgerRecord> walletRecords = records.findByWalletIdOrderByDateAscCreatedAtAsc(walletId);
+        Map<UUID, BigDecimal> incomeByAsset = walletRecords.stream()
+                .filter(this::isIncome)
+                .filter(item -> item.getTotalValue() != null)
+                .collect(Collectors.groupingBy(item -> item.getAsset().getId(),
+                        Collectors.reducing(ZERO, LedgerRecord::getTotalValue, BigDecimal::add)));
 
         List<PositionResponse> positions = source.stream()
                 .map(position -> new PositionResponse(position.asset().getId(), position.asset().getTicker(),
@@ -58,6 +65,7 @@ public class DashboardController {
                         PortfolioService.money(position.acquisitionCost()), position.asset().getCurrentPrice(),
                         nullableMoney(position.currentValue()), nullableMoney(position.profitLoss()),
                         nullableMoney(position.returnPercentage()), percentage(position.currentValue(), totalValue),
+                        PortfolioService.money(incomeByAsset.getOrDefault(position.asset().getId(), ZERO)),
                         position.asset().getPriceDate()))
                 .sorted(Comparator.comparing(PositionResponse::currentValue,
                         Comparator.nullsLast(Comparator.reverseOrder())))
@@ -75,8 +83,8 @@ public class DashboardController {
                     nullableMoney(categoryPnl), nullableMoney(categoryReturn), percentage(value, totalValue));
         }).toList();
 
-        BigDecimal income = records.findByWalletIdOrderByDateAscCreatedAtAsc(walletId).stream()
-                .filter(item -> item.getType() == LedgerRecord.Type.DIVIDENDO || item.getType() == LedgerRecord.Type.JCP)
+        BigDecimal income = walletRecords.stream()
+                .filter(this::isIncome)
                 .map(LedgerRecord::getTotalValue).filter(Objects::nonNull).reduce(ZERO, BigDecimal::add);
         String largest = totalValue == null || positions.isEmpty() ? null : positions.getFirst().ticker();
         return new DashboardResponse(PortfolioService.money(totalCost), nullableMoney(totalValue),
@@ -99,5 +107,8 @@ public class DashboardController {
     }
     private BigDecimal nullableMoney(BigDecimal value) {
         return value == null ? null : PortfolioService.money(value);
+    }
+    private boolean isIncome(LedgerRecord item) {
+        return item.getType() == LedgerRecord.Type.DIVIDENDO || item.getType() == LedgerRecord.Type.JCP;
     }
 }

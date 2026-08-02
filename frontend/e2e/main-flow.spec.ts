@@ -79,7 +79,13 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await incomeRecordForm.getByRole('button', { name: 'Salvar lançamento' }).click();
   await expect(incomeRecordForm.getByRole('status')).toContainText('sucesso');
   await expect(page.locator('.income-page-history tbody')).toContainText('PETR4');
+  await page.getByRole('link', { name: 'Posições', exact: true }).click();
+  const petr4Position = page.locator('tbody tr').filter({ hasText: 'PETR4' });
+  await expect(petr4Position.locator('.position-income')).toContainText(/R\$\s*10,00/);
   await page.getByRole('link', { name: 'Voltar à carteira' }).click();
+  const positionsPanel = (await page.locator('#posicoes > article').boundingBox())!;
+  const distributionPanel = (await page.locator('#posicoes > aside').boundingBox())!;
+  expect(distributionPanel.width).toBeLessThan(positionsPanel.width / 3);
   const recordsPanel = page.locator('#lancamentos .panel.wide');
   await expect(recordsPanel.getByRole('link', { name: 'Lançamentos', exact: true }))
     .toHaveAttribute('href', /\/wallets\/[^/]+\/records/);

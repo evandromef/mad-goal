@@ -324,6 +324,32 @@ registrar uma compra.
 - rotas e imports relativos foram atualizados para a nova estrutura;
 - as diretrizes do repositório agora documentam a convenção de organização.
 
+### Menu de ações da carteira
+
+- os controles de nova carteira, renomeação e exclusão foram reunidos em um único
+  botão “Ações da carteira”;
+- as opções são exibidas em um painel flutuante sem deslocar o conteúdo;
+- renomeação e exclusão só aparecem quando existe uma carteira selecionada;
+- o menu fecha após uma ação, ao clicar fora ou pressionar Escape;
+- o botão expõe `aria-haspopup`, `aria-expanded` e devolve o foco após Escape;
+- o indicador textual foi substituído por um ícone vetorial de ações com três
+  pontos verticais;
+- o layout foi adaptado aos temas claro e orbital e ocupa toda a largura no mobile;
+- testes unitários e E2E cobrem abertura, opções disponíveis e interação por teclado.
+
+### Cadastro contextual de carteira
+
+- o formulário da primeira carteira ganhou um botão Cancelar que também limpa o
+  nome digitado;
+- quando já existe uma carteira, a opção Nova carteira abre um modal com campo de
+  nome, seguindo o mesmo padrão visual e acessível da renomeação;
+- a criação inline e a criação pelo modal compartilham a mesma rotina de envio;
+- ao fechar o modal, o foco retorna ao botão Ações da carteira;
+- o formulário inline passa a empilhar seus controles em telas pequenas;
+- testes unitários e E2E cobrem os dois contextos de criação e o cancelamento;
+- o timeout do fluxo E2E completo foi ajustado para 60 segundos para acomodar o
+  cenário integral em ambientes mais lentos.
+
 ## Verificações executadas
 
 Ao longo do desenvolvimento foram usados os comandos canônicos:
@@ -347,9 +373,9 @@ git diff --check
 
 No último ciclo de validação registrado:
 
-- os 19 testes do backend e os 43 testes do frontend passaram;
-- a cobertura do frontend ficou em 94,78% de statements, 84,25% de branches,
-  96,80% de funções e 97,04% de linhas;
+- os 19 testes do backend e os 45 testes do frontend passaram;
+- a cobertura do frontend ficou em 94,11% de statements, 83,94% de branches,
+  96,51% de funções e 96,33% de linhas;
 - todas as verificações de cobertura do backend foram atendidas;
 - o build Angular passou localmente e dentro do Docker;
 - o E2E Playwright passou usando a stack real;

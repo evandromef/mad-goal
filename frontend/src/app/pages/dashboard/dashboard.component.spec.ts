@@ -149,6 +149,46 @@ describe('DashboardComponent - lançamentos', () => {
     expect(component.evolutionWidth(10)).toBeGreaterThan(0);
   });
 
+  it('agrupa as ações da carteira em um menu acessível', () => {
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    const trigger: HTMLButtonElement = fixture.nativeElement.querySelector('.wallet-actions-trigger');
+
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(fixture.nativeElement.querySelector('.wallet-actions-menu')).toBeNull();
+    trigger.click();
+    fixture.detectChanges();
+
+    const menu: HTMLElement = fixture.nativeElement.querySelector('.wallet-actions-menu');
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(Array.from(menu.querySelectorAll('button')).map(button => button.textContent?.trim()))
+      .toEqual(['Nova carteira', 'Renomear carteira', 'Excluir carteira']);
+
+  });
+
+  it('usa formulário cancelável na primeira carteira e modal nas próximas', async () => {
+    const fixture = TestBed.createComponent(DashboardComponent);
+    const component = fixture.componentInstance;
+    component.wallets.set([]);
+
+    await component.openWalletCreation();
+    fixture.detectChanges();
+    component.walletForm.setValue({ name: 'Temporária' });
+    fixture.nativeElement.querySelector('.inline-form .button.secondary').click();
+    expect(component.showWalletForm()).toBe(false);
+    expect(component.walletForm.controls.name.value).toBe('');
+
+    component.wallets.set([{ id: 'wallet-1', name: 'Principal', currentValue: 0 }]);
+    modal.prompt.mockResolvedValueOnce('Reserva');
+    await component.openWalletCreation();
+
+    expect(modal.prompt).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Nova carteira', inputLabel: 'Nome da carteira', confirmLabel: 'Criar carteira'
+    }));
+    expect(api.createWallet).toHaveBeenCalledWith('Reserva');
+    expect(component.showWalletForm()).toBe(false);
+  });
+
   it('exibe somente os 24 períodos mais recentes da evolução', () => {
     const component = TestBed.createComponent(DashboardComponent).componentInstance;
     const evolution = Array.from({ length: 30 }, (_, index) => ({

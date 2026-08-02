@@ -32,8 +32,19 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await page.getByRole('link', { name: 'Voltar', exact: true }).click();
 
   await page.getByRole('button', { name: 'Criar carteira' }).click();
+  await expect(page.locator('.inline-form').getByRole('button', { name: 'Cancelar' })).toBeVisible();
   await page.getByPlaceholder('Nome da nova carteira').fill('Carteira E2E');
   await page.getByRole('button', { name: 'Criar', exact: true }).click();
+  const walletActions = page.getByRole('button', { name: 'Ações da carteira' });
+  await walletActions.click();
+  const walletActionGroup = page.getByRole('group', { name: 'Ações da carteira' });
+  await expect(walletActionGroup.getByRole('button')).toHaveCount(3);
+  await walletActionGroup.getByRole('button', { name: 'Nova carteira' }).click();
+  const newWalletModal = page.getByRole('dialog');
+  await expect(newWalletModal.getByRole('heading', { name: 'Nova carteira' })).toBeVisible();
+  await expect(newWalletModal.getByLabel('Nome da carteira')).toBeVisible();
+  await newWalletModal.getByRole('button', { name: 'Cancelar' }).click();
+  await expect(walletActions).toBeFocused();
   const form = page.locator('form.stack-form');
   const purchaseHeight = (await form.boundingBox())!.height;
   for (const type of ['DIVIDENDO', 'JCP', 'BONIFICACAO', 'DESDOBRAMENTO']) {

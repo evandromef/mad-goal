@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, ElementRef, HostListener, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -24,6 +24,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly dashboard = signal<Dashboard | null>(null);
   readonly records = signal<LedgerItem[]>([]);
   readonly showWalletForm = signal(false);
+  readonly walletActionsOpen = signal(false);
   readonly message = signal('');
   readonly successMessage = signal('');
   readonly editingId = signal<string | null>(null);
@@ -95,6 +96,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
   selectWallet(id: string): void {
+    this.walletActionsOpen.set(false);
     if (id !== this.selectedWalletId()) this.cancelEdit(false);
     this.selectedWalletId.set(id);
     if (!id) return;
@@ -104,11 +106,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
   createWallet(): void {
     if (this.walletForm.invalid) return;
-    this.api.createWallet(this.walletForm.getRawValue().name).subscribe((wallet) => {
-      this.walletForm.reset(); this.showWalletForm.set(false); this.loadWallets(); this.selectWallet(wallet.id);
-    });
+    const name = this.walletForm.getRawValue().name.trim();
+    if (name) this.submitWalletCreation(name);
+  }
+  cancelWalletCreation(): void {
+    this.walletForm.reset();
+    this.showWalletForm.set(false);
+  }
+  toggleWalletActions(): void { this.walletActionsOpen.update(open => !open); }
+  async openWalletCreation(): Promise<void> {
+    this.walletActionsOpen.set(false);
+    if (!this.wallets().length) {
+      this.showWalletForm.set(true);
+      return;
+    }
+    this.walletActionsTrigger?.nativeElement.focus();
+    const name = (await this.modal.prompt({
+      title: 'Nova carteira',
+      message: 'Escolha um nome para identificar a nova carteira.',
+      inputLabel: 'Nome da carteira',
+      placeholder: 'Ex.: Longo prazo',
+      confirmLabel: 'Criar carteira'
+    }))?.trim();
+    if (name) this.submitWalletCreation(name);
   }
   async renameWallet(): Promise<void> {
+    this.walletActionsOpen.set(false);
+    this.walletActionsTrigger?.nativeElement.focus();
     const wallet = this.wallets().find(item => item.id === this.selectedWalletId());
     if (!wallet) return;
     const name = (await this.modal.prompt({
@@ -126,6 +150,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
   async deleteWallet(): Promise<void> {
+    this.walletActionsOpen.set(false);
+    this.walletActionsTrigger?.nativeElement.focus();
     const id = this.selectedWalletId();
     const wallet = this.wallets().find(item => item.id === id);
     if (!id || !await this.modal.confirm({
@@ -140,6 +166,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.dashboard.set(null);
       this.records.set([]);
       this.loadWallets();
+    });
+  }
+  @ViewChild('walletActions') private walletActions?: ElementRef<HTMLElement>;
+  @ViewChild('walletActionsTrigger') private walletActionsTrigger?: ElementRef<HTMLButtonElement>;
+
+  @HostListener('document:click', ['$event'])
+  closeWalletActionsOnOutsideClick(event: MouseEvent): void {
+    const target = event.target as Node | null;
+    if (this.walletActionsOpen() && (!target || !this.walletActions?.nativeElement.contains(target))) {
+      this.walletActionsOpen.set(false);
+    }
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  closeWalletActionsOnEscape(event: Event): void {
+    if (!this.walletActionsOpen()) return;
+    event.preventDefault();
+    this.walletActionsOpen.set(false);
+    this.walletActionsTrigger?.nativeElement.focus();
+  }
+  private submitWalletCreation(name: string): void {
+    this.api.createWallet(name).subscribe((wallet) => {
+      this.walletForm.reset(); this.showWalletForm.set(false); this.loadWallets(); this.selectWallet(wallet.id);
     });
   }
   changeGranularity(value: 'MONTHLY' | 'YEARLY'): void {

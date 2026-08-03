@@ -350,6 +350,43 @@ registrar uma compra.
 - o timeout do fluxo E2E completo foi ajustado para 60 segundos para acomodar o
   cenário integral em ambientes mais lentos.
 
+### Lançamentos em modal e painéis lado a lado
+
+- o formulário fixo de lançamento foi removido da página inicial;
+- um botão Novo lançamento passou a ser exibido abaixo dos controles da
+  carteira, ainda dentro da área principal de apresentação;
+- cadastro e edição usam o mesmo modal, preservando os campos e a altura do
+  formulário entre os diferentes tipos de lançamento;
+- o modal recebe o foco ao abrir, contém a navegação por Tab, fecha com Escape
+  ou pelo botão Cancelar e devolve o foco ao controle que o abriu;
+- as áreas Lançamentos, Evolução e Proventos foram reunidas em uma grade de três
+  colunas no desktop e continuam responsivas em telas menores;
+- os testes unitários e o fluxo E2E foram atualizados para cobrir abertura,
+  edição, retorno de foco e disposição dos três painéis.
+
+### Atividade recente compacta
+
+- a página inicial passou a exibir somente os 10 lançamentos mais recentes;
+- os itens da atividade foram compactados, com ações dispostas verticalmente;
+- Atividade recente e Evolução deixaram de limitar a altura e não exibem mais
+  rolagem vertical interna;
+- o histórico completo continua disponível pelo título e pelo link ao final da
+  lista de lançamentos.
+
+### Proventos mensais no dashboard
+
+- a antiga análise por período foi substituída por uma área de Proventos;
+- o painel consulta e exibe somente os últimos 12 meses, do mês atual ao mais
+  antigo;
+- os meses formam uma lista expansível de `income-month-details`; o mês atual
+  inicia aberto e cada título `income-selected-month` pode ser acionado para
+  exibir a tabela logo abaixo do próprio mês;
+- o detalhamento mensal mostra ativo, tipo, data de pagamento e valor;
+- filtros, agrupamentos e o valor total recebido foram removidos do dashboard;
+- meses sem recebimentos permanecem disponíveis e apresentam um estado vazio;
+- testes unitários e E2E verificam o intervalo, a seleção inicial, a troca de mês
+  e a ausência dos controles removidos.
+
 ## Verificações executadas
 
 Ao longo do desenvolvimento foram usados os comandos canônicos:
@@ -373,9 +410,9 @@ git diff --check
 
 No último ciclo de validação registrado:
 
-- os 19 testes do backend e os 45 testes do frontend passaram;
-- a cobertura do frontend ficou em 94,11% de statements, 83,94% de branches,
-  96,51% de funções e 96,33% de linhas;
+- os 19 testes do backend e os 46 testes do frontend passaram;
+- a cobertura do frontend ficou em 92,42% de statements, 81,66% de branches,
+  96,24% de funções e 94,26% de linhas;
 - todas as verificações de cobertura do backend foram atendidas;
 - o build Angular passou localmente e dentro do Docker;
 - o E2E Playwright passou usando a stack real;
@@ -400,6 +437,4 @@ No último ciclo de validação registrado:
 | `1dbc4a8` | 31/07/2026 22:49 | Páginas completas da carteira e navegação principal |
 | `e00f09b` | 02/08/2026 09:07 | Tema orbital e compatibilidade com TypeScript 6 |
 | `2ee64a4` | 02/08/2026 09:56 | Proventos por posição e distribuição compacta |
-
-A seção de alterações posteriores representa o estado atual do diretório de
-trabalho e ainda precisa ser incluída em um commit.
+| `ba58846` | 02/08/2026 20:43 | Ações e cadastro contextual de carteira |

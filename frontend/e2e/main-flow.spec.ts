@@ -45,6 +45,14 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await expect(newWalletModal.getByLabel('Nome da carteira')).toBeVisible();
   await newWalletModal.getByRole('button', { name: 'Cancelar' }).click();
   await expect(walletActions).toBeFocused();
+  const newRecordButton = page.getByRole('button', { name: 'Novo lançamento' });
+  await expect(newRecordButton).toBeVisible();
+  await newRecordButton.click();
+  const recordModal = page.getByRole('dialog');
+  await expect(recordModal.getByRole('heading', { name: 'Novo lançamento' })).toBeVisible();
+  await recordModal.evaluate(async element => {
+    await Promise.all(element.getAnimations().map(animation => animation.finished));
+  });
   const form = page.locator('form.stack-form');
   const purchaseHeight = (await form.boundingBox())!.height;
   for (const type of ['DIVIDENDO', 'JCP', 'BONIFICACAO', 'DESDOBRAMENTO']) {
@@ -97,7 +105,37 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   const positionsPanel = (await page.locator('#posicoes > article').boundingBox())!;
   const distributionPanel = (await page.locator('#posicoes > aside').boundingBox())!;
   expect(distributionPanel.width).toBeLessThan(positionsPanel.width / 3);
-  const recordsPanel = page.locator('#lancamentos .panel.wide');
+  const insightPanels = page.locator('.dashboard-insights-grid > article');
+  await expect(insightPanels).toHaveCount(3);
+  const incomePanel = insightPanels.nth(2);
+  const incomeMonths = incomePanel.locator('.income-selected-month');
+  await expect(incomeMonths).toHaveCount(12);
+  await expect(incomeMonths.first()).toHaveAttribute('aria-expanded', 'true');
+  await expect(incomePanel.locator('.income-month-details.open')).toHaveCount(1);
+  await expect(incomePanel.getByText('Total filtrado')).toHaveCount(0);
+  await expect(incomePanel.locator('form')).toHaveCount(0);
+  await expect(incomePanel.locator('thead')).toContainText('Ativo');
+  await expect(incomePanel.locator('thead')).toContainText('Pagamento');
+  await expect(incomePanel.locator('tbody')).toContainText('PETR4');
+  await incomeMonths.nth(1).click();
+  await expect(incomeMonths.first()).toHaveAttribute('aria-expanded', 'false');
+  await expect(incomeMonths.nth(1)).toHaveAttribute('aria-expanded', 'true');
+  await expect(incomePanel.getByText('Nenhum provento recebido neste mês.')).toBeVisible();
+  await incomeMonths.first().click();
+  await expect(incomePanel.locator('tbody')).toContainText('PETR4');
+  const insightBoxes = await insightPanels.evaluateAll(elements => elements.map(element => {
+    const box = element.getBoundingClientRect();
+    return { x: box.x, y: box.y };
+  }));
+  expect(insightBoxes[0].x).toBeLessThan(insightBoxes[1].x);
+  expect(insightBoxes[1].x).toBeLessThan(insightBoxes[2].x);
+  expect(Math.abs(insightBoxes[0].y - insightBoxes[2].y)).toBeLessThan(2);
+  await expect.poll(() => page.locator('.activity-list').evaluate(element => getComputedStyle(element).overflowY))
+    .toBe('visible');
+  await expect.poll(() => page.locator('.evolution').evaluate(element => getComputedStyle(element).overflowY))
+    .toBe('visible');
+  expect((await page.locator('.activity').first().boundingBox())!.height).toBeLessThan(90);
+  const recordsPanel = page.locator('#lancamentos .records-panel');
   await expect(recordsPanel.getByRole('link', { name: 'Lançamentos', exact: true }))
     .toHaveAttribute('href', /\/wallets\/[^/]+\/records/);
   await recordsPanel.getByRole('link', { name: /Ver histórico completo/ }).click();
@@ -120,6 +158,13 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await expect(page.locator('app-record-form')).toBeVisible();
   await page.getByRole('link', { name: 'Voltar à carteira' }).click();
   await expect(page.locator('#lancamentos').getByRole('heading', { name: 'Lançamentos' })).toBeVisible();
+  const editTrigger = page.locator('.activity').filter({ hasText: 'Compra · PETR4' })
+    .getByRole('button', { name: 'Editar lançamento' });
+  await editTrigger.click();
+  const editModal = page.getByRole('dialog');
+  await expect(editModal.getByRole('heading', { name: 'Editar lançamento' })).toBeVisible();
+  await editModal.getByRole('button', { name: 'Cancelar' }).click();
+  await expect(editTrigger).toBeFocused();
   const deleteTrigger = page.locator('.activity').filter({ hasText: 'Compra · PETR4' })
     .getByRole('button', { name: 'Excluir lançamento' });
   await deleteTrigger.focus();
@@ -139,6 +184,8 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await cancelDeletion.click();
   await expect(deleteModal).not.toBeVisible();
   await expect(deleteTrigger).toBeFocused();
+  await newRecordButton.click();
+  await expect(recordModal.getByRole('heading', { name: 'Novo lançamento' })).toBeVisible();
   await form.getByLabel('Tipo').selectOption('VENDA');
   const petr4 = await form.locator('select[formcontrolname="assetId"] option', { hasText: /^PETR4 ·/ })
     .getAttribute('value');
@@ -148,6 +195,7 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await page.getByRole('button', { name: 'Salvar lançamento' }).click();
   await expect(form.locator('.form-message-slot .alert')).toBeVisible();
   expect((await form.boundingBox())!.height).toBe(purchaseHeight);
+  await recordModal.getByRole('button', { name: 'Cancelar' }).click();
   await page.getByRole('link', { name: 'PETR4' }).click();
   await expect(page.getByRole('heading', { name: 'PETR4' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Ativar tema claro' })).toBeVisible();

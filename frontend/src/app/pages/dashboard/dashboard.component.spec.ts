@@ -203,7 +203,7 @@ describe('DashboardComponent - lançamentos', () => {
     expect(component.evolutionWidth(30)).toBe(100);
   });
 
-  it('exibe os 20 lançamentos mais recentes e links para o histórico completo', () => {
+  it('exibe os 10 lançamentos mais recentes e links para o histórico completo', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     const component = fixture.componentInstance;
     component.wallets.set([{ id: 'wallet-1', name: 'Principal', currentValue: 0 }]);
@@ -214,10 +214,10 @@ describe('DashboardComponent - lançamentos', () => {
     })));
     fixture.detectChanges();
 
-    expect(component.recentRecords()).toHaveLength(20);
+    expect(component.recentRecords()).toHaveLength(10);
     expect(component.recentRecords()[0].id).toBe('record-24');
-    expect(component.recentRecords()[19].id).toBe('record-5');
-    expect(fixture.nativeElement.querySelectorAll('.activity-list .activity')).toHaveLength(20);
+    expect(component.recentRecords()[9].id).toBe('record-15');
+    expect(fixture.nativeElement.querySelectorAll('.activity-list .activity')).toHaveLength(10);
     expect(fixture.nativeElement.querySelector('.topbar-menu a[href="/wallets/wallet-1/records"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.records-title-link[href="/wallets/wallet-1/records"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.records-link[href="/wallets/wallet-1/records"]')).toBeTruthy();
@@ -277,6 +277,8 @@ describe('DashboardComponent - lançamentos', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     const component = fixture.componentInstance;
     fixture.detectChanges();
+    component.openRecordModal();
+    fixture.detectChanges();
     component.recordForm.controls.type.setValue('DIVIDENDO');
     fixture.detectChanges();
 
@@ -293,22 +295,57 @@ describe('DashboardComponent - lançamentos', () => {
     expect(messageSlot).not.toBeNull();
   });
 
-  it('filtra proventos por ativo e expõe os ativos da carteira', () => {
+  it('abre cadastro e edição em modal e mantém os três painéis lado a lado', () => {
+    const fixture = TestBed.createComponent(DashboardComponent);
+    const component = fixture.componentInstance;
+    component.wallets.set([{ id: 'wallet-1', name: 'Principal', currentValue: 0 }]);
+    component.selectedWalletId.set('wallet-1');
+    component.dashboard.set(dashboard);
+    component.records.set([item]);
+    fixture.detectChanges();
+
+    const heroButton: HTMLButtonElement = fixture.nativeElement.querySelector('.hero-actions .new-record-button');
+    expect(heroButton).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.workspace form.stack-form')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('.dashboard-insights-grid > article')).toHaveLength(3);
+
+    heroButton.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="dialog"] form.stack-form')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('#record-modal-title').textContent).toContain('Novo lançamento');
+    component.cancelEdit();
+    fixture.detectChanges();
+
+    const editButton: HTMLButtonElement = fixture.nativeElement.querySelector('.activity-actions button');
+    editButton.click();
+    fixture.detectChanges();
+    expect(component.editingId()).toBe('record-1');
+    expect(fixture.nativeElement.querySelector('#record-modal-title').textContent).toContain('Editar lançamento');
+  });
+
+  it('carrega os últimos 12 meses e seleciona os proventos de um mês', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-15T12:00:00-03:00'));
+    api.incomes.mockReturnValueOnce(of({ total: 30, groups: [], items: [
+      { id: 'income-1', assetId: 'asset-1', ticker: 'PETR4', category: 'ACAO', type: 'DIVIDENDO',
+        date: '2026-08-10', totalValue: 20 },
+      { id: 'income-2', assetId: 'asset-2', ticker: 'VALE3', category: 'ACAO', type: 'JCP',
+        date: '2026-07-10', totalValue: 10 }
+    ] }));
     const component = TestBed.createComponent(DashboardComponent).componentInstance;
     component.selectedWalletId.set('wallet-1');
-    component.assets.set([
-      { id: 'asset-1', ticker: 'PETR4', name: 'Petrobras', category: 'ACAO', currentPrice: null, priceDate: null },
-      { id: 'asset-2', ticker: 'VALE3', name: 'Vale', category: 'ACAO', currentPrice: null, priceDate: null }
-    ]);
-    component.records.set([item]);
-    component.incomeForm.patchValue({ assetId: 'asset-1', type: 'DIVIDENDO', groupBy: 'QUARTERLY' });
-
-    expect(component.incomeAssets().map(asset => asset.id)).toEqual(['asset-1']);
     component.loadIncomes();
 
     expect(api.incomes).toHaveBeenCalledWith('wallet-1', {
-      assetId: 'asset-1', type: 'DIVIDENDO', groupBy: 'QUARTERLY'
+      from: '2025-09-01', to: '2026-08-31', groupBy: 'MONTHLY'
     });
+    expect(component.incomeMonths).toHaveLength(12);
+    expect(component.incomeMonths[0]).toBe('2026-08');
+    expect(component.incomeMonths[11]).toBe('2025-09');
+    expect(component.selectedMonthIncomes().map(income => income.id)).toEqual(['income-1']);
+
+    component.selectIncomeMonth('2026-07');
+    expect(component.selectedMonthIncomes().map(income => income.id)).toEqual(['income-2']);
   });
 
   it('monta payloads de provento, bonificação e evento e trata erros', async () => {
@@ -358,9 +395,9 @@ describe('DashboardComponent - lançamentos', () => {
     }));
     api.records.mockReturnValue(of([{ ...item, type: 'DESDOBRAMENTO', totalValue: undefined,
       quantity: undefined, newQuantity: 20, ratio: '1:2' }]));
-    api.incomes.mockReturnValue(of({ total: 25, groups: [{ period: '2026-T1', total: 25 }], items: [{
+    api.incomes.mockReturnValue(of({ total: 25, groups: [{ period: '2026-08', total: 25 }], items: [{
       id: 'income-1', assetId: 'asset-1', ticker: 'PETR4', category: 'ACAO', type: 'DIVIDENDO',
-      date: '2026-04-10', totalValue: 25
+      date: '2026-08-10', totalValue: 25
     }] }));
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
@@ -369,9 +406,14 @@ describe('DashboardComponent - lançamentos', () => {
     expect(text).toContain('PETR4');
     expect(text).toContain('20 un. · 1:2');
     expect(text).toContain('janeiro de 2026');
-    expect(text).toContain('1º trimestre de 2026');
-    expect(text).toContain('10/04/2026');
-    expect(text).toContain('Dividendos');
+    expect(text).toContain('10/08/2026');
+    expect(text).toContain('Dividendo');
+    expect(fixture.nativeElement.querySelectorAll('.income-month-details')).toHaveLength(12);
+    expect(fixture.nativeElement.querySelectorAll('.income-selected-month')).toHaveLength(12);
+    expect(fixture.nativeElement.querySelectorAll('.income-month-details.open table')).toHaveLength(1);
+    expect(fixture.nativeElement.querySelector('.income-selected-month').getAttribute('aria-expanded')).toBe('true');
+    expect(text).not.toContain('Total filtrado');
+    expect(fixture.nativeElement.querySelector('.dashboard-insights-grid .filter-grid')).toBeNull();
     expect(fixture.nativeElement.querySelector('.position-income').textContent).toMatch(/25[,.]00/);
     expect(fixture.nativeElement.querySelector('#posicoes').classList.contains('positions-overview-grid')).toBe(true);
   });

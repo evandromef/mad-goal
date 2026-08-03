@@ -64,6 +64,7 @@ input:focus, select:focus, textarea:focus { border-color: #6d8e81; box-shadow: 0
 .user > span { width: 34px; height: 34px; display: grid; place-items: center; background: var(--ink); color: var(--lime); border-radius: 50%; font-weight: 700; }
 .workspace { width: min(1450px, calc(100% - 2.5rem)); margin: 0 auto; padding: 3rem 0 5rem; }
 .hero-row { display: flex; justify-content: space-between; align-items: end; gap: 2rem; margin-bottom: 2rem; }
+.hero-actions { display: grid; gap: .7rem; justify-items: end; }
 .wallet-control { display: flex; align-items: end; gap: .7rem; }
 .wallet-control label { margin: 0; min-width: 220px; }
 .wallet-actions { position: relative; }
@@ -73,6 +74,7 @@ input:focus, select:focus, textarea:focus { border-color: #6d8e81; box-shadow: 0
 .wallet-actions-menu button { width: 100%; padding: .7rem .75rem; border: 0; border-radius: 7px; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
 .wallet-actions-menu button:hover, .wallet-actions-menu button:focus-visible { outline: none; background: #edf2e1; }
 .wallet-actions-menu .wallet-action-danger { color: var(--red); }
+.new-record-button { min-width: 175px; }
 .inline-form { display: flex; gap: .6rem; padding: 1rem; background: white; border: 1px solid var(--line); border-radius: 12px; margin-bottom: 1.5rem; }
 .metrics { display: grid; grid-template-columns: 1.3fr repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem; }
 .metric { padding: 1.4rem; background: white; border: 1px solid var(--line); border-radius: 15px; min-height: 145px; display: flex; flex-direction: column; justify-content: space-between; }
@@ -128,7 +130,27 @@ td small { display: block; color: var(--muted); margin-top: .2rem; }
 .form-message-slot .alert { margin: .6rem 0 0; }
 .form-actions { display: flex; gap: .6rem; }
 .form-actions .button { flex: 1; }
+.record-modal { width: min(100%, 760px); max-height: calc(100vh - 2rem); overflow-y: auto; }
+.record-modal-form { height: 554px; }
 .readonly { color: #52615c; background: #f0f2ed; }
+.dashboard-insights-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items: start; margin-bottom: 1rem; }
+.dashboard-insights-grid .activity { grid-template-columns: auto minmax(0, 1fr) auto; gap: .25rem .55rem; padding: .55rem .25rem; }
+.dashboard-insights-grid .activity-icon { grid-row: 1 / span 2; width: 30px; height: 30px; }
+.dashboard-insights-grid .activity-value { grid-column: 2; text-align: left; }
+.dashboard-insights-grid .activity-actions { grid-column: 3; grid-row: 1 / span 2; flex-direction: column; gap: .25rem; }
+.dashboard-insights-grid .activity-actions button { padding: .3rem .45rem; }
+.income-month-list { display: grid; gap: .4rem; }
+.income-month-details { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.income-month-details h3 { margin: 0; }
+.income-selected-month { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .7rem .8rem; border: 0; background: transparent; color: var(--muted); font-size: .85rem; font-weight: 600; text-align: left; text-transform: capitalize; cursor: pointer; }
+.income-selected-month:hover, .income-selected-month:focus-visible { color: var(--ink); outline: none; background: #f4f6ef; }
+.income-month-details.open { border-color: var(--green); }
+.income-month-details.open .income-selected-month { background: #edf2e1; color: var(--green); font-weight: 700; }
+.income-month-content { padding: .25rem .7rem .7rem; border-top: 1px solid var(--line); }
+.income-month-details table { min-width: 0; }
+.income-month-details th, .income-month-details td { padding: .55rem .35rem; }
+.income-month-details th { font-size: .6rem; }
+.income-month-details td { font-size: .78rem; }
 .activity { display: grid; grid-template-columns: auto 1fr auto auto; gap: .8rem; align-items: center; padding: .9rem .5rem; border-bottom: 1px solid #edf0eb; border-radius: 8px; }
 .activity.editing { background: #f2f6e9; }
 .activity-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #edf2e1; font-weight: 700; }
@@ -280,6 +302,11 @@ td small { display: block; color: var(--muted); margin-top: .2rem; }
 [data-theme='orbital'] .activity.editing { background: #151b23; }
 [data-theme='orbital'] .activity-icon { border: 1px solid #46515e; border-radius: 0; background: #11161d; color: #fff; }
 [data-theme='orbital'] .activity-actions button { border-color: #3b4653; border-radius: 0; background: transparent; color: #c3cad2; }
+[data-theme='orbital'] .income-month-details { border-radius: 0; }
+[data-theme='orbital'] .income-month-details.open { border-color: #fff; }
+[data-theme='orbital'] .income-selected-month:hover,
+[data-theme='orbital'] .income-selected-month:focus-visible,
+[data-theme='orbital'] .income-month-details.open .income-selected-month { background: #171d25; color: #fff; }
 [data-theme='orbital'] .readonly { background: #11161a; color: #909ba7; }
 [data-theme='orbital'] .empty { border-color: #3a4552; border-radius: 0; background: rgba(8, 11, 15, .72); }
 [data-theme='orbital'] .alert { border: 1px solid #753632; border-radius: 0; background: #271312; color: #ffaaa5; }
@@ -305,6 +332,7 @@ td small { display: block; color: var(--muted); margin-top: .2rem; }
   .analytics, .detail-metrics { grid-template-columns: 1fr 1fr !important; }
   .records-filter { grid-template-columns: 1fr 1fr; }
   .page-detail-grid { grid-template-columns: 1fr; }
+  .dashboard-insights-grid { grid-template-columns: 1fr; }
   .topbar-menu { gap: .25rem !important; }
   .topbar-menu a { padding-inline: .4rem; }
   .topbar { padding-right: 5rem; }
@@ -318,13 +346,16 @@ td small { display: block; color: var(--muted); margin-top: .2rem; }
   .topbar nav { display: none; }
   .workspace { width: min(100% - 1.5rem, 1450px); padding-top: 2rem; }
   .hero-row { align-items: stretch; flex-direction: column; }
+  .hero-actions { justify-items: stretch; }
   .wallet-control { align-items: stretch; flex-direction: column; }
   .wallet-control label { min-width: 0; }
   .wallet-actions, .wallet-actions-trigger { width: 100%; }
+  .new-record-button { width: 100%; }
   .wallet-actions-menu { right: 0; left: 0; width: auto; }
   .inline-form { flex-direction: column; }
   .metrics { grid-template-columns: 1fr; }
   .stack-form { height: 850px; }
+  .record-modal-form { height: 850px; }
   .form-row { grid-template-columns: 1fr; }
   .form-message-slot { height: 64px; }
   .activity { grid-template-columns: auto 1fr auto; }

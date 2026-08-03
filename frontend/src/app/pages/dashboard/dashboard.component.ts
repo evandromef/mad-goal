@@ -25,15 +25,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly records = signal<LedgerItem[]>([]);
   readonly showWalletForm = signal(false);
   readonly walletActionsOpen = signal(false);
+  readonly recordModalOpen = signal(false);
   readonly message = signal('');
   readonly successMessage = signal('');
   readonly editingId = signal<string | null>(null);
   readonly granularity = signal<'MONTHLY' | 'YEARLY'>('MONTHLY');
   readonly incomeData = signal<IncomeResponse | null>(null);
+  readonly incomeMonths = this.createIncomeMonths();
+  readonly selectedIncomeMonth = signal(this.incomeMonths[0]);
+  readonly selectedMonthIncomes = computed(() => this.incomeData()?.items
+    .filter(item => item.date.startsWith(this.selectedIncomeMonth())) ?? []);
   private successTimer: ReturnType<typeof setTimeout> | null = null;
+  private recordModalReturnFocus?: HTMLElement;
   readonly userName = signal(localStorage.getItem('mad_user') ?? 'Investidor');
   readonly userInitial = computed(() => this.userName().charAt(0).toUpperCase());
-  readonly recentRecords = computed(() => [...this.records()].reverse().slice(0, 20));
+  readonly recentRecords = computed(() => [...this.records()].reverse().slice(0, 10));
   readonly visibleEvolution = computed(() => [...(this.dashboard()?.evolution.slice(-24) ?? [])].reverse());
   readonly purchaseAssetQuery = signal('');
   readonly filteredPurchaseAssets = computed(() => {
@@ -41,17 +47,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (!query) return this.assets();
     return this.assets().filter(asset => this.assetDisplay(asset).toLocaleLowerCase('pt-BR').includes(query));
   });
-  readonly incomeAssets = computed(() => {
-    const ids = new Set(this.records().map(item => item.assetId));
-    return this.assets().filter(asset => ids.has(asset.id));
-  });
   availableAssets(): Asset[] {
     if (this.recordForm.controls.type.value === 'COMPRA') return this.assets();
     const walletAssetIds = new Set(this.records().map(item => item.assetId));
     return this.assets().filter(asset => walletAssetIds.has(asset.id));
   }
   readonly walletForm = this.fb.nonNullable.group({ name: ['', [Validators.required, Validators.maxLength(80)]] });
-  readonly incomeForm = this.fb.nonNullable.group({ assetId: '', category: '', type: '', from: '', to: '', groupBy: 'MONTHLY' });
   readonly recordForm = this.fb.group({
     type: this.fb.nonNullable.control('COMPRA', Validators.required),
     assetId: this.fb.nonNullable.control('', Validators.required),
@@ -97,7 +98,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
   selectWallet(id: string): void {
     this.walletActionsOpen.set(false);
-    if (id !== this.selectedWalletId()) this.cancelEdit(false);
+    if (id !== this.selectedWalletId()) {
+      this.cancelEdit(false);
+      this.selectedIncomeMonth.set(this.incomeMonths[0]);
+    }
     this.selectedWalletId.set(id);
     if (!id) return;
     this.api.dashboard(id, this.granularity()).subscribe((data) => this.dashboard.set(data));
@@ -170,6 +174,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
   @ViewChild('walletActions') private walletActions?: ElementRef<HTMLElement>;
   @ViewChild('walletActionsTrigger') private walletActionsTrigger?: ElementRef<HTMLButtonElement>;
+  @ViewChild('recordModal') private recordModal?: ElementRef<HTMLElement>;
 
   @HostListener('document:click', ['$event'])
   closeWalletActionsOnOutsideClick(event: MouseEvent): void {
@@ -180,7 +185,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   @HostListener('document:keydown.escape', ['$event'])
-  closeWalletActionsOnEscape(event: Event): void {
+  closeOverlaysOnEscape(event: Event): void {
+    if (this.recordModalOpen()) {
+      event.preventDefault();
+      this.cancelEdit();
+      return;
+    }
     if (!this.walletActionsOpen()) return;
     event.preventDefault();
     this.walletActionsOpen.set(false);
@@ -198,9 +208,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loadIncomes(): void {
     const walletId = this.selectedWalletId();
     if (!walletId) return;
-    const filters = Object.fromEntries(Object.entries(this.incomeForm.getRawValue()).filter(([, value]) => value));
-    this.api.incomes(walletId, filters).subscribe(data => this.incomeData.set(data));
+    const currentMonth = this.incomeMonths[0];
+    const [year, month] = currentMonth.split('-').map(Number);
+    const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    this.api.incomes(walletId, {
+      from: `${this.incomeMonths[11]}-01`,
+      to: `${currentMonth}-${String(lastDay).padStart(2, '0')}`,
+      groupBy: 'MONTHLY'
+    }).subscribe(data => this.incomeData.set(data));
   }
+  selectIncomeMonth(month: string): void { this.selectedIncomeMonth.set(month); }
   evolutionWidth(value: number): number {
     const max = Math.max(...this.visibleEvolution().map(item => item.acquisitionCost), 1);
     return Math.max(2, value / max * 100);
@@ -255,6 +272,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       || this.assetDisplay(asset).toLocaleLowerCase('pt-BR') === normalized);
     this.recordForm.controls.assetId.setValue(selected?.id ?? '');
   }
+  openRecordModal(): void {
+    this.captureRecordModalReturnFocus();
+    this.editingId.set(null);
+    this.message.set('');
+    this.resetRecordForm();
+    this.recordModalOpen.set(true);
+    this.focusRecordModal();
+  }
   saveRecord(): void {
     const walletId = this.selectedWalletId();
     if (!walletId || this.recordForm.invalid) return;
@@ -268,12 +293,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.showSuccess(editingId ? 'Lançamento atualizado com sucesso.' : 'Lançamento salvo com sucesso.');
         this.editingId.set(null);
         this.resetRecordForm();
+        this.closeRecordModal();
         this.selectWallet(walletId);
       },
       error: (response) => this.showError(response.error?.message ?? 'Não foi possível salvar o lançamento.')
     });
   }
   editRecord(item: LedgerItem): void {
+    this.captureRecordModalReturnFocus();
     this.editingId.set(item.id);
     this.message.set('');
     this.clearSuccess();
@@ -291,7 +318,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
     this.recordForm.controls.assetId.disable();
     this.syncPurchaseAssetQuery();
-    document.getElementById('lancamentos')?.scrollIntoView({ behavior: 'smooth' });
+    this.recordModalOpen.set(true);
+    this.focusRecordModal();
   }
   async deleteRecord(item: LedgerItem): Promise<void> {
     if (!await this.modal.confirm({
@@ -313,9 +341,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
   cancelEdit(clearMessage = true): void {
     this.editingId.set(null);
     this.resetRecordForm();
+    this.closeRecordModal(clearMessage);
     if (clearMessage) {
       this.message.set('');
       this.clearSuccess();
+    }
+  }
+  trapRecordModalFocus(event: KeyboardEvent): void {
+    if (event.key !== 'Tab') return;
+    const controls = Array.from(this.recordModal?.nativeElement.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+    ) ?? []);
+    if (!controls.length) return;
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
     }
   }
   private showSuccess(message: string): void {
@@ -335,6 +380,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.successTimer) clearTimeout(this.successTimer);
     this.successTimer = null;
     this.successMessage.set('');
+  }
+  private createIncomeMonths(): string[] {
+    const now = new Date();
+    return Array.from({ length: 12 }, (_, offset) => {
+      const date = new Date(Date.UTC(now.getFullYear(), now.getMonth() - offset, 1));
+      return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+    });
+  }
+  private captureRecordModalReturnFocus(): void {
+    const activeElement = document.activeElement;
+    this.recordModalReturnFocus = activeElement instanceof HTMLElement ? activeElement : undefined;
+  }
+  private focusRecordModal(): void {
+    queueMicrotask(() => this.recordModal?.nativeElement
+      .querySelector<HTMLElement>('[data-record-initial-focus]')?.focus());
+  }
+  private closeRecordModal(restoreFocus = true): void {
+    if (!this.recordModalOpen()) return;
+    this.recordModalOpen.set(false);
+    if (restoreFocus) {
+      const returnFocus = this.recordModalReturnFocus;
+      queueMicrotask(() => returnFocus?.focus());
+    }
+    this.recordModalReturnFocus = undefined;
   }
   private recordPayload(walletId: string): Record<string, unknown> {
     const value = this.recordForm.getRawValue();

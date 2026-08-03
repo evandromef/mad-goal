@@ -19,33 +19,38 @@
       <h1>Olá, {{ userName() }}.</h1>
       <p class="muted">Seu patrimônio, atualizado com a última cotação disponível.</p>
     </div>
-    <div class="wallet-control">
-      <label>Carteira
-        <select [value]="selectedWalletId()" (change)="selectWallet($any($event.target).value)">
-          @for (wallet of wallets(); track wallet.id) { <option [value]="wallet.id">{{ wallet.name }} · {{ wallet.currentValue == null ? 'indisponível' : (wallet.currentValue | currency:'BRL') }}</option> }
-        </select>
-      </label>
-      <div class="wallet-actions" #walletActions>
-        <button #walletActionsTrigger class="button secondary wallet-actions-trigger" type="button"
-          aria-haspopup="true" aria-controls="wallet-actions-menu"
-          [attr.aria-expanded]="walletActionsOpen()" (click)="toggleWalletActions()">
-          Ações da carteira
-          <svg class="wallet-actions-icon" aria-hidden="true" viewBox="0 0 20 20" focusable="false">
-            <circle cx="10" cy="4" r="1.5" />
-            <circle cx="10" cy="10" r="1.5" />
-            <circle cx="10" cy="16" r="1.5" />
-          </svg>
-        </button>
-        @if (walletActionsOpen()) {
-          <div class="wallet-actions-menu" id="wallet-actions-menu" role="group" aria-label="Ações da carteira">
-            <button type="button" (click)="openWalletCreation()">Nova carteira</button>
-            @if (selectedWalletId()) {
-              <button type="button" (click)="renameWallet()">Renomear carteira</button>
-              <button class="wallet-action-danger" type="button" (click)="deleteWallet()">Excluir carteira</button>
-            }
-          </div>
-        }
+    <div class="hero-actions">
+      <div class="wallet-control">
+        <label>Carteira
+          <select [value]="selectedWalletId()" (change)="selectWallet($any($event.target).value)">
+            @for (wallet of wallets(); track wallet.id) { <option [value]="wallet.id">{{ wallet.name }} · {{ wallet.currentValue == null ? 'indisponível' : (wallet.currentValue | currency:'BRL') }}</option> }
+          </select>
+        </label>
+        <div class="wallet-actions" #walletActions>
+          <button #walletActionsTrigger class="button secondary wallet-actions-trigger" type="button"
+            aria-haspopup="true" aria-controls="wallet-actions-menu"
+            [attr.aria-expanded]="walletActionsOpen()" (click)="toggleWalletActions()">
+            Ações da carteira
+            <svg class="wallet-actions-icon" aria-hidden="true" viewBox="0 0 20 20" focusable="false">
+              <circle cx="10" cy="4" r="1.5" />
+              <circle cx="10" cy="10" r="1.5" />
+              <circle cx="10" cy="16" r="1.5" />
+            </svg>
+          </button>
+          @if (walletActionsOpen()) {
+            <div class="wallet-actions-menu" id="wallet-actions-menu" role="group" aria-label="Ações da carteira">
+              <button type="button" (click)="openWalletCreation()">Nova carteira</button>
+              @if (selectedWalletId()) {
+                <button type="button" (click)="renameWallet()">Renomear carteira</button>
+                <button class="wallet-action-danger" type="button" (click)="deleteWallet()">Excluir carteira</button>
+              }
+            </div>
+          }
+        </div>
       </div>
+      @if (selectedWalletId()) {
+        <button class="button primary new-record-button" type="button" (click)="openRecordModal()">Novo lançamento</button>
+      }
     </div>
   </section>
 
@@ -107,68 +112,8 @@
       </aside>
     </section>
 
-    <section class="content-grid" id="lancamentos">
-      <article class="panel">
-        <p class="eyebrow">{{ editingId() ? 'Editando registro' : 'Novo registro' }}</p>
-        <h2>{{ editingId() ? 'Editar lançamento' : 'Adicionar lançamento' }}</h2>
-        <form [formGroup]="recordForm" (ngSubmit)="saveRecord()" class="stack-form">
-          <div class="form-row">
-            <label>Tipo<select formControlName="type" (change)="onRecordTypeChange()">
-              @for (type of recordTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }
-            </select></label>
-            @if (recordForm.controls.type.value === 'COMPRA') {
-              <label>Ativo<input type="text" list="purchase-assets" autocomplete="off"
-                placeholder="Digite o ticker ou nome" [value]="purchaseAssetQuery()"
-                [disabled]="recordForm.controls.assetId.disabled" [class.readonly]="editingId()"
-                (input)="onPurchaseAssetInput($any($event.target).value)">
-                <datalist id="purchase-assets">
-                  @for (asset of filteredPurchaseAssets(); track asset.id) {
-                    <option [value]="assetDisplay(asset)"></option>
-                  }
-                </datalist>
-              </label>
-            } @else {
-              <label>Ativo<select formControlName="assetId" [class.readonly]="editingId()"><option value="">Selecione</option>
-                @for (asset of availableAssets(); track asset.id) { <option [value]="asset.id">{{ asset.ticker }} · {{ asset.name }}</option> }
-              </select></label>
-            }
-          </div>
-          <div class="form-row">
-            <label>Data<input type="date" formControlName="date"></label>
-            @if (isCorporateEvent()) {
-              <label>Nova quantidade<input type="number" min="0.000001" step="0.000001" formControlName="newQuantity"></label>
-            } @else if (isIncome()) {
-              <label class="total-value income-total-value">Valor total<input type="number" min="0.01" step="0.01" formControlName="totalValue"></label>
-            } @else {
-              <label>Quantidade<input type="number" min="0.000001" step="0.000001" formControlName="quantity"></label>
-            }
-          </div>
-          @if (isCorporateEvent()) {
-            <div class="form-row"><label>Proporção<input formControlName="ratio" placeholder="Ex.: 1:2"></label></div>
-          } @else {
-            @if (isOperation()) {
-              <div class="form-row"><label class="total-value">Valor total<input type="number" min="0.01" step="0.01" formControlName="totalValue"></label></div>
-            }
-            @if (!isBonus()) {
-              <div class="form-row">
-                <label>Preço unitário <span>(opcional)</span><input type="number" min="0" step="0.01" formControlName="unitPrice"></label>
-                @if (isOperation()) { <label>Taxas <span>(opcional)</span><input type="number" min="0" step="0.01" formControlName="fees"></label> }
-              </div>
-            }
-          }
-          <label class="record-description">Descrição <span>(opcional)</span><textarea formControlName="description" rows="2"></textarea></label>
-          <div class="form-actions">
-            <button class="button primary" type="submit" [disabled]="recordForm.invalid">
-              {{ editingId() ? 'Salvar alterações' : 'Salvar lançamento' }}
-            </button>
-            @if (editingId()) { <button class="button secondary" type="button" (click)="cancelEdit()">Cancelar</button> }
-          </div>
-          <div class="form-message-slot" aria-live="polite">
-            @if (message()) { <p class="alert">{{ message() }}</p> }
-          </div>
-        </form>
-      </article>
-      <article class="panel wide">
+    <section class="dashboard-insights-grid" id="lancamentos">
+      <article class="panel records-panel">
         <div class="panel-title"><div><p class="eyebrow">Atividade recente</p>
           <h2><a class="records-title-link" [routerLink]="['/wallets', selectedWalletId(), 'records']">Lançamentos</a></h2>
         </div></div>
@@ -194,9 +139,6 @@
           </a>
         } @else { <p class="empty-copy">Nenhum lançamento nesta carteira.</p> }
       </article>
-    </section>
-
-    <section class="content-grid analytics">
       <article class="panel">
         <div class="panel-title"><div><p class="eyebrow">Evolução</p><h2>Custo de aquisição</h2></div>
           <select class="compact-select" [value]="granularity()" (change)="changeGranularity($any($event.target).value)">
@@ -210,34 +152,109 @@
         </div>
       </article>
       <article class="panel">
-        <p class="eyebrow">Análise por período</p>
+        <p class="eyebrow">Últimos 12 meses</p>
         <h2><a class="records-title-link" [routerLink]="['/wallets', selectedWalletId(), 'incomes']">Proventos</a></h2>
-        <form [formGroup]="incomeForm" class="filter-grid" (ngSubmit)="loadIncomes()">
-          <label>Ativo<select formControlName="assetId"><option value="">Todos</option>
-            @for (asset of incomeAssets(); track asset.id) { <option [value]="asset.id">{{ asset.ticker }}</option> }
-          </select></label>
-          <label>Categoria<select formControlName="category"><option value="">Todas</option><option value="ACAO">Ações</option><option value="FII">FIIs</option></select></label>
-          <label>Tipo<select formControlName="type"><option value="">Todos</option><option value="DIVIDENDO">Dividendos</option><option value="JCP">JCP</option></select></label>
-          <label>De<input type="date" formControlName="from"></label><label>Até<input type="date" formControlName="to"></label>
-          <label>Agrupar<select formControlName="groupBy"><option value="MONTHLY">Mensal</option><option value="QUARTERLY">Trimestral</option><option value="YEARLY">Anual</option></select></label>
-          <button class="button secondary">Aplicar</button>
-        </form>
-        @if (incomeData(); as income) {
-          <p class="income-total">Total filtrado <strong>{{ income.total | currency:'BRL' }}</strong></p>
-          @for (group of income.groups; track group.period) {
-            <div class="category-row"><span>{{ periodLabel(group.period) }}</span><strong>{{ group.total | currency:'BRL' }}</strong></div>
-          }
-          <div class="table-scroll income-history"><table>
-            <thead><tr><th>Data</th><th>Ativo</th><th>Tipo</th><th>Valor</th></tr></thead>
-            <tbody>
-              @for (item of income.items; track item.id) {
-                <tr><td>{{ item.date | date:'dd/MM/yyyy':'UTC' }}</td><td>{{ item.ticker }}</td><td>{{ label(item.type) }}</td><td>{{ item.totalValue | currency:'BRL' }}</td></tr>
+        <div class="income-month-list" aria-label="Proventos dos últimos 12 meses">
+          @for (month of incomeMonths; track month) {
+            <section class="income-month-details" [class.open]="selectedIncomeMonth() === month">
+              <h3>
+                <button class="income-selected-month" type="button"
+                  [attr.aria-expanded]="selectedIncomeMonth() === month"
+                  [attr.aria-controls]="'income-month-' + month"
+                  (click)="selectIncomeMonth(month)">
+                  <span>{{ periodLabel(month) }}</span><span aria-hidden="true">{{ selectedIncomeMonth() === month ? '−' : '+' }}</span>
+                </button>
+              </h3>
+              @if (selectedIncomeMonth() === month) {
+                <div class="income-month-content" [id]="'income-month-' + month">
+                  @if (selectedMonthIncomes().length) {
+                    <div class="table-scroll"><table>
+                      <thead><tr><th>Ativo</th><th>Tipo</th><th>Pagamento</th><th>Valor</th></tr></thead>
+                      <tbody>
+                        @for (item of selectedMonthIncomes(); track item.id) {
+                          <tr><td><strong>{{ item.ticker }}</strong></td><td>{{ label(item.type) }}</td><td>{{ item.date | date:'dd/MM/yyyy':'UTC' }}</td><td>{{ item.totalValue | currency:'BRL' }}</td></tr>
+                        }
+                      </tbody>
+                    </table></div>
+                  } @else {
+                    <p class="empty-copy compact">Nenhum provento recebido neste mês.</p>
+                  }
+                </div>
               }
-            </tbody>
-          </table></div>
-          @if (!income.items.length) { <p class="empty-copy compact">Nenhum provento encontrado.</p> }
-        }
+            </section>
+          }
+        </div>
       </article>
     </section>
   }
 </main>
+
+@if (recordModalOpen()) {
+  <div class="modal-backdrop" (mousedown)="cancelEdit()">
+    <section #recordModal class="system-modal record-modal" role="dialog" aria-modal="true"
+      aria-labelledby="record-modal-title" (mousedown)="$event.stopPropagation()" (keydown)="trapRecordModalFocus($event)">
+      <div class="modal-mark" aria-hidden="true">{{ editingId() ? 'E' : '+' }}</div>
+      <div class="modal-copy">
+        <p class="eyebrow">Lançamentos</p>
+        <h2 id="record-modal-title">{{ editingId() ? 'Editar lançamento' : 'Novo lançamento' }}</h2>
+        <p>{{ editingId() ? 'Atualize os dados deste lançamento.' : 'Registre uma movimentação na carteira selecionada.' }}</p>
+      </div>
+      <form [formGroup]="recordForm" (ngSubmit)="saveRecord()" class="stack-form record-modal-form">
+        <div class="form-row">
+          <label>Tipo<select data-record-initial-focus formControlName="type" (change)="onRecordTypeChange()">
+            @for (type of recordTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }
+          </select></label>
+          @if (recordForm.controls.type.value === 'COMPRA') {
+            <label>Ativo<input type="text" list="purchase-assets" autocomplete="off"
+              placeholder="Digite o ticker ou nome" [value]="purchaseAssetQuery()"
+              [disabled]="recordForm.controls.assetId.disabled" [class.readonly]="editingId()"
+              (input)="onPurchaseAssetInput($any($event.target).value)">
+              <datalist id="purchase-assets">
+                @for (asset of filteredPurchaseAssets(); track asset.id) {
+                  <option [value]="assetDisplay(asset)"></option>
+                }
+              </datalist>
+            </label>
+          } @else {
+            <label>Ativo<select formControlName="assetId" [class.readonly]="editingId()"><option value="">Selecione</option>
+              @for (asset of availableAssets(); track asset.id) { <option [value]="asset.id">{{ asset.ticker }} · {{ asset.name }}</option> }
+            </select></label>
+          }
+        </div>
+        <div class="form-row">
+          <label>Data<input type="date" formControlName="date"></label>
+          @if (isCorporateEvent()) {
+            <label>Nova quantidade<input type="number" min="0.000001" step="0.000001" formControlName="newQuantity"></label>
+          } @else if (isIncome()) {
+            <label class="total-value income-total-value">Valor total<input type="number" min="0.01" step="0.01" formControlName="totalValue"></label>
+          } @else {
+            <label>Quantidade<input type="number" min="0.000001" step="0.000001" formControlName="quantity"></label>
+          }
+        </div>
+        @if (isCorporateEvent()) {
+          <div class="form-row"><label>Proporção<input formControlName="ratio" placeholder="Ex.: 1:2"></label></div>
+        } @else {
+          @if (isOperation()) {
+            <div class="form-row"><label class="total-value">Valor total<input type="number" min="0.01" step="0.01" formControlName="totalValue"></label></div>
+          }
+          @if (!isBonus()) {
+            <div class="form-row">
+              <label>Preço unitário <span>(opcional)</span><input type="number" min="0" step="0.01" formControlName="unitPrice"></label>
+              @if (isOperation()) { <label>Taxas <span>(opcional)</span><input type="number" min="0" step="0.01" formControlName="fees"></label> }
+            </div>
+          }
+        }
+        <label class="record-description">Descrição <span>(opcional)</span><textarea formControlName="description" rows="2"></textarea></label>
+        <div class="form-actions">
+          <button class="button primary" type="submit" [disabled]="recordForm.invalid">
+            {{ editingId() ? 'Salvar alterações' : 'Salvar lançamento' }}
+          </button>
+          <button class="button secondary" type="button" (click)="cancelEdit()">Cancelar</button>
+        </div>
+        <div class="form-message-slot" aria-live="polite">
+          @if (message()) { <p class="alert">{{ message() }}</p> }
+        </div>
+      </form>
+    </section>
+  </div>
+}

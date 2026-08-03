@@ -17,7 +17,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
+import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -120,7 +122,9 @@ class ApiFlowIntegrationTest {
                         .header("Authorization", bearer(token)).contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of("name", name)))).andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString());
-        return response.get("id").asText();
+        String id = response.get("id").asText();
+        assertThat(UUID.fromString(id).version()).isEqualTo(7);
+        return id;
     }
     private String token(String name, String email) {
         User user = new User(name, email, encoder.encode("senha-segura"));

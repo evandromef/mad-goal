@@ -18,6 +18,20 @@ próximos acessos.
 - Maven, npm, Docker e Docker Compose
 - JUnit, MockMvc, AssertJ, Vitest, JaCoCo e Playwright
 
+## Identificadores persistentes
+
+Novos usuários, ativos, carteiras, lançamentos, notas, tokens de conta e refresh
+tokens usam UUIDv7 conforme a
+[RFC 9562](https://www.rfc-editor.org/rfc/rfc9562.html). O timestamp em
+milissegundos nos bits iniciais melhora a localidade das inserções e a ordenação
+dos índices, enquanto os 74 bits restantes preservam entropia.
+
+O banco continua usando colunas PostgreSQL do tipo `uuid`. UUIDv4 criados antes
+desta mudança permanecem válidos e podem coexistir com UUIDv7; nenhuma conversão
+de dados ou alteração de chave estrangeira é necessária. A estratégia se aplica
+somente às chaves primárias persistentes, que devem continuar sendo tratadas
+como identificadores opacos e não como credenciais ou autorização.
+
 ## Executar com Docker
 
 Pré-requisito: Docker com o plugin Compose.

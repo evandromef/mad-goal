@@ -413,6 +413,19 @@ registrar uma compra.
 - testes unitários cobrem a ausência total de mutações para usuário existente e
   a interrupção controlada quando falta um ativo.
 
+### Identificadores UUIDv7
+
+- a geração de chaves primárias foi centralizada em um gerador compatível com o
+  layout UUIDv7 definido pela RFC 9562;
+- novos usuários, ativos, carteiras, lançamentos, notas, tokens de conta e
+  refresh tokens usam timestamp Unix em milissegundos e 74 bits aleatórios;
+- as colunas PostgreSQL permanecem com o tipo `uuid`, permitindo coexistência
+  transparente entre registros UUIDv4 antigos e UUIDv7 novos;
+- o UUIDv4 usado como material aleatório para senha interna no login Google não
+  foi alterado, pois não representa um identificador persistente;
+- testes validam versão, variante, timestamp, unicidade em sequência e a versão
+  do identificador retornado pela API ao criar uma carteira.
+
 ## Verificações executadas
 
 Ao longo do desenvolvimento foram usados os comandos canônicos:
@@ -436,7 +449,7 @@ git diff --check
 
 No último ciclo de validação registrado:
 
-- os 21 testes do backend e os 48 testes do frontend passaram;
+- os 23 testes do backend e os 48 testes do frontend passaram;
 - a cobertura do frontend ficou em 92,78% de statements, 81,78% de branches,
   96,99% de funções e 94,58% de linhas;
 - todas as verificações de cobertura do backend foram atendidas;

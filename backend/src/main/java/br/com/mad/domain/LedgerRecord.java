@@ -1,5 +1,6 @@
 package br.com.mad.domain;
 
+import br.com.mad.util.UuidV7;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -37,7 +38,7 @@ public class LedgerRecord extends AuditedEntity {
 
     protected LedgerRecord() {}
     public LedgerRecord(Wallet wallet, Asset asset) {
-        this.id = UUID.randomUUID();
+        this.id = UuidV7.generate();
         this.wallet = wallet;
         this.asset = asset;
     }

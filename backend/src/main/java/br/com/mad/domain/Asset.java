@@ -1,5 +1,6 @@
 package br.com.mad.domain;
 
+import br.com.mad.util.UuidV7;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,7 +26,7 @@ public class Asset {
 
     protected Asset() {}
     public Asset(String ticker, String name, Category category, BigDecimal currentPrice) {
-        this.id = UUID.randomUUID();
+        this.id = UuidV7.generate();
         this.ticker = ticker;
         this.name = name;
         this.category = category;

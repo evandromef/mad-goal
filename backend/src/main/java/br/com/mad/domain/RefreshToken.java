@@ -1,5 +1,6 @@
 package br.com.mad.domain;
 
+import br.com.mad.util.UuidV7;
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -24,7 +25,7 @@ public class RefreshToken {
 
     protected RefreshToken() {}
     public RefreshToken(User user, String tokenHash, Instant expiresAt) {
-        this.id = UUID.randomUUID();
+        this.id = UuidV7.generate();
         this.user = user;
         this.tokenHash = tokenHash;
         this.expiresAt = expiresAt;

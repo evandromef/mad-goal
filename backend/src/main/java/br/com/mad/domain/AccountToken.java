@@ -1,5 +1,6 @@
 package br.com.mad.domain;
 
+import br.com.mad.util.UuidV7;
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -29,7 +30,7 @@ public class AccountToken {
 
     protected AccountToken() {}
     public AccountToken(User user, Type type, String tokenHash, Instant expiresAt) {
-        this.id = UUID.randomUUID();
+        this.id = UuidV7.generate();
         this.user = user;
         this.type = type;
         this.tokenHash = tokenHash;

@@ -1,5 +1,6 @@
 package br.com.mad.domain;
 
+import br.com.mad.util.UuidV7;
 import jakarta.persistence.*;
 import java.util.UUID;
 
@@ -17,7 +18,7 @@ public class AssetNote extends AuditedEntity {
 
     protected AssetNote() {}
     public AssetNote(Wallet wallet, Asset asset, String content) {
-        this.id = UUID.randomUUID(); this.wallet = wallet; this.asset = asset; this.content = content;
+        this.id = UuidV7.generate(); this.wallet = wallet; this.asset = asset; this.content = content;
     }
     public UUID getId() { return id; }
     public Wallet getWallet() { return wallet; }

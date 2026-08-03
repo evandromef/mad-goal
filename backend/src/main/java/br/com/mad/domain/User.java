@@ -1,5 +1,6 @@
 package br.com.mad.domain;
 
+import br.com.mad.util.UuidV7;
 import jakarta.persistence.*;
 import java.util.UUID;
 
@@ -21,7 +22,7 @@ public class User extends AuditedEntity {
 
     protected User() {}
     public User(String name, String email, String passwordHash) {
-        this.id = UUID.randomUUID();
+        this.id = UuidV7.generate();
         this.name = name;
         this.email = email;
         this.passwordHash = passwordHash;

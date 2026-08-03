@@ -202,4 +202,10 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await page.getByLabel('Conteúdo').fill('Nota criada no fluxo E2E');
   await page.getByRole('button', { name: 'Adicionar' }).click();
   await expect(page.getByText('Nota criada no fluxo E2E')).toBeVisible();
+
+  await page.route('**/api/wallets', route => route.fulfill({ status: 401, body: '' }));
+  await page.route('**/api/auth/refresh', route => route.fulfill({ status: 401, body: '' }));
+  await page.goto('/');
+  await expect(page).toHaveURL(/\/login$/);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('mad_token'))).toBeNull();
 });

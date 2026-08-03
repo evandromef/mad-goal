@@ -387,6 +387,32 @@ registrar uma compra.
 - testes unitários e E2E verificam o intervalo, a seleção inicial, a troca de mês
   e a ausência dos controles removidos.
 
+### Redirecionamento após expiração da sessão
+
+- respostas de autenticação ausente ou token inválido em endpoints protegidos
+  passaram de `403 Forbidden` para `401 Unauthorized` no backend;
+- o interceptor tenta renovar o token de acesso e limpa a sessão quando o
+  refresh token também é recusado;
+- respostas `403` vazias continuam sendo reconhecidas defensivamente como
+  rejeição de sessão, sem confundir erros de negócio que possuem mensagem;
+- ao encerrar a sessão, o frontend substitui a rota atual por `/login`, evitando
+  o retorno pelo histórico do navegador a uma página protegida expirada;
+- testes de integração, unitários e E2E cobrem token inválido, falha de renovação,
+  limpeza do armazenamento local e redirecionamento para o login.
+
+### Correções da quarta revisão
+
+- a carga demonstrativa passou a verificar a existência do e-mail configurado
+  antes de qualquer consulta ou mutação de ativos, carteiras e lançamentos;
+- quando o e-mail já existe, o inicializador encerra sem alterar dados do
+  usuário, inclusive carteiras que tenham o mesmo nome usado na demonstração;
+- os sete ativos necessários são validados em conjunto antes da atualização de
+  cotações e da criação do perfil demonstrativo;
+- catálogo incompleto ou com ativo exigido inativo gera um aviso e cancela
+  apenas a carga de demonstração, sem impedir a inicialização da aplicação;
+- testes unitários cobrem a ausência total de mutações para usuário existente e
+  a interrupção controlada quando falta um ativo.
+
 ## Verificações executadas
 
 Ao longo do desenvolvimento foram usados os comandos canônicos:
@@ -410,9 +436,9 @@ git diff --check
 
 No último ciclo de validação registrado:
 
-- os 19 testes do backend e os 46 testes do frontend passaram;
-- a cobertura do frontend ficou em 92,42% de statements, 81,66% de branches,
-  96,24% de funções e 94,26% de linhas;
+- os 21 testes do backend e os 48 testes do frontend passaram;
+- a cobertura do frontend ficou em 92,78% de statements, 81,78% de branches,
+  96,99% de funções e 94,58% de linhas;
 - todas as verificações de cobertura do backend foram atendidas;
 - o build Angular passou localmente e dentro do Docker;
 - o E2E Playwright passou usando a stack real;

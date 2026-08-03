@@ -8,6 +8,8 @@ import br.com.mad.repository.AssetRepository;
 import br.com.mad.repository.LedgerRecordRepository;
 import br.com.mad.repository.UserRepository;
 import br.com.mad.repository.WalletRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -27,12 +29,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /** Carga opcional para avaliação manual de UI/UX em ambientes locais. */
 @Component
 @Profile("dev")
 @Order(1)
 public class DemoDataInitializer implements ApplicationRunner {
+    private static final Logger log = LoggerFactory.getLogger(DemoDataInitializer.class);
     private final UserRepository users;
     private final WalletRepository wallets;
     private final AssetRepository assets;
@@ -65,27 +69,29 @@ public class DemoDataInitializer implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         if (!enabled) return;
 
+        if (users.findByEmailIgnoreCase(email).isPresent()) {
+            log.info("Carga demonstrativa ignorada: o e-mail configurado já existe");
+            return;
+        }
+
         Map<String, Asset> catalog = new LinkedHashMap<>();
         assets.findByActiveTrueOrderByTicker().forEach(asset -> catalog.put(asset.getTicker(), asset));
         Map<String, BigDecimal> referencePrices = Map.of(
                 "PETR4", bd("37.84"), "VALE3", bd("61.20"), "ITUB4", bd("39.15"),
                 "WEGE3", bd("47.32"), "MXRF11", bd("10.12"), "HGLG11", bd("161.40"),
                 "KNRI11", bd("144.75"));
+        Set<String> missingTickers = new TreeSet<>(referencePrices.keySet());
+        missingTickers.removeAll(catalog.keySet());
+        if (!missingTickers.isEmpty()) {
+            log.warn("Carga demonstrativa ignorada: ativos obrigatórios ausentes ou inativos: {}", missingTickers);
+            return;
+        }
         referencePrices.forEach((ticker, price) -> {
             Asset asset = requiredAsset(catalog, ticker);
             if (asset.getCurrentPrice() == null) asset.updateQuote(price, LocalDate.now());
         });
 
         LocalDate today = LocalDate.now();
-        User existingUser = users.findByEmailIgnoreCase(email).orElse(null);
-        if (existingUser != null) {
-            wallets.findByUserIdOrderByName(existingUser.getId()).stream()
-                    .filter(item -> item.getName().equals("Carteira de longo prazo"))
-                    .findFirst()
-                    .ifPresent(wallet -> reconcileMonthlyFiiDividends(wallet, catalog, today));
-            return;
-        }
-
         User user = new User(name.trim(), email.trim().toLowerCase(), passwordEncoder.encode(password));
         user.verifyEmail();
         user = users.save(user);

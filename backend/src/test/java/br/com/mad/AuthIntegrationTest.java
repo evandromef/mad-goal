@@ -49,7 +49,9 @@ class AuthIntegrationTest {
                 .andExpect(jsonPath("$.name").value("Carteira Principal"));
 
         mvc.perform(get("/api/wallets"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/wallets").header("Authorization", "Bearer token-invalido"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

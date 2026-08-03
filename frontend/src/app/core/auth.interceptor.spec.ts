@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { authInterceptor } from './auth.interceptor';
 import { SessionService } from './session.service';
 
@@ -31,5 +31,24 @@ describe('authInterceptor', () => {
     expect(session.clear).toHaveBeenCalled();
     http.post('/api/auth/login', {}).subscribe({ error: () => {} });
     controller.expectOne('/api/auth/login').flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(session.clear).toHaveBeenCalledOnce();
+  });
+  it('trata 403 vazio como sessão rejeitada sem confundir erro de negócio', () => {
+    http.get('/api/profile').subscribe({ error: () => {} });
+    controller.expectOne('/api/profile').flush(null, { status: 403, statusText: 'Forbidden' });
+    expect(session.clear).toHaveBeenCalledOnce();
+
+    http.get('/api/profile').subscribe({ error: () => {} });
+    controller.expectOne('/api/profile').flush({ message: 'Operação não permitida.' },
+      { status: 403, statusText: 'Forbidden' });
+    expect(session.clear).toHaveBeenCalledOnce();
+  });
+  it('limpa a sessão quando a renovação é recusada', () => {
+    localStorage.setItem('mad_token', 'expirado');
+    localStorage.setItem('mad_refresh_token', 'refresh-expirado');
+    session.refresh.mockReturnValueOnce(throwError(() => new Error('Refresh recusado')));
+    http.get('/api/profile').subscribe({ error: () => {} });
+    controller.expectOne('/api/profile').flush(null, { status: 401, statusText: 'Unauthorized' });
+    expect(session.clear).toHaveBeenCalledOnce();
   });
 });

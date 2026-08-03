@@ -10,8 +10,10 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   return next(authenticated).pipe(catchError((error: HttpErrorResponse) => {
     const publicAuthCall = ['/login', '/register', '/confirm-email', '/forgot-password',
       '/reset-password', '/google', '/refresh', '/config'].some(path => request.url.endsWith(`/api/auth${path}`));
-    if (error.status !== 401 || publicAuthCall || !localStorage.getItem('mad_refresh_token')) {
-      if (error.status === 401 && !publicAuthCall) session.clear();
+    const rejectedSession = error.status === 401
+      || (error.status === 403 && (error.error == null || error.error === ''));
+    if (!rejectedSession || publicAuthCall || !localStorage.getItem('mad_refresh_token')) {
+      if (rejectedSession && !publicAuthCall) session.clear();
       return throwError(() => error);
     }
     return session.refresh().pipe(

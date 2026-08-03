@@ -36,6 +36,6 @@ export class SessionService {
     localStorage.removeItem('mad_token');
     localStorage.removeItem('mad_refresh_token');
     localStorage.removeItem('mad_user');
-    void this.router.navigate(['/login']);
+    void this.router.navigateByUrl('/login', { replaceUrl: true });
   }
 }

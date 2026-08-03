@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { SessionService } from './session.service';
 
 describe('SessionService', () => {
-  const router = { navigate: vi.fn().mockResolvedValue(true) };
+  const router = { navigateByUrl: vi.fn().mockResolvedValue(true) };
   let service: SessionService;
   let http: HttpTestingController;
   beforeEach(() => {
@@ -29,7 +29,7 @@ describe('SessionService', () => {
     expect(localStorage.getItem('mad_user')).toBe('Ana');
     service.clear();
     expect(localStorage.getItem('mad_token')).toBeNull();
-    expect(router.navigate).toHaveBeenCalledWith(['/login']);
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/login', { replaceUrl: true });
   });
 
   it('limpa a sessão quando o refresh falha', () => {

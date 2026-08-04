@@ -1,5 +1,5 @@
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService, Dashboard } from '../../core/api.service';
 import { RecordFormComponent } from '../../shared/record-form/record-form.component';
@@ -16,6 +16,12 @@ export class PositionsComponent implements OnInit {
   readonly walletId = this.route.snapshot.paramMap.get('walletId') ?? '';
   readonly walletName = signal('');
   readonly dashboard = signal<Dashboard | null>(null);
+  readonly categoryFilter = signal<'TODOS' | 'ACAO' | 'FII'>('TODOS');
+  readonly filteredPositions = computed(() => {
+    const positions = this.dashboard()?.positions ?? [];
+    const category = this.categoryFilter();
+    return category === 'TODOS' ? positions : positions.filter(position => position.category === category);
+  });
   readonly positionRecordTypes = ['COMPRA', 'VENDA', 'SUBSCRICAO', 'BONIFICACAO', 'DESDOBRAMENTO', 'GRUPAMENTO'];
 
   ngOnInit(): void {

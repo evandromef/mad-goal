@@ -456,6 +456,16 @@ registrar uma compra.
 - testes unitários e E2E cobrem as durações do modal, Escape, devolução de foco e
   indisponibilidade do menu em saída para tecnologias assistivas.
 
+### Filtro por tipo de ativo nas posições
+
+- a página de posições permite alternar entre todos os ativos, ações e FIIs sem
+  nova chamada ao backend;
+- o contador informa quantas posições filtradas existem em relação ao total da
+  carteira;
+- o estado sem correspondências é diferenciado de uma carteira sem posições;
+- teste de componente cobre as opções, a filtragem da tabela, o contador e o
+  estado vazio do filtro.
+
 ## Verificações executadas
 
 Ao longo do desenvolvimento foram usados os comandos canônicos:
@@ -479,9 +489,9 @@ git diff --check
 
 No último ciclo de validação registrado:
 
-- os 23 testes do backend e os 52 testes do frontend passaram;
-- a cobertura do frontend ficou em 92,25% de statements, 81,48% de branches,
-  96,67% de funções e 94,44% de linhas;
+- os 23 testes do backend e os 53 testes do frontend passaram;
+- a cobertura do frontend ficou em 92,30% de statements, 81,50% de branches,
+  96,70% de funções e 94,48% de linhas;
 - todas as verificações de cobertura do backend foram atendidas;
 - o build Angular passou localmente e dentro do Docker;
 - o E2E Playwright passou usando a stack real;

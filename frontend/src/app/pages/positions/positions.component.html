@@ -7,7 +7,7 @@
 <main class="workspace">
   <section class="hero-row records-page-heading"><div><p class="eyebrow">{{ walletName() || 'Carteira' }}</p>
     <h1>Posições da carteira</h1><p class="muted">Composição atual, custos e resultados por ativo.</p></div>
-    <span class="chip">{{ dashboard()?.positions?.length ?? 0 }} ativos</span>
+    <span class="chip">{{ filteredPositions().length }} de {{ dashboard()?.positions?.length ?? 0 }} ativos</span>
   </section>
   <section class="page-detail-grid">
     <article class="panel record-create-panel"><p class="eyebrow">Novo registro</p><h2>Adicionar lançamento</h2>
@@ -15,25 +15,38 @@
         initialType="COMPRA" (saved)="loadDashboard()" />
     </article>
     <article class="panel">
-      <div class="panel-title"><div><p class="eyebrow">Composição</p><h2>Todos os ativos</h2></div></div>
+      <div class="panel-title"><div><p class="eyebrow">Composição</p><h2>Todos os ativos</h2></div>
+        <label class="compact-filter">Tipo de ativo
+          <select class="compact-select" [value]="categoryFilter()"
+            (change)="categoryFilter.set($any($event.target).value)">
+            <option value="TODOS">Todos</option>
+            <option value="ACAO">Ações</option>
+            <option value="FII">FIIs</option>
+          </select>
+        </label>
+      </div>
       @if (dashboard(); as data) {
         @if (data.positions.length) {
-          <div class="table-scroll"><table>
-            <thead><tr><th>Ativo</th><th>Categoria</th><th>Quantidade</th><th>Custo</th>
-              <th>Cotação</th><th>Valor atual</th><th>Proventos</th><th>Resultado</th><th>Rentabilidade</th><th>Alocação</th></tr></thead>
-            <tbody>@for (position of data.positions; track position.assetId) {
-              <tr><td><a [routerLink]="['/assets', walletId, position.assetId]"><strong>{{ position.ticker }}</strong></a><small>{{ position.name }}</small></td>
-                <td>{{ position.category === 'ACAO' ? 'Ação' : 'FII' }}</td>
-                <td>{{ position.quantity | number:'1.0-8' }}</td>
-                <td>{{ position.acquisitionCost | currency:'BRL' }}</td>
-                <td>{{ position.currentPrice == null ? 'Indisponível' : (position.currentPrice | currency:'BRL') }}</td>
-                <td>{{ position.currentValue == null ? 'Indisponível' : (position.currentValue | currency:'BRL') }}</td>
-                <td class="position-income">{{ position.totalIncome | currency:'BRL' }}</td>
-                <td [class.negative]="position.profitLoss != null && position.profitLoss < 0">{{ position.profitLoss == null ? 'Indisponível' : (position.profitLoss | currency:'BRL') }}</td>
-                <td>{{ position.returnPercentage == null ? 'Indisponível' : ((position.returnPercentage | number:'1.2-2') + '%') }}</td>
-                <td>{{ position.allocationPercentage == null ? '—' : ((position.allocationPercentage | number:'1.2-2') + '%') }}</td></tr>
-            }</tbody>
-          </table></div>
+          @if (filteredPositions().length) {
+            <div class="table-scroll state-content-enter"><table>
+              <thead><tr><th>Ativo</th><th>Categoria</th><th>Quantidade</th><th>Custo</th>
+                <th>Cotação</th><th>Valor atual</th><th>Proventos</th><th>Resultado</th><th>Rentabilidade</th><th>Alocação</th></tr></thead>
+              <tbody>@for (position of filteredPositions(); track position.assetId) {
+                <tr><td><a [routerLink]="['/assets', walletId, position.assetId]"><strong>{{ position.ticker }}</strong></a><small>{{ position.name }}</small></td>
+                  <td>{{ position.category === 'ACAO' ? 'Ação' : 'FII' }}</td>
+                  <td>{{ position.quantity | number:'1.0-8' }}</td>
+                  <td>{{ position.acquisitionCost | currency:'BRL' }}</td>
+                  <td>{{ position.currentPrice == null ? 'Indisponível' : (position.currentPrice | currency:'BRL') }}</td>
+                  <td>{{ position.currentValue == null ? 'Indisponível' : (position.currentValue | currency:'BRL') }}</td>
+                  <td class="position-income">{{ position.totalIncome | currency:'BRL' }}</td>
+                  <td [class.negative]="position.profitLoss != null && position.profitLoss < 0">{{ position.profitLoss == null ? 'Indisponível' : (position.profitLoss | currency:'BRL') }}</td>
+                  <td>{{ position.returnPercentage == null ? 'Indisponível' : ((position.returnPercentage | number:'1.2-2') + '%') }}</td>
+                  <td>{{ position.allocationPercentage == null ? '—' : ((position.allocationPercentage | number:'1.2-2') + '%') }}</td></tr>
+              }</tbody>
+            </table></div>
+          } @else {
+            <p class="empty-copy state-content-enter">Nenhuma posição encontrada para o tipo selecionado.</p>
+          }
         } @else { <p class="empty-copy">Registre uma compra para criar a primeira posição.</p> }
       }
     </article>

@@ -109,6 +109,15 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await expect(page.getByRole('button', { name: 'Ativar tema claro' })).toBeVisible();
   await expect(page.locator('app-record-form')).toBeVisible();
   await expect(page.locator('tbody')).toContainText('PETR4');
+  const positionCategoryFilter = page.getByLabel('Tipo de ativo');
+  await expect(positionCategoryFilter.locator('option')).toHaveText(['Todos', 'Ações', 'FIIs']);
+  await positionCategoryFilter.selectOption('FII');
+  await expect(page.getByText('Nenhuma posição encontrada para o tipo selecionado.')).toBeVisible();
+  await expect(page.locator('main .chip')).toContainText('0 de 1 ativos');
+  await positionCategoryFilter.selectOption('ACAO');
+  await expect(page.locator('tbody')).toContainText('PETR4');
+  await expect(page.locator('main .chip')).toContainText('1 de 1 ativos');
+  await positionCategoryFilter.selectOption('TODOS');
   await page.getByRole('link', { name: 'Voltar à carteira' }).click();
   await page.locator('.topbar-menu').getByRole('link', { name: 'Proventos', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Proventos' })).toBeVisible();

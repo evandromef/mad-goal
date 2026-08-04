@@ -356,7 +356,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (event.key !== 'Tab') return;
     const controls = Array.from(this.recordModal?.nativeElement.querySelectorAll<HTMLElement>(
       'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
-    ) ?? []);
+    ) ?? []).filter(control => !control.closest('[inert]'));
     if (!controls.length) return;
     const first = controls[0];
     const last = controls[controls.length - 1];

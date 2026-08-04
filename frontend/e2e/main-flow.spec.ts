@@ -60,8 +60,15 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await expect(walletActions).toBeFocused();
   const newRecordButton = page.getByRole('button', { name: 'Novo lançamento' });
   await expect(newRecordButton).toBeVisible();
+  await page.setViewportSize({ width: 1024, height: 900 });
   await newRecordButton.click();
   const recordModal = page.getByRole('dialog');
+  await expect(recordModal.locator('.modal-mark')).toBeVisible();
+  const regularModalOverflow = await recordModal.evaluate(element => ({
+    horizontal: element.scrollWidth > element.clientWidth,
+    vertical: element.scrollHeight > element.clientHeight
+  }));
+  expect(regularModalOverflow).toEqual({ horizontal: false, vertical: false });
   const modalAnimation = await recordModal.evaluate(element => getComputedStyle(element).animationName);
   expect(modalAnimation).toContain('motion-dialog-in');
   const modalDurations = await recordModal.evaluate(element => {
@@ -78,27 +85,74 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await recordModal.evaluate(async element => {
     await Promise.allSettled(element.getAnimations().map(animation => animation.finished));
   });
+  await page.setViewportSize({ width: 768, height: 600 });
+  await expect(recordModal.locator('.modal-mark')).toBeVisible();
+  const shortViewportModalBounds = (await recordModal.boundingBox())!;
+  expect(shortViewportModalBounds.y).toBeGreaterThanOrEqual(0);
+  expect(shortViewportModalBounds.y + shortViewportModalBounds.height).toBeLessThanOrEqual(600);
+  const shortViewportModalOverflow = await recordModal.evaluate(element => ({
+    horizontal: element.scrollWidth > element.clientWidth,
+    vertical: element.scrollHeight > element.clientHeight
+  }));
+  expect(shortViewportModalOverflow).toEqual({ horizontal: false, vertical: false });
   const form = page.locator('form.stack-form');
+  const valuesSlot = form.locator('.record-values-slot');
   const purchaseHeight = (await form.boundingBox())!.height;
-  for (const type of ['DIVIDENDO', 'JCP', 'BONIFICACAO', 'DESDOBRAMENTO']) {
+  await form.getByLabel('Tipo').selectOption('DIVIDENDO');
+  const enteringValues = valuesSlot.locator('.motion-field-enter');
+  await expect(enteringValues).toHaveCount(1);
+  expect(await enteringValues.evaluate(element => getComputedStyle(element).animationName)).toContain('motion-field-in');
+  const leavingValues = valuesSlot.locator('.motion-field-leave');
+  await expect(leavingValues).toHaveAttribute('aria-hidden', 'true');
+  await valuesSlot.evaluate(async element => {
+    await Promise.allSettled(element.getAnimations({ subtree: true }).map(animation => animation.finished));
+  });
+  expect((await form.boundingBox())!.height).toBe(purchaseHeight);
+  for (const type of ['JCP', 'BONIFICACAO', 'DESDOBRAMENTO']) {
     await form.getByLabel('Tipo').selectOption(type);
+    await form.evaluate(async element => {
+      await Promise.allSettled(element.getAnimations({ subtree: true }).map(animation => animation.finished));
+    });
     expect((await form.boundingBox())!.height).toBe(purchaseHeight);
     if (type === 'JCP') {
-      const dateBox = (await form.getByLabel('Data').boundingBox())!;
-      const unitPriceBox = (await form.getByLabel('Preço unitário (opcional)').boundingBox())!;
-      const descriptionBox = (await form.getByLabel('Descrição (opcional)').boundingBox())!;
-      expect(unitPriceBox.y - (dateBox.y + dateBox.height)).toBeLessThan(56);
-      expect(descriptionBox.y).toBeGreaterThan(unitPriceBox.y + unitPriceBox.height);
-      expect(descriptionBox.y - (unitPriceBox.y + unitPriceBox.height)).toBeLessThan(56);
+      await expect(form.locator('.record-unit-price')).toContainText('Valor por cota/ação');
+      const incomeUnitBox = (await form.locator('.record-unit-price').boundingBox())!;
+      const incomeDateBox = (await form.locator('input[formControlName="date"]').boundingBox())!;
+      expect(Math.abs(incomeUnitBox.x - incomeDateBox.x)).toBeLessThan(2);
     }
   }
   await form.getByLabel('Tipo').selectOption('COMPRA');
+  await form.evaluate(async element => {
+    await Promise.allSettled(element.getAnimations({ subtree: true }).map(animation => animation.finished));
+  });
+  const firstRow = form.locator('.record-main-row');
+  const valuesRow = valuesSlot.locator(':scope > .record-values-row');
+  const dateTotalRow = form.locator('.record-date-total-row');
+  const firstRowBoxes = await firstRow.locator(':scope > label > select, .record-asset-slot > label > input')
+    .evaluateAll(elements => elements.map(element => element.getBoundingClientRect().toJSON()));
+  expect(firstRowBoxes).toHaveLength(2);
+  expect(Math.max(...firstRowBoxes.map(box => box.y)) - Math.min(...firstRowBoxes.map(box => box.y))).toBeLessThan(2);
+  expect(firstRowBoxes[1].width).toBeGreaterThan(firstRowBoxes[0].width * 1.9);
+  const secondRowBoxes = await valuesRow.locator(':scope > label > input')
+    .evaluateAll(elements => elements.map(element => element.getBoundingClientRect().toJSON()));
+  expect(secondRowBoxes).toHaveLength(3);
+  expect(Math.max(...secondRowBoxes.map(box => box.y)) - Math.min(...secondRowBoxes.map(box => box.y))).toBeLessThan(2);
+  const dateBox = (await dateTotalRow.locator('input[formControlName="date"]').boundingBox())!;
+  const totalValueBox = (await dateTotalRow.locator('.total-value').boundingBox())!;
+  const totalValueInputBox = (await dateTotalRow.locator('input[formControlName="totalValue"]').boundingBox())!;
+  const descriptionBox = (await form.locator('.record-description').boundingBox())!;
+  expect(totalValueInputBox.y).toBeGreaterThan(secondRowBoxes[0].y + secondRowBoxes[0].height);
+  expect(Math.abs(totalValueInputBox.y - dateBox.y)).toBeLessThan(2);
+  expect(totalValueInputBox.x).toBeGreaterThan(dateBox.x + dateBox.width);
+  expect(descriptionBox.y).toBeGreaterThan(totalValueInputBox.y + totalValueInputBox.height);
+  expect(descriptionBox.width).toBeGreaterThan(totalValueBox.width * 2.8);
   await form.getByLabel('Ativo').fill('PETR4');
   await page.getByLabel('Quantidade').fill('10.12345678');
   await page.getByLabel('Valor total').fill('1000.12345678');
   await page.getByLabel('Preço unitário (opcional)').fill('98.79');
   await page.getByRole('button', { name: 'Salvar lançamento' }).click();
   await expect(page.getByRole('status')).toContainText('sucesso');
+  await page.setViewportSize({ width: 1280, height: 720 });
   await expect(page.locator('.activity-icon').first()).toHaveText('C');
   await expect(page.locator('.activity-value').first())
     .toContainText('10,12345678 un. · Preço unitário R$ 98,79');
@@ -232,6 +286,9 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await newRecordButton.click();
   await expect(recordModal.getByRole('heading', { name: 'Novo lançamento' })).toBeVisible();
   await form.getByLabel('Tipo').selectOption('VENDA');
+  await form.locator('.record-asset-slot').evaluate(async element => {
+    await Promise.allSettled(element.getAnimations({ subtree: true }).map(animation => animation.finished));
+  });
   const petr4 = await form.locator('select[formcontrolname="assetId"] option', { hasText: /^PETR4 ·/ })
     .getAttribute('value');
   await form.getByLabel('Ativo').selectOption(petr4!);

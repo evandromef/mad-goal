@@ -437,7 +437,7 @@ registrar uma compra.
   diferentes, enquanto botões, links, controles, tabelas e indicadores oferecem
   feedback visual discreto;
 - o acordeão anima sua expansão em grid para evitar saltos e os formulários de
-  lançamento preservam as dimensões fixas já estabelecidas;
+  lançamento preservam uma estrutura estável entre os diferentes tipos;
 - `prefers-reduced-motion` reduz animações e transições a uma duração virtualmente
   instantânea, mantendo foco, navegação por teclado e bloqueio de cliques durante
   saídas de overlays;
@@ -466,6 +466,25 @@ registrar uma compra.
 - teste de componente cobre as opções, a filtragem da tabela, o contador e o
   estado vazio do filtro.
 
+### Formulário de lançamento em três colunas
+
+- o formulário usa três colunas, com Ativo ocupando as duas colunas restantes
+  da primeira linha ao lado de Tipo; quantidade,
+  preço unitário e taxas na segunda; data e valor total na terceira; e descrição
+  ocupando as três colunas na quarta linha;
+- campos condicionais sempre começam na primeira coluna disponível; em
+  dividendos e JCP, “Preço unitário” passa a ser “Valor por cota/ação”;
+- a altura fixa e o modo compacto foram removidos; o modal usa a altura natural
+  do conteúdo sem alternar a densidade visual conforme o viewport;
+- em telas estreitas, o formulário preserva a disposição em uma coluna e o
+  scroll vertical como fallback, evitando controles excessivamente pequenos;
+- o fluxo E2E garante que o modal comum caiba em um viewport de 768 × 600 sem
+  overflow.
+- campos condicionais de ativo, valores da operação e valor total usam uma
+  transição compartilhada de opacidade e deslocamento curto ao entrar e sair;
+- slots sobrepostos mantêm as linhas estáveis durante a troca, enquanto campos
+  em saída ficam imediatamente inertes e ocultos para tecnologias assistivas.
+
 ## Verificações executadas
 
 Ao longo do desenvolvimento foram usados os comandos canônicos:
@@ -489,7 +508,7 @@ git diff --check
 
 No último ciclo de validação registrado:
 
-- os 23 testes do backend e os 53 testes do frontend passaram;
+- os 23 testes do backend e os 55 testes do frontend passaram;
 - a cobertura do frontend ficou em 92,30% de statements, 81,50% de branches,
   96,70% de funções e 94,48% de linhas;
 - todas as verificações de cobertura do backend foram atendidas;

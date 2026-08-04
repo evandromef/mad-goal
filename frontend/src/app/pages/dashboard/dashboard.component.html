@@ -207,51 +207,61 @@
         <p>{{ editingId() ? 'Atualize os dados deste lançamento.' : 'Registre uma movimentação na carteira selecionada.' }}</p>
       </div>
       <form [formGroup]="recordForm" (ngSubmit)="saveRecord()" class="stack-form record-modal-form">
-        <div class="form-row">
+        <div class="form-row record-main-row">
           <label>Tipo<select data-record-initial-focus formControlName="type" (change)="onRecordTypeChange()">
             @for (type of recordTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }
           </select></label>
-          @if (recordForm.controls.type.value === 'COMPRA') {
-            <label>Ativo<input type="text" list="purchase-assets" autocomplete="off"
-              placeholder="Digite o ticker ou nome" [value]="purchaseAssetQuery()"
-              [disabled]="recordForm.controls.assetId.disabled" [class.readonly]="editingId()"
-              (input)="onPurchaseAssetInput($any($event.target).value)">
-              <datalist id="purchase-assets">
-                @for (asset of filteredPurchaseAssets(); track asset.id) {
-                  <option [value]="assetDisplay(asset)"></option>
-                }
-              </datalist>
-            </label>
+          <div class="record-asset-slot">
+            @if (recordForm.controls.type.value === 'COMPRA') {
+              <label appMotionOverlay animate.enter="motion-field-enter" animate.leave="motion-field-leave">Ativo<input type="text" list="purchase-assets" autocomplete="off"
+                placeholder="Digite o ticker ou nome" [value]="purchaseAssetQuery()"
+                [disabled]="recordForm.controls.assetId.disabled" [class.readonly]="editingId()"
+                (input)="onPurchaseAssetInput($any($event.target).value)">
+                <datalist id="purchase-assets">
+                  @for (asset of filteredPurchaseAssets(); track asset.id) {
+                    <option [value]="assetDisplay(asset)"></option>
+                  }
+                </datalist>
+              </label>
+            } @else {
+              <label appMotionOverlay animate.enter="motion-field-enter" animate.leave="motion-field-leave">Ativo<select formControlName="assetId" [class.readonly]="editingId()"><option value="">Selecione</option>
+                @for (asset of availableAssets(); track asset.id) { <option [value]="asset.id">{{ asset.ticker }} · {{ asset.name }}</option> }
+              </select></label>
+            }
+          </div>
+        </div>
+        <div class="record-values-slot">
+          @if (isCorporateEvent()) {
+            <div appMotionOverlay class="form-row record-values-row" animate.enter="motion-field-enter" animate.leave="motion-field-leave">
+              <label>Nova quantidade<input type="number" min="0.000001" step="0.000001" formControlName="newQuantity"></label>
+              <label>Proporção<input formControlName="ratio" placeholder="Ex.: 1:2"></label>
+            </div>
+          } @else if (isIncome()) {
+            <div appMotionOverlay class="form-row record-values-row" animate.enter="motion-field-enter" animate.leave="motion-field-leave">
+              <label class="record-unit-price"><span class="field-label">Valor por cota/ação <span>(opcional)</span></span><input type="number" min="0" step="0.01" formControlName="unitPrice"></label>
+            </div>
+          } @else if (isBonus()) {
+            <div appMotionOverlay class="form-row record-values-row" animate.enter="motion-field-enter" animate.leave="motion-field-leave">
+              <label>Quantidade<input type="number" min="0.000001" step="0.000001" formControlName="quantity"></label>
+            </div>
           } @else {
-            <label>Ativo<select formControlName="assetId" [class.readonly]="editingId()"><option value="">Selecione</option>
-              @for (asset of availableAssets(); track asset.id) { <option [value]="asset.id">{{ asset.ticker }} · {{ asset.name }}</option> }
-            </select></label>
+            <div appMotionOverlay class="form-row record-values-row" animate.enter="motion-field-enter" animate.leave="motion-field-leave">
+              <label>Quantidade<input type="number" min="0.000001" step="0.000001" formControlName="quantity"></label>
+              <label class="record-unit-price"><span class="field-label">Preço unitário <span>(opcional)</span></span><input type="number" min="0" step="0.01" formControlName="unitPrice"></label>
+              <label><span class="field-label">Taxas <span>(opcional)</span></span><input type="number" min="0" step="0.01" formControlName="fees"></label>
+            </div>
+          }
+        </div>
+        <div class="form-row record-date-total-row">
+          <label>Data<input type="date" formControlName="date"></label>
+          @if (!isCorporateEvent() && !isBonus()) {
+            <label appMotionOverlay class="total-value" [class.income-total-value]="isIncome()"
+              animate.enter="motion-field-enter" animate.leave="motion-field-leave">Valor total<input type="number" min="0.01" step="0.01" formControlName="totalValue"></label>
           }
         </div>
         <div class="form-row">
-          <label>Data<input type="date" formControlName="date"></label>
-          @if (isCorporateEvent()) {
-            <label>Nova quantidade<input type="number" min="0.000001" step="0.000001" formControlName="newQuantity"></label>
-          } @else if (isIncome()) {
-            <label class="total-value income-total-value">Valor total<input type="number" min="0.01" step="0.01" formControlName="totalValue"></label>
-          } @else {
-            <label>Quantidade<input type="number" min="0.000001" step="0.000001" formControlName="quantity"></label>
-          }
+          <label class="record-description">Descrição <span>(opcional)</span><textarea formControlName="description" rows="2"></textarea></label>
         </div>
-        @if (isCorporateEvent()) {
-          <div class="form-row"><label>Proporção<input formControlName="ratio" placeholder="Ex.: 1:2"></label></div>
-        } @else {
-          @if (isOperation()) {
-            <div class="form-row"><label class="total-value">Valor total<input type="number" min="0.01" step="0.01" formControlName="totalValue"></label></div>
-          }
-          @if (!isBonus()) {
-            <div class="form-row">
-              <label>Preço unitário <span>(opcional)</span><input type="number" min="0" step="0.01" formControlName="unitPrice"></label>
-              @if (isOperation()) { <label>Taxas <span>(opcional)</span><input type="number" min="0" step="0.01" formControlName="fees"></label> }
-            </div>
-          }
-        }
-        <label class="record-description">Descrição <span>(opcional)</span><textarea formControlName="description" rows="2"></textarea></label>
         <div class="form-actions">
           <button class="button primary" type="submit" [disabled]="recordForm.invalid">
             {{ editingId() ? 'Salvar alterações' : 'Salvar lançamento' }}

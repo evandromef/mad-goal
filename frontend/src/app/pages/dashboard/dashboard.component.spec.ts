@@ -273,21 +273,32 @@ describe('DashboardComponent - lançamentos', () => {
     expect(component.recordForm.controls.assetId.value).toBe('');
   });
 
-  it('posiciona valor total ao lado da data em dividendos e JCP', () => {
+  it('organiza o formulário em três colunas e expande a descrição', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     const component = fixture.componentInstance;
     fixture.detectChanges();
     component.openRecordModal();
     fixture.detectChanges();
-    component.recordForm.controls.type.setValue('DIVIDENDO');
-    fixture.detectChanges();
-
-    const totalValue = fixture.nativeElement.querySelector('.total-value');
-    expect(totalValue.classList.contains('income-total-value')).toBe(true);
-
     component.recordForm.controls.type.setValue('COMPRA');
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.total-value').classList.contains('income-total-value')).toBe(false);
+
+    const mainRow = fixture.nativeElement.querySelector('.record-main-row');
+    const valuesRow = fixture.nativeElement.querySelector('.record-values-slot > .record-values-row');
+    const dateTotalRow = fixture.nativeElement.querySelector('.record-date-total-row');
+    expect(mainRow.querySelector('select[formControlName="type"]')).toBeTruthy();
+    expect(mainRow.querySelector('.record-asset-slot input[list="purchase-assets"]')).toBeTruthy();
+    expect(valuesRow.querySelector('input[formControlName="quantity"]')).toBeTruthy();
+    expect(valuesRow.querySelector('input[formControlName="unitPrice"]')).toBeTruthy();
+    expect(valuesRow.querySelector('input[formControlName="fees"]')).toBeTruthy();
+    expect(dateTotalRow.querySelector('input[formControlName="date"]')).toBeTruthy();
+    expect(dateTotalRow.querySelector('input[formControlName="totalValue"]')).toBeTruthy();
+    expect(dateTotalRow.querySelectorAll(':scope > label')).toHaveLength(2);
+    expect(fixture.nativeElement.querySelector('.record-description')).toBeTruthy();
+
+    component.recordForm.controls.type.setValue('DIVIDENDO');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.total-value').classList.contains('income-total-value')).toBe(true);
+    expect(fixture.nativeElement.querySelector('.record-unit-price').textContent).toContain('Valor por cota/ação');
 
     const actions = fixture.nativeElement.querySelector('.form-actions');
     const messageSlot = fixture.nativeElement.querySelector('.form-message-slot');

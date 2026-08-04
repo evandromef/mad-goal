@@ -8,8 +8,10 @@ import { Directive } from '@angular/core';
 export class MotionOverlayDirective {
   onAnimationStart(event: AnimationEvent): void {
     const isSupportedLeave = event.animationName === 'motion-fade-out'
-      || event.animationName === 'motion-menu-out';
-    if (!isSupportedLeave || !(event.currentTarget instanceof HTMLElement)) return;
+      || event.animationName === 'motion-menu-out'
+      || event.animationName === 'motion-field-out';
+    if (!isSupportedLeave || event.target !== event.currentTarget
+      || !(event.currentTarget instanceof HTMLElement)) return;
     this.deactivate(event.currentTarget);
   }
 

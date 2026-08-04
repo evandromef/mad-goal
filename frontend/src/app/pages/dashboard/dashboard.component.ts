@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, ElementRef, HostListener, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, computed, ElementRef, HostListener, inject, Injector, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -19,6 +19,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly session = inject(SessionService);
   private readonly modal = inject(ModalService);
+  private readonly injector = inject(Injector);
   readonly wallets = signal<Wallet[]>([]);
   readonly assets = signal<Asset[]>([]);
   readonly selectedWalletId = signal('');
@@ -277,6 +278,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       || this.assetDisplay(asset).toLocaleLowerCase('pt-BR') === normalized);
     this.recordForm.controls.assetId.setValue(selected?.id ?? '');
   }
+  selectFirstPurchaseAsset(event: Event): void {
+    event.preventDefault();
+    const asset = this.filteredPurchaseAssets()[0];
+    if (!asset) return;
+    this.purchaseAssetQuery.set(this.assetDisplay(asset));
+    this.recordForm.controls.assetId.setValue(asset.id);
+    this.focusNextRecordControl(event.currentTarget as HTMLElement);
+  }
   openRecordModal(): void {
     this.captureRecordModalReturnFocus();
     this.editingId.set(null);
@@ -354,9 +363,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
   trapRecordModalFocus(event: KeyboardEvent): void {
     if (event.key !== 'Tab') return;
-    const controls = Array.from(this.recordModal?.nativeElement.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
-    ) ?? []).filter(control => !control.closest('[inert]'));
+    const controls = this.recordModalControls();
     if (!controls.length) return;
     const first = controls[0];
     const last = controls[controls.length - 1];
@@ -398,8 +405,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.recordModalReturnFocus = activeElement instanceof HTMLElement ? activeElement : undefined;
   }
   private focusRecordModal(): void {
-    queueMicrotask(() => this.recordModal?.nativeElement
-      .querySelector<HTMLElement>('[data-record-initial-focus]')?.focus());
+    afterNextRender(() => {
+      const initialControl = Array.from(this.recordModal?.nativeElement
+        .querySelectorAll<HTMLElement>('[data-record-initial-focus]') ?? [])
+        .find(control => !control.matches(':disabled') && !control.closest('[inert]'));
+      (initialControl ?? this.recordModal?.nativeElement
+        .querySelector<HTMLElement>('select[formControlName="type"]'))?.focus();
+    }, { injector: this.injector });
+  }
+  private focusNextRecordControl(currentControl: HTMLElement): void {
+    const controls = this.recordModalControls();
+    const currentIndex = controls.indexOf(currentControl);
+    if (currentIndex >= 0) controls[currentIndex + 1]?.focus();
+  }
+  private recordModalControls(): HTMLElement[] {
+    return Array.from(this.recordModal?.nativeElement.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+    ) ?? []).filter(control => !control.closest('[inert]'));
   }
   private closeRecordModal(restoreFocus = true): void {
     if (!this.recordModalOpen()) return;

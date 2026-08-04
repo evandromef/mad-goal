@@ -273,6 +273,33 @@ describe('DashboardComponent - lançamentos', () => {
     expect(component.recordForm.controls.assetId.value).toBe('');
   });
 
+  it('foca o ativo e seleciona o primeiro resultado com Enter', async () => {
+    const fixture = TestBed.createComponent(DashboardComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+    component.assets.set([
+      { id: 'asset-1', ticker: 'PETR4', name: 'Petrobras', category: 'ACAO', currentPrice: 30, priceDate: '2026-07-31' },
+      { id: 'asset-2', ticker: 'PETZ3', name: 'Petz', category: 'ACAO', currentPrice: 5, priceDate: '2026-07-31' }
+    ]);
+
+    component.openRecordModal();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const assetInput: HTMLInputElement = fixture.nativeElement.querySelector('input[list="purchase-assets"]');
+    expect(document.activeElement).toBe(assetInput);
+    assetInput.value = 'PET';
+    assetInput.dispatchEvent(new Event('input', { bubbles: true }));
+    const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    assetInput.dispatchEvent(enter);
+    fixture.detectChanges();
+
+    expect(enter.defaultPrevented).toBe(true);
+    expect(component.recordForm.controls.assetId.value).toBe('asset-1');
+    expect(component.purchaseAssetQuery()).toBe('PETR4 · Petrobras');
+    expect(document.activeElement).toBe(fixture.nativeElement.querySelector('input[formControlName="quantity"]'));
+  });
+
   it('organiza o formulário em três colunas e expande a descrição', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     const component = fixture.componentInstance;

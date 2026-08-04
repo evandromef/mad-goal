@@ -484,6 +484,8 @@ registrar uma compra.
   transição compartilhada de opacidade e deslocamento curto ao entrar e sair;
 - slots sobrepostos mantêm as linhas estáveis durante a troca, enquanto campos
   em saída ficam imediatamente inertes e ocultos para tecnologias assistivas.
+- ao abrir um novo lançamento, o foco vai diretamente para Ativo; na compra,
+  Enter seleciona o primeiro resultado correspondente e avança para Quantidade.
 
 ## Verificações executadas
 
@@ -508,7 +510,7 @@ git diff --check
 
 No último ciclo de validação registrado:
 
-- os 23 testes do backend e os 55 testes do frontend passaram;
+- os 23 testes do backend e os 56 testes do frontend passaram;
 - a cobertura do frontend ficou em 92,30% de statements, 81,50% de branches,
   96,70% de funções e 94,48% de linhas;
 - todas as verificações de cobertura do backend foram atendidas;

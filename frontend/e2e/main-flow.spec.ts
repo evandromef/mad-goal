@@ -82,6 +82,13 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   });
   expect(modalDurations.backdrop).toBeGreaterThanOrEqual(modalDurations.dialog);
   await expect(recordModal.getByRole('heading', { name: 'Novo lançamento' })).toBeVisible();
+  const purchaseAssetInput = recordModal.getByPlaceholder('Digite o ticker ou nome');
+  await expect(purchaseAssetInput).toBeFocused();
+  await purchaseAssetInput.fill('PET');
+  const firstMatchingAsset = await recordModal.locator('#purchase-assets option').first().getAttribute('value');
+  await purchaseAssetInput.press('Enter');
+  await expect(purchaseAssetInput).toHaveValue(firstMatchingAsset!);
+  await expect(recordModal.getByLabel('Quantidade')).toBeFocused();
   await recordModal.evaluate(async element => {
     await Promise.allSettled(element.getAnimations().map(animation => animation.finished));
   });

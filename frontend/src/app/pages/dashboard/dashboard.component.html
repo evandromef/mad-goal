@@ -208,15 +208,16 @@
       </div>
       <form [formGroup]="recordForm" (ngSubmit)="saveRecord()" class="stack-form record-modal-form">
         <div class="form-row record-main-row">
-          <label>Tipo<select data-record-initial-focus formControlName="type" (change)="onRecordTypeChange()">
+          <label>Tipo<select formControlName="type" (change)="onRecordTypeChange()">
             @for (type of recordTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }
           </select></label>
           <div class="record-asset-slot">
             @if (recordForm.controls.type.value === 'COMPRA') {
-              <label appMotionOverlay animate.enter="motion-field-enter" animate.leave="motion-field-leave">Ativo<input type="text" list="purchase-assets" autocomplete="off"
+              <label appMotionOverlay animate.enter="motion-field-enter" animate.leave="motion-field-leave">Ativo<input data-record-initial-focus type="text" list="purchase-assets" autocomplete="off"
                 placeholder="Digite o ticker ou nome" [value]="purchaseAssetQuery()"
                 [disabled]="recordForm.controls.assetId.disabled" [class.readonly]="editingId()"
-                (input)="onPurchaseAssetInput($any($event.target).value)">
+                (input)="onPurchaseAssetInput($any($event.target).value)"
+                (keydown.enter)="selectFirstPurchaseAsset($event)">
                 <datalist id="purchase-assets">
                   @for (asset of filteredPurchaseAssets(); track asset.id) {
                     <option [value]="assetDisplay(asset)"></option>
@@ -224,7 +225,7 @@
                 </datalist>
               </label>
             } @else {
-              <label appMotionOverlay animate.enter="motion-field-enter" animate.leave="motion-field-leave">Ativo<select formControlName="assetId" [class.readonly]="editingId()"><option value="">Selecione</option>
+              <label appMotionOverlay animate.enter="motion-field-enter" animate.leave="motion-field-leave">Ativo<select data-record-initial-focus formControlName="assetId" [class.readonly]="editingId()"><option value="">Selecione</option>
                 @for (asset of availableAssets(); track asset.id) { <option [value]="asset.id">{{ asset.ticker }} · {{ asset.name }}</option> }
               </select></label>
             }

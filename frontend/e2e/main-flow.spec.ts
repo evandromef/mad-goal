@@ -9,8 +9,8 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   const orbitalBackground = await page.locator('body').evaluate((element) => getComputedStyle(element).backgroundColor);
   await themeToggle.click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'classic');
-  const classicBackground = await page.locator('body').evaluate((element) => getComputedStyle(element).backgroundColor);
-  expect(classicBackground).not.toBe(orbitalBackground);
+  await expect.poll(() => page.locator('body')
+    .evaluate(element => getComputedStyle(element).backgroundColor)).not.toBe(orbitalBackground);
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'classic');
   await page.getByRole('button', { name: 'Ativar tema orbital' }).click();
@@ -38,7 +38,20 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   const walletActions = page.getByRole('button', { name: 'Ações da carteira' });
   await walletActions.click();
   const walletActionGroup = page.getByRole('group', { name: 'Ações da carteira' });
+  const walletActionElement = page.locator('#wallet-actions-menu');
+  const walletMenuAnimation = await walletActionGroup.evaluate(element => getComputedStyle(element).animationName);
+  expect(walletMenuAnimation).toContain('motion-menu-in');
   await expect(walletActionGroup.getByRole('button')).toHaveCount(3);
+  await page.keyboard.press('Escape');
+  const leavingMenuState = await walletActionElement.evaluate(element => ({
+    inert: (element as HTMLElement).inert,
+    ariaHidden: element.getAttribute('aria-hidden')
+  }));
+  expect(leavingMenuState).toEqual({ inert: true, ariaHidden: 'true' });
+  await expect(walletActionGroup).toHaveCount(0);
+  await expect(walletActions).toBeFocused();
+  await expect(walletActionElement).toHaveCount(0);
+  await walletActions.click();
   await walletActionGroup.getByRole('button', { name: 'Nova carteira' }).click();
   const newWalletModal = page.getByRole('dialog');
   await expect(newWalletModal.getByRole('heading', { name: 'Nova carteira' })).toBeVisible();
@@ -49,9 +62,21 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await expect(newRecordButton).toBeVisible();
   await newRecordButton.click();
   const recordModal = page.getByRole('dialog');
+  const modalAnimation = await recordModal.evaluate(element => getComputedStyle(element).animationName);
+  expect(modalAnimation).toContain('motion-dialog-in');
+  const modalDurations = await recordModal.evaluate(element => {
+    const milliseconds = (duration: string): number => duration.endsWith('ms')
+      ? Number.parseFloat(duration)
+      : Number.parseFloat(duration) * 1000;
+    return {
+      dialog: milliseconds(getComputedStyle(element).animationDuration),
+      backdrop: milliseconds(getComputedStyle(element.parentElement!).animationDuration)
+    };
+  });
+  expect(modalDurations.backdrop).toBeGreaterThanOrEqual(modalDurations.dialog);
   await expect(recordModal.getByRole('heading', { name: 'Novo lançamento' })).toBeVisible();
   await recordModal.evaluate(async element => {
-    await Promise.all(element.getAnimations().map(animation => animation.finished));
+    await Promise.allSettled(element.getAnimations().map(animation => animation.finished));
   });
   const form = page.locator('form.stack-form');
   const purchaseHeight = (await form.boundingBox())!.height;
@@ -118,6 +143,9 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await expect(incomePanel.locator('thead')).toContainText('Pagamento');
   await expect(incomePanel.locator('tbody')).toContainText('PETR4');
   await incomeMonths.nth(1).click();
+  const incomeAnimation = await incomePanel.locator('.income-month-details').nth(1)
+    .locator('.income-month-content-shell').evaluate(element => getComputedStyle(element).animationName);
+  expect(incomeAnimation).toContain('motion-expand-in');
   await expect(incomeMonths.first()).toHaveAttribute('aria-expanded', 'false');
   await expect(incomeMonths.nth(1)).toHaveAttribute('aria-expanded', 'true');
   await expect(incomePanel.getByText('Nenhum provento recebido neste mês.')).toBeVisible();
@@ -184,6 +212,14 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await cancelDeletion.click();
   await expect(deleteModal).not.toBeVisible();
   await expect(deleteTrigger).toBeFocused();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await walletActions.click();
+  await expect(walletActionGroup).toBeVisible();
+  const reducedDuration = await walletActionGroup.evaluate(element => getComputedStyle(element).animationDuration);
+  expect(Number.parseFloat(reducedDuration)).toBeLessThanOrEqual(0.001);
+  await page.keyboard.press('Escape');
+  await expect(walletActions).toBeFocused();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await newRecordButton.click();
   await expect(recordModal.getByRole('heading', { name: 'Novo lançamento' })).toBeVisible();
   await form.getByLabel('Tipo').selectOption('VENDA');

@@ -9,3 +9,4 @@ frontend/playwright-report/
 .idea/
 .vscode/
 *.log
+diagnostico_memoria_wsl.md

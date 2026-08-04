@@ -426,6 +426,36 @@ registrar uma compra.
 - testes validam versão, variante, timestamp, unicidade em sequência e a versão
   do identificador retornado pela API ao criar uma carteira.
 
+### Motion acessível no frontend
+
+- durações, curvas de aceleração e classes reutilizáveis foram centralizadas em
+  tokens CSS globais, sem adicionar bibliotecas de animação;
+- modais, menu de ações, mensagens, toast e acordeão de proventos receberam
+  entrada e saída com `animate.enter` e `animate.leave` do Angular;
+- páginas autenticadas usam a View Transitions API com fallback automático; a
+  entrada e a saída do login ficam instantâneas para não misturar layouts muito
+  diferentes, enquanto botões, links, controles, tabelas e indicadores oferecem
+  feedback visual discreto;
+- o acordeão anima sua expansão em grid para evitar saltos e os formulários de
+  lançamento preservam as dimensões fixas já estabelecidas;
+- `prefers-reduced-motion` reduz animações e transições a uma duração virtualmente
+  instantânea, mantendo foco, navegação por teclado e bloqueio de cliques durante
+  saídas de overlays;
+- o fluxo E2E verifica as animações principais e o comportamento com movimento
+  reduzido.
+
+### Correções da quinta revisão
+
+- a duração da animação do backdrop foi alinhada aos 240 ms do diálogo, evitando
+  que o Angular remova a classe de entrada antes do término de
+  `motion-dialog-in`;
+- o menu de ações da carteira passou a reutilizar a diretiva de inércia dos
+  overlays e é desativado antes de iniciar a saída visual;
+- durante o fechamento, os controles do menu ficam imediatamente fora da ordem
+  de tabulação e da árvore acessível por meio de `inert` e `aria-hidden`;
+- testes unitários e E2E cobrem as durações do modal, Escape, devolução de foco e
+  indisponibilidade do menu em saída para tecnologias assistivas.
+
 ## Verificações executadas
 
 Ao longo do desenvolvimento foram usados os comandos canônicos:
@@ -449,9 +479,9 @@ git diff --check
 
 No último ciclo de validação registrado:
 
-- os 23 testes do backend e os 48 testes do frontend passaram;
-- a cobertura do frontend ficou em 92,78% de statements, 81,78% de branches,
-  96,99% de funções e 94,58% de linhas;
+- os 23 testes do backend e os 52 testes do frontend passaram;
+- a cobertura do frontend ficou em 92,25% de statements, 81,48% de branches,
+  96,67% de funções e 94,44% de linhas;
 - todas as verificações de cobertura do backend foram atendidas;
 - o build Angular passou localmente e dentro do Docker;
 - o E2E Playwright passou usando a stack real;

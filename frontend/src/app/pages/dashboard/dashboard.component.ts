@@ -5,10 +5,11 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService, Asset, Dashboard, IncomeResponse, LedgerItem, Wallet } from '../../core/api.service';
 import { SessionService } from '../../core/session.service';
 import { ModalService } from '../../core/modal.service';
+import { MotionOverlayDirective } from '../../core/motion-overlay.directive';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [ReactiveFormsModule, CurrencyPipe, DecimalPipe, DatePipe, RouterLink],
+  imports: [ReactiveFormsModule, CurrencyPipe, DecimalPipe, DatePipe, RouterLink, MotionOverlayDirective],
   templateUrl: './dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -97,7 +98,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
   selectWallet(id: string): void {
-    this.walletActionsOpen.set(false);
+    this.closeWalletActions();
     if (id !== this.selectedWalletId()) {
       this.cancelEdit(false);
       this.selectedIncomeMonth.set(this.incomeMonths[0]);
@@ -117,9 +118,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.walletForm.reset();
     this.showWalletForm.set(false);
   }
-  toggleWalletActions(): void { this.walletActionsOpen.update(open => !open); }
+  toggleWalletActions(): void {
+    if (this.walletActionsOpen()) this.closeWalletActions();
+    else this.walletActionsOpen.set(true);
+  }
   async openWalletCreation(): Promise<void> {
-    this.walletActionsOpen.set(false);
+    this.closeWalletActions();
     if (!this.wallets().length) {
       this.showWalletForm.set(true);
       return;
@@ -135,7 +139,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (name) this.submitWalletCreation(name);
   }
   async renameWallet(): Promise<void> {
-    this.walletActionsOpen.set(false);
+    this.closeWalletActions();
     this.walletActionsTrigger?.nativeElement.focus();
     const wallet = this.wallets().find(item => item.id === this.selectedWalletId());
     if (!wallet) return;
@@ -154,7 +158,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
   async deleteWallet(): Promise<void> {
-    this.walletActionsOpen.set(false);
+    this.closeWalletActions();
     this.walletActionsTrigger?.nativeElement.focus();
     const id = this.selectedWalletId();
     const wallet = this.wallets().find(item => item.id === id);
@@ -174,13 +178,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
   @ViewChild('walletActions') private walletActions?: ElementRef<HTMLElement>;
   @ViewChild('walletActionsTrigger') private walletActionsTrigger?: ElementRef<HTMLButtonElement>;
+  @ViewChild('walletActionsMotion') private walletActionsMotion?: MotionOverlayDirective;
   @ViewChild('recordModal') private recordModal?: ElementRef<HTMLElement>;
+  @ViewChild('recordModalMotion') private recordMotionOverlay?: MotionOverlayDirective;
 
   @HostListener('document:click', ['$event'])
   closeWalletActionsOnOutsideClick(event: MouseEvent): void {
     const target = event.target as Node | null;
     if (this.walletActionsOpen() && (!target || !this.walletActions?.nativeElement.contains(target))) {
-      this.walletActionsOpen.set(false);
+      this.closeWalletActions();
     }
   }
 
@@ -193,8 +199,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
     if (!this.walletActionsOpen()) return;
     event.preventDefault();
-    this.walletActionsOpen.set(false);
-    this.walletActionsTrigger?.nativeElement.focus();
+    this.closeWalletActions(true);
   }
   private submitWalletCreation(name: string): void {
     this.api.createWallet(name).subscribe((wallet) => {
@@ -398,12 +403,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
   private closeRecordModal(restoreFocus = true): void {
     if (!this.recordModalOpen()) return;
+    const overlay = this.recordModal?.nativeElement.parentElement;
+    if (overlay) this.recordMotionOverlay?.deactivate(overlay);
     this.recordModalOpen.set(false);
     if (restoreFocus) {
       const returnFocus = this.recordModalReturnFocus;
       queueMicrotask(() => returnFocus?.focus());
     }
     this.recordModalReturnFocus = undefined;
+  }
+  private closeWalletActions(restoreFocus = false): void {
+    if (!this.walletActionsOpen()) return;
+    const menu = this.walletActions?.nativeElement.querySelector<HTMLElement>('.wallet-actions-menu');
+    if (menu) this.walletActionsMotion?.deactivate(menu);
+    this.walletActionsOpen.set(false);
+    if (restoreFocus) this.walletActionsTrigger?.nativeElement.focus();
   }
   private recordPayload(walletId: string): Record<string, unknown> {
     const value = this.recordForm.getRawValue();

@@ -22,9 +22,13 @@
       @if (mode() === 'confirm' || mode() === 'reset') {
         <label>Token<input formControlName="accountToken" autocomplete="one-time-code" placeholder="Token recebido"></label>
       }
-      @if (message()) { <p class="notice">{{ message() }}</p> }
-      @if (error()) { <p class="alert">{{ error() }}</p> }
-      <button class="button primary" type="submit" [disabled]="loading()">
+      @if (message()) {
+        <p class="notice" animate.enter="motion-feedback-enter" animate.leave="motion-feedback-leave">{{ message() }}</p>
+      }
+      @if (error()) {
+        <p class="alert" animate.enter="motion-feedback-enter" animate.leave="motion-feedback-leave">{{ error() }}</p>
+      }
+      <button class="button primary" type="submit" [disabled]="loading()" [class.loading]="loading()">
         {{ loading() ? 'Aguarde…' : actionLabel() }}
       </button>
       @if (mode() === 'login') {

@@ -1,5 +1,5 @@
 import { bootstrapApplication } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withViewTransitions } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { LOCALE_ID } from '@angular/core';
 import { registerLocaleData } from '@angular/common';
@@ -13,7 +13,12 @@ registerLocaleData(localePt);
 bootstrapApplication(AppComponent, {
   providers: [
     { provide: LOCALE_ID, useValue: 'pt-BR' },
-    provideRouter(routes),
+    provideRouter(routes, withViewTransitions({
+      skipInitialTransition: true,
+      onViewTransitionCreated: ({ transition, from, to }) => {
+        if (from.routeConfig?.path === 'login' || to.routeConfig?.path === 'login') transition.skipTransition();
+      }
+    })),
     provideHttpClient(withInterceptors([authInterceptor]))
   ]
 }).catch((error) => console.error(error));

@@ -1,5 +1,6 @@
 @if (modal.state(); as state) {
-  <div class="modal-backdrop" (mousedown)="cancel()">
+  <div appMotionOverlay class="modal-backdrop" animate.enter="motion-modal-enter" animate.leave="motion-modal-leave"
+    (mousedown)="cancel()">
     <section class="system-modal" role="dialog" aria-modal="true" [attr.aria-labelledby]="titleId"
       (mousedown)="$event.stopPropagation()">
       <div class="modal-mark" [class.danger]="state.danger">{{ state.danger ? '!' : 'M' }}</div>

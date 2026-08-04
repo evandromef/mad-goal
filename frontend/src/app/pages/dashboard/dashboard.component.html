@@ -10,7 +10,8 @@
   <div class="user"><span>{{ userInitial() }}</span><a routerLink="/profile">Perfil</a><button class="text-button" (click)="logout()">Sair</button></div>
 </header>
 @if (successMessage()) {
-  <div class="success-toast" role="status" aria-live="polite">{{ successMessage() }}</div>
+  <div class="success-toast" role="status" aria-live="polite"
+    animate.enter="motion-toast-enter" animate.leave="motion-toast-leave">{{ successMessage() }}</div>
 }
 <main class="workspace">
   <section class="hero-row">
@@ -38,7 +39,9 @@
             </svg>
           </button>
           @if (walletActionsOpen()) {
-            <div class="wallet-actions-menu" id="wallet-actions-menu" role="group" aria-label="Ações da carteira">
+            <div appMotionOverlay #walletActionsMotion="motionOverlay" class="wallet-actions-menu"
+              id="wallet-actions-menu" role="group" aria-label="Ações da carteira"
+              animate.enter="motion-menu-enter" animate.leave="motion-menu-leave">
               <button type="button" (click)="openWalletCreation()">Nova carteira</button>
               @if (selectedWalletId()) {
                 <button type="button" (click)="renameWallet()">Renomear carteira</button>
@@ -162,23 +165,26 @@
                   [attr.aria-expanded]="selectedIncomeMonth() === month"
                   [attr.aria-controls]="'income-month-' + month"
                   (click)="selectIncomeMonth(month)">
-                  <span>{{ periodLabel(month) }}</span><span aria-hidden="true">{{ selectedIncomeMonth() === month ? '−' : '+' }}</span>
+                  <span>{{ periodLabel(month) }}</span><span class="income-toggle-icon" aria-hidden="true"></span>
                 </button>
               </h3>
               @if (selectedIncomeMonth() === month) {
-                <div class="income-month-content" [id]="'income-month-' + month">
-                  @if (selectedMonthIncomes().length) {
-                    <div class="table-scroll"><table>
-                      <thead><tr><th>Ativo</th><th>Tipo</th><th>Pagamento</th><th>Valor</th></tr></thead>
-                      <tbody>
-                        @for (item of selectedMonthIncomes(); track item.id) {
-                          <tr><td><strong>{{ item.ticker }}</strong></td><td>{{ label(item.type) }}</td><td>{{ item.date | date:'dd/MM/yyyy':'UTC' }}</td><td>{{ item.totalValue | currency:'BRL' }}</td></tr>
-                        }
-                      </tbody>
-                    </table></div>
-                  } @else {
-                    <p class="empty-copy compact">Nenhum provento recebido neste mês.</p>
-                  }
+                <div class="income-month-content-shell" [id]="'income-month-' + month"
+                  animate.enter="motion-expand-enter" animate.leave="motion-expand-leave">
+                  <div class="income-month-content">
+                    @if (selectedMonthIncomes().length) {
+                      <div class="table-scroll"><table>
+                        <thead><tr><th>Ativo</th><th>Tipo</th><th>Pagamento</th><th>Valor</th></tr></thead>
+                        <tbody>
+                          @for (item of selectedMonthIncomes(); track item.id) {
+                            <tr><td><strong>{{ item.ticker }}</strong></td><td>{{ label(item.type) }}</td><td>{{ item.date | date:'dd/MM/yyyy':'UTC' }}</td><td>{{ item.totalValue | currency:'BRL' }}</td></tr>
+                          }
+                        </tbody>
+                      </table></div>
+                    } @else {
+                      <p class="empty-copy compact">Nenhum provento recebido neste mês.</p>
+                    }
+                  </div>
                 </div>
               }
             </section>
@@ -190,7 +196,8 @@
 </main>
 
 @if (recordModalOpen()) {
-  <div class="modal-backdrop" (mousedown)="cancelEdit()">
+  <div appMotionOverlay #recordModalMotion="motionOverlay" class="modal-backdrop"
+    animate.enter="motion-modal-enter" animate.leave="motion-modal-leave" (mousedown)="cancelEdit()">
     <section #recordModal class="system-modal record-modal" role="dialog" aria-modal="true"
       aria-labelledby="record-modal-title" (mousedown)="$event.stopPropagation()" (keydown)="trapRecordModalFocus($event)">
       <div class="modal-mark" aria-hidden="true">{{ editingId() ? 'E' : '+' }}</div>
@@ -252,7 +259,9 @@
           <button class="button secondary" type="button" (click)="cancelEdit()">Cancelar</button>
         </div>
         <div class="form-message-slot" aria-live="polite">
-          @if (message()) { <p class="alert">{{ message() }}</p> }
+          @if (message()) {
+            <p class="alert" animate.enter="motion-feedback-enter" animate.leave="motion-feedback-leave">{{ message() }}</p>
+          }
         </div>
       </form>
     </section>

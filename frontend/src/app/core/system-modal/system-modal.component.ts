@@ -1,9 +1,11 @@
 import { DOCUMENT } from '@angular/common';
-import { ChangeDetectionStrategy, Component, effect, ElementRef, HostListener, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, ElementRef, HostListener, inject, signal, ViewChild } from '@angular/core';
 import { ModalService, ModalState } from '../modal.service';
+import { MotionOverlayDirective } from '../motion-overlay.directive';
 
 @Component({
   selector: 'app-system-modal',
+  imports: [MotionOverlayDirective],
   templateUrl: './system-modal.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -14,6 +16,7 @@ export class SystemModalComponent {
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly document = inject(DOCUMENT);
   private openState: ModalState | null = null;
+  @ViewChild(MotionOverlayDirective) private motionOverlay?: MotionOverlayDirective;
 
   constructor() {
     effect(() => {
@@ -38,10 +41,21 @@ export class SystemModalComponent {
   confirm(): void {
     const state = this.modal.state();
     if (!state || (state.inputLabel && !this.inputValue().trim())) return;
+    this.deactivateOverlay();
     state.onConfirm(this.inputValue().trim());
   }
 
-  cancel(): void { this.modal.state()?.onCancel(); }
+  cancel(): void {
+    const state = this.modal.state();
+    if (!state) return;
+    this.deactivateOverlay();
+    state.onCancel();
+  }
+
+  private deactivateOverlay(): void {
+    const overlay = this.element.nativeElement.querySelector<HTMLElement>('.modal-backdrop');
+    if (overlay) this.motionOverlay?.deactivate(overlay);
+  }
 
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {

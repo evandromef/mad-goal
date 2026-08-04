@@ -48,7 +48,7 @@
       <section class="panel records-history-panel">
         @if (records().length) {
           @if (filteredRecords().length) {
-            <div class="table-scroll"><table>
+            <div class="table-scroll state-content-enter"><table>
               <thead><tr><th>Data</th><th>Tipo</th><th>Ativo</th><th>Quantidade</th>
                 <th>Preço unitário</th><th>Taxas</th><th>Valor total</th><th>Detalhes</th><th>Descrição</th></tr></thead>
               <tbody>
@@ -64,8 +64,8 @@
                 }
               </tbody>
             </table></div>
-          } @else { <p class="empty-copy">Nenhum lançamento encontrado para os filtros selecionados.</p> }
-        } @else { <p class="empty-copy">Nenhum lançamento nesta carteira.</p> }
+          } @else { <p class="empty-copy state-content-enter">Nenhum lançamento encontrado para os filtros selecionados.</p> }
+        } @else { <p class="empty-copy state-content-enter">Nenhum lançamento nesta carteira.</p> }
       </section>
     </div>
   </section>

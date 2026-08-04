@@ -7,7 +7,9 @@
     <form [formGroup]="form" (ngSubmit)="save()" class="stack-single">
       <label>Nome<input formControlName="name"></label>
       <label>E-mail<input formControlName="email" type="email"></label>
-      @if (message()) { <p class="notice">{{ message() }}</p> }
+      @if (message()) {
+        <p class="notice" animate.enter="motion-feedback-enter" animate.leave="motion-feedback-leave">{{ message() }}</p>
+      }
       <button class="button primary" [disabled]="form.invalid">Salvar perfil</button>
     </form>
   </section>

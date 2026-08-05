@@ -9,8 +9,9 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   const orbitalBackground = await page.locator('body').evaluate((element) => getComputedStyle(element).backgroundColor);
   await themeToggle.click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'classic');
-  await expect.poll(() => page.locator('body')
-    .evaluate(element => getComputedStyle(element).backgroundColor)).not.toBe(orbitalBackground);
+  await expect
+    .poll(() => page.locator('body').evaluate((element) => getComputedStyle(element).backgroundColor))
+    .not.toBe(orbitalBackground);
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'classic');
   await page.getByRole('button', { name: 'Ativar tema orbital' }).click();
@@ -36,16 +37,27 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await page.getByPlaceholder('Nome da nova carteira').fill('Carteira E2E');
   await page.getByRole('button', { name: 'Criar', exact: true }).click();
   const walletActions = page.getByRole('button', { name: 'Ações da carteira' });
+  const walletMenuAnimation = page.evaluate(
+    () =>
+      new Promise<string>((resolve) => {
+        const listener = (event: Event) => {
+          if (!(event instanceof AnimationEvent) || !(event.target instanceof HTMLElement)) return;
+          if (event.target.id !== 'wallet-actions-menu') return;
+          document.removeEventListener('animationstart', listener, true);
+          resolve(event.animationName);
+        };
+        document.addEventListener('animationstart', listener, true);
+      }),
+  );
   await walletActions.click();
   const walletActionGroup = page.getByRole('group', { name: 'Ações da carteira' });
   const walletActionElement = page.locator('#wallet-actions-menu');
-  const walletMenuAnimation = await walletActionGroup.evaluate(element => getComputedStyle(element).animationName);
-  expect(walletMenuAnimation).toContain('motion-menu-in');
+  expect(await walletMenuAnimation).toContain('motion-menu-in');
   await expect(walletActionGroup.getByRole('button')).toHaveCount(3);
   await page.keyboard.press('Escape');
-  const leavingMenuState = await walletActionElement.evaluate(element => ({
+  const leavingMenuState = await walletActionElement.evaluate((element) => ({
     inert: (element as HTMLElement).inert,
-    ariaHidden: element.getAttribute('aria-hidden')
+    ariaHidden: element.getAttribute('aria-hidden'),
   }));
   expect(leavingMenuState).toEqual({ inert: true, ariaHidden: 'true' });
   await expect(walletActionGroup).toHaveCount(0);
@@ -64,20 +76,19 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await newRecordButton.click();
   const recordModal = page.getByRole('dialog');
   await expect(recordModal.locator('.modal-mark')).toBeVisible();
-  const regularModalOverflow = await recordModal.evaluate(element => ({
+  const regularModalOverflow = await recordModal.evaluate((element) => ({
     horizontal: element.scrollWidth > element.clientWidth,
-    vertical: element.scrollHeight > element.clientHeight
+    vertical: element.scrollHeight > element.clientHeight,
   }));
   expect(regularModalOverflow).toEqual({ horizontal: false, vertical: false });
-  const modalAnimation = await recordModal.evaluate(element => getComputedStyle(element).animationName);
+  const modalAnimation = await recordModal.evaluate((element) => getComputedStyle(element).animationName);
   expect(modalAnimation).toContain('motion-dialog-in');
-  const modalDurations = await recordModal.evaluate(element => {
-    const milliseconds = (duration: string): number => duration.endsWith('ms')
-      ? Number.parseFloat(duration)
-      : Number.parseFloat(duration) * 1000;
+  const modalDurations = await recordModal.evaluate((element) => {
+    const milliseconds = (duration: string): number =>
+      duration.endsWith('ms') ? Number.parseFloat(duration) : Number.parseFloat(duration) * 1000;
     return {
       dialog: milliseconds(getComputedStyle(element).animationDuration),
-      backdrop: milliseconds(getComputedStyle(element.parentElement!).animationDuration)
+      backdrop: milliseconds(getComputedStyle(element.parentElement!).animationDuration),
     };
   });
   expect(modalDurations.backdrop).toBeGreaterThanOrEqual(modalDurations.dialog);
@@ -89,17 +100,17 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await purchaseAssetInput.press('Enter');
   await expect(purchaseAssetInput).toHaveValue(firstMatchingAsset!);
   await expect(recordModal.getByLabel('Quantidade')).toBeFocused();
-  await recordModal.evaluate(async element => {
-    await Promise.allSettled(element.getAnimations().map(animation => animation.finished));
+  await recordModal.evaluate(async (element) => {
+    await Promise.allSettled(element.getAnimations().map((animation) => animation.finished));
   });
   await page.setViewportSize({ width: 768, height: 600 });
   await expect(recordModal.locator('.modal-mark')).toBeVisible();
   const shortViewportModalBounds = (await recordModal.boundingBox())!;
   expect(shortViewportModalBounds.y).toBeGreaterThanOrEqual(0);
   expect(shortViewportModalBounds.y + shortViewportModalBounds.height).toBeLessThanOrEqual(600);
-  const shortViewportModalOverflow = await recordModal.evaluate(element => ({
+  const shortViewportModalOverflow = await recordModal.evaluate((element) => ({
     horizontal: element.scrollWidth > element.clientWidth,
-    vertical: element.scrollHeight > element.clientHeight
+    vertical: element.scrollHeight > element.clientHeight,
   }));
   expect(shortViewportModalOverflow).toEqual({ horizontal: false, vertical: false });
   const form = page.locator('form.stack-form');
@@ -108,17 +119,19 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await form.getByLabel('Tipo').selectOption('DIVIDENDO');
   const enteringValues = valuesSlot.locator('.motion-field-enter');
   await expect(enteringValues).toHaveCount(1);
-  expect(await enteringValues.evaluate(element => getComputedStyle(element).animationName)).toContain('motion-field-in');
+  expect(await enteringValues.evaluate((element) => getComputedStyle(element).animationName)).toContain(
+    'motion-field-in',
+  );
   const leavingValues = valuesSlot.locator('.motion-field-leave');
   await expect(leavingValues).toHaveAttribute('aria-hidden', 'true');
-  await valuesSlot.evaluate(async element => {
-    await Promise.allSettled(element.getAnimations({ subtree: true }).map(animation => animation.finished));
+  await valuesSlot.evaluate(async (element) => {
+    await Promise.allSettled(element.getAnimations({ subtree: true }).map((animation) => animation.finished));
   });
   expect((await form.boundingBox())!.height).toBe(purchaseHeight);
   for (const type of ['JCP', 'BONIFICACAO', 'DESDOBRAMENTO']) {
     await form.getByLabel('Tipo').selectOption(type);
-    await form.evaluate(async element => {
-      await Promise.allSettled(element.getAnimations({ subtree: true }).map(animation => animation.finished));
+    await form.evaluate(async (element) => {
+      await Promise.allSettled(element.getAnimations({ subtree: true }).map((animation) => animation.finished));
     });
     expect((await form.boundingBox())!.height).toBe(purchaseHeight);
     if (type === 'JCP') {
@@ -129,21 +142,27 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
     }
   }
   await form.getByLabel('Tipo').selectOption('COMPRA');
-  await form.evaluate(async element => {
-    await Promise.allSettled(element.getAnimations({ subtree: true }).map(animation => animation.finished));
+  await form.evaluate(async (element) => {
+    await Promise.allSettled(element.getAnimations({ subtree: true }).map((animation) => animation.finished));
   });
   const firstRow = form.locator('.record-main-row');
   const valuesRow = valuesSlot.locator(':scope > .record-values-row');
   const dateTotalRow = form.locator('.record-date-total-row');
-  const firstRowBoxes = await firstRow.locator(':scope > label > select, .record-asset-slot > label > input')
-    .evaluateAll(elements => elements.map(element => element.getBoundingClientRect().toJSON()));
+  const firstRowBoxes = await firstRow
+    .locator(':scope > label > select, .record-asset-slot > label > input')
+    .evaluateAll((elements) => elements.map((element) => element.getBoundingClientRect().toJSON()));
   expect(firstRowBoxes).toHaveLength(2);
-  expect(Math.max(...firstRowBoxes.map(box => box.y)) - Math.min(...firstRowBoxes.map(box => box.y))).toBeLessThan(2);
+  expect(Math.max(...firstRowBoxes.map((box) => box.y)) - Math.min(...firstRowBoxes.map((box) => box.y))).toBeLessThan(
+    2,
+  );
   expect(firstRowBoxes[1].width).toBeGreaterThan(firstRowBoxes[0].width * 1.9);
-  const secondRowBoxes = await valuesRow.locator(':scope > label > input')
-    .evaluateAll(elements => elements.map(element => element.getBoundingClientRect().toJSON()));
+  const secondRowBoxes = await valuesRow
+    .locator(':scope > label > input')
+    .evaluateAll((elements) => elements.map((element) => element.getBoundingClientRect().toJSON()));
   expect(secondRowBoxes).toHaveLength(3);
-  expect(Math.max(...secondRowBoxes.map(box => box.y)) - Math.min(...secondRowBoxes.map(box => box.y))).toBeLessThan(2);
+  expect(
+    Math.max(...secondRowBoxes.map((box) => box.y)) - Math.min(...secondRowBoxes.map((box) => box.y)),
+  ).toBeLessThan(2);
   const dateBox = (await dateTotalRow.locator('input[formControlName="date"]').boundingBox())!;
   const totalValueBox = (await dateTotalRow.locator('.total-value').boundingBox())!;
   const totalValueInputBox = (await dateTotalRow.locator('input[formControlName="totalValue"]').boundingBox())!;
@@ -161,10 +180,10 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await expect(page.getByRole('status')).toContainText('sucesso');
   await page.setViewportSize({ width: 1280, height: 720 });
   await expect(page.locator('.activity-icon').first()).toHaveText('C');
-  await expect(page.locator('.activity-value').first())
-    .toContainText('10,12345678 un. · Preço unitário R$ 98,79');
-  await expect(page.locator('.metric').filter({ hasText: 'Custo de aquisição' }).locator('strong'))
-    .toHaveText(/R\$\s*1\.000,12/);
+  await expect(page.locator('.activity-value').first()).toContainText('10,12345678 un. · Preço unitário R$ 98,79');
+  await expect(page.locator('.metric').filter({ hasText: 'Custo de aquisição' }).locator('strong')).toHaveText(
+    /R\$\s*1\.000,12/,
+  );
   await page.getByRole('link', { name: 'Posições da carteira', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Posições da carteira' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Ativar tema claro' })).toBeVisible();
@@ -213,29 +232,38 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await expect(incomePanel.locator('thead')).toContainText('Pagamento');
   await expect(incomePanel.locator('tbody')).toContainText('PETR4');
   await incomeMonths.nth(1).click();
-  const incomeAnimation = await incomePanel.locator('.income-month-details').nth(1)
-    .locator('.income-month-content-shell').evaluate(element => getComputedStyle(element).animationName);
+  const incomeAnimation = await incomePanel
+    .locator('.income-month-details')
+    .nth(1)
+    .locator('.income-month-content-shell')
+    .evaluate((element) => getComputedStyle(element).animationName);
   expect(incomeAnimation).toContain('motion-expand-in');
   await expect(incomeMonths.first()).toHaveAttribute('aria-expanded', 'false');
   await expect(incomeMonths.nth(1)).toHaveAttribute('aria-expanded', 'true');
   await expect(incomePanel.getByText('Nenhum provento recebido neste mês.')).toBeVisible();
   await incomeMonths.first().click();
   await expect(incomePanel.locator('tbody')).toContainText('PETR4');
-  const insightBoxes = await insightPanels.evaluateAll(elements => elements.map(element => {
-    const box = element.getBoundingClientRect();
-    return { x: box.x, y: box.y };
-  }));
+  const insightBoxes = await insightPanels.evaluateAll((elements) =>
+    elements.map((element) => {
+      const box = element.getBoundingClientRect();
+      return { x: box.x, y: box.y };
+    }),
+  );
   expect(insightBoxes[0].x).toBeLessThan(insightBoxes[1].x);
   expect(insightBoxes[1].x).toBeLessThan(insightBoxes[2].x);
   expect(Math.abs(insightBoxes[0].y - insightBoxes[2].y)).toBeLessThan(2);
-  await expect.poll(() => page.locator('.activity-list').evaluate(element => getComputedStyle(element).overflowY))
+  await expect
+    .poll(() => page.locator('.activity-list').evaluate((element) => getComputedStyle(element).overflowY))
     .toBe('visible');
-  await expect.poll(() => page.locator('.evolution').evaluate(element => getComputedStyle(element).overflowY))
+  await expect
+    .poll(() => page.locator('.evolution').evaluate((element) => getComputedStyle(element).overflowY))
     .toBe('visible');
   expect((await page.locator('.activity').first().boundingBox())!.height).toBeLessThan(90);
   const recordsPanel = page.locator('#lancamentos .records-panel');
-  await expect(recordsPanel.getByRole('link', { name: 'Lançamentos', exact: true }))
-    .toHaveAttribute('href', /\/wallets\/[^/]+\/records/);
+  await expect(recordsPanel.getByRole('link', { name: 'Lançamentos', exact: true })).toHaveAttribute(
+    'href',
+    /\/wallets\/[^/]+\/records/,
+  );
   await recordsPanel.getByRole('link', { name: /Ver histórico completo/ }).click();
   await expect(page.getByRole('heading', { name: 'Histórico de lançamentos' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Ativar tema claro' })).toBeVisible();
@@ -256,14 +284,18 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await expect(page.locator('app-record-form')).toBeVisible();
   await page.getByRole('link', { name: 'Voltar à carteira' }).click();
   await expect(page.locator('#lancamentos').getByRole('heading', { name: 'Lançamentos' })).toBeVisible();
-  const editTrigger = page.locator('.activity').filter({ hasText: 'Compra · PETR4' })
+  const editTrigger = page
+    .locator('.activity')
+    .filter({ hasText: 'Compra · PETR4' })
     .getByRole('button', { name: 'Editar lançamento' });
   await editTrigger.click();
   const editModal = page.getByRole('dialog');
   await expect(editModal.getByRole('heading', { name: 'Editar lançamento' })).toBeVisible();
   await editModal.getByRole('button', { name: 'Cancelar' }).click();
   await expect(editTrigger).toBeFocused();
-  const deleteTrigger = page.locator('.activity').filter({ hasText: 'Compra · PETR4' })
+  const deleteTrigger = page
+    .locator('.activity')
+    .filter({ hasText: 'Compra · PETR4' })
     .getByRole('button', { name: 'Excluir lançamento' });
   await deleteTrigger.focus();
   await page.keyboard.press('Enter');
@@ -285,7 +317,7 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await walletActions.click();
   await expect(walletActionGroup).toBeVisible();
-  const reducedDuration = await walletActionGroup.evaluate(element => getComputedStyle(element).animationDuration);
+  const reducedDuration = await walletActionGroup.evaluate((element) => getComputedStyle(element).animationDuration);
   expect(Number.parseFloat(reducedDuration)).toBeLessThanOrEqual(0.001);
   await page.keyboard.press('Escape');
   await expect(walletActions).toBeFocused();
@@ -293,10 +325,11 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await newRecordButton.click();
   await expect(recordModal.getByRole('heading', { name: 'Novo lançamento' })).toBeVisible();
   await form.getByLabel('Tipo').selectOption('VENDA');
-  await form.locator('.record-asset-slot').evaluate(async element => {
-    await Promise.allSettled(element.getAnimations({ subtree: true }).map(animation => animation.finished));
+  await form.locator('.record-asset-slot').evaluate(async (element) => {
+    await Promise.allSettled(element.getAnimations({ subtree: true }).map((animation) => animation.finished));
   });
-  const petr4 = await form.locator('select[formcontrolname="assetId"] option', { hasText: /^PETR4 ·/ })
+  const petr4 = await form
+    .locator('select[formcontrolname="assetId"] option', { hasText: /^PETR4 ·/ })
     .getAttribute('value');
   await form.getByLabel('Ativo').selectOption(petr4!);
   await form.getByLabel('Quantidade').fill('999999');
@@ -312,8 +345,8 @@ test('cadastro confirmado, carteira, lançamento e detalhe com nota', async ({ p
   await page.getByRole('button', { name: 'Adicionar' }).click();
   await expect(page.getByText('Nota criada no fluxo E2E')).toBeVisible();
 
-  await page.route('**/api/wallets', route => route.fulfill({ status: 401, body: '' }));
-  await page.route('**/api/auth/refresh', route => route.fulfill({ status: 401, body: '' }));
+  await page.route('**/api/wallets', (route) => route.fulfill({ status: 401, body: '' }));
+  await page.route('**/api/auth/refresh', (route) => route.fulfill({ status: 401, body: '' }));
   await page.goto('/');
   await expect(page).toHaveURL(/\/login$/);
   await expect.poll(() => page.evaluate(() => localStorage.getItem('mad_token'))).toBeNull();

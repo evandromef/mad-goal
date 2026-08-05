@@ -10,15 +10,18 @@ describe('SystemModalComponent', () => {
   });
 
   afterEach(() => {
-    mountedElements.splice(0).forEach(element => element.remove());
+    mountedElements.splice(0).forEach((element) => element.remove());
   });
 
   it('renderiza e confirma uma ação destrutiva personalizada', async () => {
     const fixture = TestBed.createComponent(SystemModalComponent);
     const modal = TestBed.inject(ModalService);
     const result = modal.confirm({
-      title: 'Excluir carteira?', message: 'Todo o histórico será removido.',
-      confirmLabel: 'Excluir carteira', cancelLabel: 'Manter carteira', danger: true
+      title: 'Excluir carteira?',
+      message: 'Todo o histórico será removido.',
+      confirmLabel: 'Excluir carteira',
+      cancelLabel: 'Manter carteira',
+      danger: true,
     });
 
     fixture.detectChanges();
@@ -36,12 +39,16 @@ describe('SystemModalComponent', () => {
     const component = fixture.componentInstance;
     const modal = TestBed.inject(ModalService);
     const promptResult = modal.prompt({
-      title: 'Renomear carteira', message: 'Informe o novo nome.', inputLabel: 'Novo nome',
-      initialValue: 'Principal', confirmLabel: 'Salvar nome'
+      title: 'Renomear carteira',
+      message: 'Informe o novo nome.',
+      inputLabel: 'Novo nome',
+      initialValue: 'Principal',
+      confirmLabel: 'Salvar nome',
     });
     fixture.detectChanges();
     const input: HTMLInputElement = fixture.nativeElement.querySelector('input');
-    input.value = 'Longo prazo'; input.dispatchEvent(new Event('input'));
+    input.value = 'Longo prazo';
+    input.dispatchEvent(new Event('input'));
     fixture.detectChanges();
     fixture.nativeElement.querySelector('.modal-actions .button:last-child').click();
     expect(await promptResult).toBe('Longo prazo');
@@ -64,14 +71,18 @@ describe('SystemModalComponent', () => {
     mountedElements.push(fixture.nativeElement);
     const modal = TestBed.inject(ModalService);
     const result = modal.confirm({
-      title: 'Excluir lançamento?', message: 'O lançamento será removido.',
-      confirmLabel: 'Excluir lançamento', cancelLabel: 'Manter lançamento', danger: true
+      title: 'Excluir lançamento?',
+      message: 'O lançamento será removido.',
+      confirmLabel: 'Excluir lançamento',
+      cancelLabel: 'Manter lançamento',
+      danger: true,
     });
 
     fixture.detectChanges();
     await fixture.whenStable();
-    const controls = (fixture.nativeElement as HTMLElement)
-      .querySelectorAll<HTMLButtonElement>('.modal-actions button');
+    const controls = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>(
+      '.modal-actions button',
+    );
     const cancelButton = controls[0];
     const confirmButton = controls[1];
     expect(document.activeElement).toBe(cancelButton);

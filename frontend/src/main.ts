@@ -13,12 +13,15 @@ registerLocaleData(localePt);
 bootstrapApplication(AppComponent, {
   providers: [
     { provide: LOCALE_ID, useValue: 'pt-BR' },
-    provideRouter(routes, withViewTransitions({
-      skipInitialTransition: true,
-      onViewTransitionCreated: ({ transition, from, to }) => {
-        if (from.routeConfig?.path === 'login' || to.routeConfig?.path === 'login') transition.skipTransition();
-      }
-    })),
-    provideHttpClient(withInterceptors([authInterceptor]))
-  ]
+    provideRouter(
+      routes,
+      withViewTransitions({
+        skipInitialTransition: true,
+        onViewTransitionCreated: ({ transition, from, to }) => {
+          if (from.routeConfig?.path === 'login' || to.routeConfig?.path === 'login') transition.skipTransition();
+        },
+      }),
+    ),
+    provideHttpClient(withInterceptors([authInterceptor])),
+  ],
 }).catch((error) => console.error(error));

@@ -7,11 +7,21 @@ import br.com.mad.repository.WalletRepository;
 import br.com.mad.service.PortfolioService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -24,7 +34,9 @@ public class DashboardController {
     private final PortfolioService portfolio;
 
     public DashboardController(WalletRepository wallets, LedgerRecordRepository records, PortfolioService portfolio) {
-        this.wallets = wallets; this.records = records; this.portfolio = portfolio;
+        this.wallets = wallets;
+        this.records = records;
+        this.portfolio = portfolio;
     }
 
     public record PositionResponse(UUID assetId, String ticker, String name, Asset.Category category,

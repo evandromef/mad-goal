@@ -31,26 +31,42 @@ export class ModalService {
 
   confirm(options: ConfirmModalOptions): Promise<boolean> {
     this.dismissCurrent();
-    return new Promise(resolve => this.state.set({
-      ...options,
-      returnFocus: this.focusedElement(),
-      confirmLabel: options.confirmLabel ?? 'Confirmar',
-      cancelLabel: options.cancelLabel ?? 'Cancelar',
-      onConfirm: () => { this.state.set(null); resolve(true); },
-      onCancel: () => { this.state.set(null); resolve(false); }
-    }));
+    return new Promise((resolve) =>
+      this.state.set({
+        ...options,
+        returnFocus: this.focusedElement(),
+        confirmLabel: options.confirmLabel ?? 'Confirmar',
+        cancelLabel: options.cancelLabel ?? 'Cancelar',
+        onConfirm: () => {
+          this.state.set(null);
+          resolve(true);
+        },
+        onCancel: () => {
+          this.state.set(null);
+          resolve(false);
+        },
+      }),
+    );
   }
 
   prompt(options: PromptModalOptions): Promise<string | null> {
     this.dismissCurrent();
-    return new Promise(resolve => this.state.set({
-      ...options,
-      returnFocus: this.focusedElement(),
-      confirmLabel: options.confirmLabel ?? 'Salvar',
-      cancelLabel: options.cancelLabel ?? 'Cancelar',
-      onConfirm: value => { this.state.set(null); resolve(value); },
-      onCancel: () => { this.state.set(null); resolve(null); }
-    }));
+    return new Promise((resolve) =>
+      this.state.set({
+        ...options,
+        returnFocus: this.focusedElement(),
+        confirmLabel: options.confirmLabel ?? 'Salvar',
+        cancelLabel: options.cancelLabel ?? 'Cancelar',
+        onConfirm: (value) => {
+          this.state.set(null);
+          resolve(value);
+        },
+        onCancel: () => {
+          this.state.set(null);
+          resolve(null);
+        },
+      }),
+    );
   }
 
   private dismissCurrent(): void {

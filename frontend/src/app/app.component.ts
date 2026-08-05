@@ -8,7 +8,7 @@ import { ThemeToggleComponent } from './core/theme-toggle/theme-toggle.component
   selector: 'app-root',
   imports: [RouterOutlet, SystemModalComponent, ThemeToggleComponent],
   templateUrl: './app.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
   readonly modal = inject(ModalService);

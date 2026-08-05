@@ -16,7 +16,7 @@ describe('DashboardComponent - lançamentos', () => {
     largestPosition: null,
     categories: [],
     positions: [],
-    evolution: []
+    evolution: [],
   };
   const item: LedgerItem = {
     id: 'record-1',
@@ -29,7 +29,7 @@ describe('DashboardComponent - lançamentos', () => {
     unitPrice: 9.5,
     fees: 5,
     totalValue: 1000,
-    description: 'Compra inicial'
+    description: 'Compra inicial',
   };
   const api = {
     updateRecord: vi.fn(),
@@ -42,7 +42,7 @@ describe('DashboardComponent - lançamentos', () => {
     wallets: vi.fn(),
     createWallet: vi.fn(),
     updateWallet: vi.fn(),
-    deleteWallet: vi.fn()
+    deleteWallet: vi.fn(),
   };
   const session = { clear: vi.fn() };
   const modal = { confirm: vi.fn(), prompt: vi.fn() };
@@ -68,8 +68,8 @@ describe('DashboardComponent - lançamentos', () => {
         provideRouter([]),
         { provide: ApiService, useValue: api },
         { provide: SessionService, useValue: session },
-        { provide: ModalService, useValue: modal }
-      ]
+        { provide: ModalService, useValue: modal },
+      ],
     }).compileComponents();
   });
 
@@ -91,19 +91,22 @@ describe('DashboardComponent - lançamentos', () => {
       quantity: 10,
       unitPrice: 9.5,
       fees: 5,
-      totalValue: 1000
+      totalValue: 1000,
     });
 
     component.recordForm.patchValue({ quantity: 12, totalValue: 1200 });
     vi.useFakeTimers();
     component.saveRecord();
 
-    expect(api.updateRecord).toHaveBeenCalledWith('record-1', expect.objectContaining({
-      walletId: 'wallet-1',
-      assetId: 'asset-1',
-      quantity: 12,
-      totalValue: 1200
-    }));
+    expect(api.updateRecord).toHaveBeenCalledWith(
+      'record-1',
+      expect.objectContaining({
+        walletId: 'wallet-1',
+        assetId: 'asset-1',
+        quantity: 12,
+        totalValue: 1200,
+      }),
+    );
     expect(component.editingId()).toBeNull();
     expect(component.successMessage()).toBe('Lançamento atualizado com sucesso.');
     expect(component.message()).toBe('');
@@ -161,9 +164,11 @@ describe('DashboardComponent - lançamentos', () => {
 
     const menu: HTMLElement = fixture.nativeElement.querySelector('.wallet-actions-menu');
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
-    expect(Array.from(menu.querySelectorAll('button')).map(button => button.textContent?.trim()))
-      .toEqual(['Nova carteira', 'Renomear carteira', 'Excluir carteira']);
-
+    expect(Array.from(menu.querySelectorAll('button')).map((button) => button.textContent?.trim())).toEqual([
+      'Nova carteira',
+      'Renomear carteira',
+      'Excluir carteira',
+    ]);
   });
 
   it('usa formulário cancelável na primeira carteira e modal nas próximas', async () => {
@@ -182,9 +187,13 @@ describe('DashboardComponent - lançamentos', () => {
     modal.prompt.mockResolvedValueOnce('Reserva');
     await component.openWalletCreation();
 
-    expect(modal.prompt).toHaveBeenCalledWith(expect.objectContaining({
-      title: 'Nova carteira', inputLabel: 'Nome da carteira', confirmLabel: 'Criar carteira'
-    }));
+    expect(modal.prompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Nova carteira',
+        inputLabel: 'Nome da carteira',
+        confirmLabel: 'Criar carteira',
+      }),
+    );
     expect(api.createWallet).toHaveBeenCalledWith('Reserva');
     expect(component.showWalletForm()).toBe(false);
   });
@@ -193,7 +202,7 @@ describe('DashboardComponent - lançamentos', () => {
     const component = TestBed.createComponent(DashboardComponent).componentInstance;
     const evolution = Array.from({ length: 30 }, (_, index) => ({
       period: `período-${index + 1}`,
-      acquisitionCost: index + 1
+      acquisitionCost: index + 1,
     }));
     component.dashboard.set({ ...dashboard, evolution });
 
@@ -209,9 +218,13 @@ describe('DashboardComponent - lançamentos', () => {
     component.wallets.set([{ id: 'wallet-1', name: 'Principal', currentValue: 0 }]);
     component.selectedWalletId.set('wallet-1');
     component.dashboard.set(dashboard);
-    component.records.set(Array.from({ length: 25 }, (_, index) => ({
-      ...item, id: `record-${index}`, date: `2026-07-${String(index + 1).padStart(2, '0')}`
-    })));
+    component.records.set(
+      Array.from({ length: 25 }, (_, index) => ({
+        ...item,
+        id: `record-${index}`,
+        date: `2026-07-${String(index + 1).padStart(2, '0')}`,
+      })),
+    );
     fixture.detectChanges();
 
     expect(component.recentRecords()).toHaveLength(10);
@@ -229,16 +242,26 @@ describe('DashboardComponent - lançamentos', () => {
     const component = TestBed.createComponent(DashboardComponent).componentInstance;
     component.selectedWalletId.set('wallet-1');
     component.recordForm.patchValue({
-      type: 'COMPRA', assetId: 'asset-1', quantity: 1, totalValue: 100
+      type: 'COMPRA',
+      assetId: 'asset-1',
+      quantity: 1,
+      totalValue: 100,
     });
     component.saveRecord();
     expect(api.createRecord).toHaveBeenCalledWith(expect.objectContaining({ quantity: 1, totalValue: 100 }));
-    expect(component.recordValue({ ...item, totalValue: undefined, quantity: undefined,
-      type: 'DESDOBRAMENTO', newQuantity: 20, ratio: '1:2' })).toBe('20 un. · 1:2');
+    expect(
+      component.recordValue({
+        ...item,
+        totalValue: undefined,
+        quantity: undefined,
+        type: 'DESDOBRAMENTO',
+        newQuantity: 20,
+        ratio: '1:2',
+      }),
+    ).toBe('20 un. · 1:2');
     expect(component.operationDetails(item)).toBe('10 un. · Preço unitário R$ 9,50');
     expect(component.operationDetails({ ...item, type: 'VENDA', unitPrice: undefined })).toBe('10 un.');
-    expect(component.operationDetails({ ...item, type: 'SUBSCRICAO' }))
-      .toBe('10 un. · Preço unitário R$ 9,50');
+    expect(component.operationDetails({ ...item, type: 'SUBSCRICAO' })).toBe('10 un. · Preço unitário R$ 9,50');
     expect(component.operationDetails({ ...item, type: 'DIVIDENDO' })).toBe('');
     component.recordForm.controls.type.setValue('JCP');
     expect(component.isIncome()).toBe(true);
@@ -246,22 +269,37 @@ describe('DashboardComponent - lançamentos', () => {
     expect(component.isBonus()).toBe(true);
     component.recordForm.controls.type.setValue('GRUPAMENTO');
     expect(component.isCorporateEvent()).toBe(true);
-    expect(component.recordTypes.map(type => component.typeInitial(type.value)))
-      .toEqual(['C', 'V', 'S', 'D', 'J', 'B', 'D', 'G']);
+    expect(component.recordTypes.map((type) => component.typeInitial(type.value))).toEqual([
+      'C',
+      'V',
+      'S',
+      'D',
+      'J',
+      'B',
+      'D',
+      'G',
+    ]);
     component.cancelEdit();
   });
 
   it('lista o catálogo na compra e somente ativos da carteira nos demais tipos', () => {
     const component = TestBed.createComponent(DashboardComponent).componentInstance;
     component.assets.set([
-      { id: 'asset-1', ticker: 'PETR4', name: 'Petrobras', category: 'ACAO', currentPrice: 30, priceDate: '2026-07-31' },
-      { id: 'asset-2', ticker: 'VALE3', name: 'Vale', category: 'ACAO', currentPrice: 60, priceDate: '2026-07-31' }
+      {
+        id: 'asset-1',
+        ticker: 'PETR4',
+        name: 'Petrobras',
+        category: 'ACAO',
+        currentPrice: 30,
+        priceDate: '2026-07-31',
+      },
+      { id: 'asset-2', ticker: 'VALE3', name: 'Vale', category: 'ACAO', currentPrice: 60, priceDate: '2026-07-31' },
     ]);
     component.records.set([item]);
 
-    expect(component.availableAssets().map(asset => asset.id)).toEqual(['asset-1', 'asset-2']);
+    expect(component.availableAssets().map((asset) => asset.id)).toEqual(['asset-1', 'asset-2']);
     component.onPurchaseAssetInput('vale');
-    expect(component.filteredPurchaseAssets().map(asset => asset.id)).toEqual(['asset-2']);
+    expect(component.filteredPurchaseAssets().map((asset) => asset.id)).toEqual(['asset-2']);
     expect(component.recordForm.controls.assetId.value).toBe('');
     component.onPurchaseAssetInput('VALE3');
     expect(component.recordForm.controls.assetId.value).toBe('asset-2');
@@ -269,7 +307,7 @@ describe('DashboardComponent - lançamentos', () => {
     component.recordForm.patchValue({ type: 'VENDA', assetId: 'asset-2' });
     component.onRecordTypeChange();
 
-    expect(component.availableAssets().map(asset => asset.id)).toEqual(['asset-1']);
+    expect(component.availableAssets().map((asset) => asset.id)).toEqual(['asset-1']);
     expect(component.recordForm.controls.assetId.value).toBe('');
   });
 
@@ -278,8 +316,15 @@ describe('DashboardComponent - lançamentos', () => {
     const component = fixture.componentInstance;
     fixture.detectChanges();
     component.assets.set([
-      { id: 'asset-1', ticker: 'PETR4', name: 'Petrobras', category: 'ACAO', currentPrice: 30, priceDate: '2026-07-31' },
-      { id: 'asset-2', ticker: 'PETZ3', name: 'Petz', category: 'ACAO', currentPrice: 5, priceDate: '2026-07-31' }
+      {
+        id: 'asset-1',
+        ticker: 'PETR4',
+        name: 'Petrobras',
+        category: 'ACAO',
+        currentPrice: 30,
+        priceDate: '2026-07-31',
+      },
+      { id: 'asset-2', ticker: 'PETZ3', name: 'Petz', category: 'ACAO', currentPrice: 5, priceDate: '2026-07-31' },
     ]);
 
     component.openRecordModal();
@@ -364,37 +409,69 @@ describe('DashboardComponent - lançamentos', () => {
   it('carrega os últimos 12 meses e seleciona os proventos de um mês', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-15T12:00:00-03:00'));
-    api.incomes.mockReturnValueOnce(of({ total: 30, groups: [], items: [
-      { id: 'income-1', assetId: 'asset-1', ticker: 'PETR4', category: 'ACAO', type: 'DIVIDENDO',
-        date: '2026-08-10', totalValue: 20 },
-      { id: 'income-2', assetId: 'asset-2', ticker: 'VALE3', category: 'ACAO', type: 'JCP',
-        date: '2026-07-10', totalValue: 10 }
-    ] }));
+    api.incomes.mockReturnValueOnce(
+      of({
+        total: 30,
+        groups: [],
+        items: [
+          {
+            id: 'income-1',
+            assetId: 'asset-1',
+            ticker: 'PETR4',
+            category: 'ACAO',
+            type: 'DIVIDENDO',
+            date: '2026-08-10',
+            totalValue: 20,
+          },
+          {
+            id: 'income-2',
+            assetId: 'asset-2',
+            ticker: 'VALE3',
+            category: 'ACAO',
+            type: 'JCP',
+            date: '2026-07-10',
+            totalValue: 10,
+          },
+        ],
+      }),
+    );
     const component = TestBed.createComponent(DashboardComponent).componentInstance;
     component.selectedWalletId.set('wallet-1');
     component.loadIncomes();
 
     expect(api.incomes).toHaveBeenCalledWith('wallet-1', {
-      from: '2025-09-01', to: '2026-08-31', groupBy: 'MONTHLY'
+      from: '2025-09-01',
+      to: '2026-08-31',
+      groupBy: 'MONTHLY',
     });
     expect(component.incomeMonths).toHaveLength(12);
     expect(component.incomeMonths[0]).toBe('2026-08');
     expect(component.incomeMonths[11]).toBe('2025-09');
-    expect(component.selectedMonthIncomes().map(income => income.id)).toEqual(['income-1']);
+    expect(component.selectedMonthIncomes().map((income) => income.id)).toEqual(['income-1']);
 
     component.selectIncomeMonth('2026-07');
-    expect(component.selectedMonthIncomes().map(income => income.id)).toEqual(['income-2']);
+    expect(component.selectedMonthIncomes().map((income) => income.id)).toEqual(['income-2']);
   });
 
   it('monta payloads de provento, bonificação e evento e trata erros', async () => {
     const component = TestBed.createComponent(DashboardComponent).componentInstance;
     component.selectedWalletId.set('wallet-1');
-    component.recordForm.patchValue({ type: 'JCP', assetId: 'asset-1', totalValue: 25, unitPrice: 2.5,
-      description: 'Provento' });
+    component.recordForm.patchValue({
+      type: 'JCP',
+      assetId: 'asset-1',
+      totalValue: 25,
+      unitPrice: 2.5,
+      description: 'Provento',
+    });
     component.saveRecord();
-    expect(api.createRecord).toHaveBeenLastCalledWith(expect.objectContaining({
-      type: 'JCP', totalValue: 25, unitPrice: 2.5, description: 'Provento'
-    }));
+    expect(api.createRecord).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        type: 'JCP',
+        totalValue: 25,
+        unitPrice: 2.5,
+        description: 'Provento',
+      }),
+    );
 
     component.recordForm.patchValue({ type: 'BONIFICACAO', assetId: 'asset-1', quantity: 3 });
     component.saveRecord();
@@ -419,24 +496,71 @@ describe('DashboardComponent - lançamentos', () => {
   });
 
   it('renderiza estados indisponíveis, indicadores, evolução e evento corporativo', () => {
-    api.assets.mockReturnValueOnce(of([{ id: 'asset-1', ticker: 'PETR4', name: 'Petrobras',
-      category: 'ACAO', currentPrice: null, priceDate: null }]));
-    api.dashboard.mockReturnValue(of({
-      acquisitionCost: 1000, currentValue: null, profitLoss: null, returnPercentage: null,
-      totalIncome: 25, largestPosition: null,
-      categories: [{ category: 'ACAO', acquisitionCost: 1000, currentValue: null,
-        profitLoss: null, returnPercentage: null, allocationPercentage: null }],
-      positions: [{ assetId: 'asset-1', ticker: 'PETR4', name: 'Petrobras', category: 'ACAO',
-        quantity: 20, acquisitionCost: 1000, currentPrice: null, currentValue: null,
-        profitLoss: null, returnPercentage: null, allocationPercentage: null, totalIncome: 25, priceDate: null }],
-      evolution: [{ period: '2026-01', acquisitionCost: 1000 }]
-    }));
-    api.records.mockReturnValue(of([{ ...item, type: 'DESDOBRAMENTO', totalValue: undefined,
-      quantity: undefined, newQuantity: 20, ratio: '1:2' }]));
-    api.incomes.mockReturnValue(of({ total: 25, groups: [{ period: '2026-08', total: 25 }], items: [{
-      id: 'income-1', assetId: 'asset-1', ticker: 'PETR4', category: 'ACAO', type: 'DIVIDENDO',
-      date: '2026-08-10', totalValue: 25
-    }] }));
+    api.assets.mockReturnValueOnce(
+      of([
+        { id: 'asset-1', ticker: 'PETR4', name: 'Petrobras', category: 'ACAO', currentPrice: null, priceDate: null },
+      ]),
+    );
+    api.dashboard.mockReturnValue(
+      of({
+        acquisitionCost: 1000,
+        currentValue: null,
+        profitLoss: null,
+        returnPercentage: null,
+        totalIncome: 25,
+        largestPosition: null,
+        categories: [
+          {
+            category: 'ACAO',
+            acquisitionCost: 1000,
+            currentValue: null,
+            profitLoss: null,
+            returnPercentage: null,
+            allocationPercentage: null,
+          },
+        ],
+        positions: [
+          {
+            assetId: 'asset-1',
+            ticker: 'PETR4',
+            name: 'Petrobras',
+            category: 'ACAO',
+            quantity: 20,
+            acquisitionCost: 1000,
+            currentPrice: null,
+            currentValue: null,
+            profitLoss: null,
+            returnPercentage: null,
+            allocationPercentage: null,
+            totalIncome: 25,
+            priceDate: null,
+          },
+        ],
+        evolution: [{ period: '2026-01', acquisitionCost: 1000 }],
+      }),
+    );
+    api.records.mockReturnValue(
+      of([
+        { ...item, type: 'DESDOBRAMENTO', totalValue: undefined, quantity: undefined, newQuantity: 20, ratio: '1:2' },
+      ]),
+    );
+    api.incomes.mockReturnValue(
+      of({
+        total: 25,
+        groups: [{ period: '2026-08', total: 25 }],
+        items: [
+          {
+            id: 'income-1',
+            assetId: 'asset-1',
+            ticker: 'PETR4',
+            category: 'ACAO',
+            type: 'DIVIDENDO',
+            date: '2026-08-10',
+            totalValue: 25,
+          },
+        ],
+      }),
+    );
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
     const text = fixture.nativeElement.textContent;

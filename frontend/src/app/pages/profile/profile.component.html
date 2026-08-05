@@ -1,20 +1,38 @@
-<header class="topbar"><a class="brand dark" routerLink="/"><span>M</span> MAD</a>
-  <nav class="topbar-menu"><a routerLink="/">Visão geral</a><a routerLink="/profile">Perfil</a></nav>
-  <a routerLink="/">Voltar</a></header>
+<header class="topbar">
+  <a class="brand dark" routerLink="/">
+    <span>M</span>
+    MAD
+  </a>
+  <nav class="topbar-menu">
+    <a routerLink="/">Visão geral</a>
+    <a routerLink="/profile">Perfil</a>
+  </nav>
+  <a routerLink="/">Voltar</a>
+</header>
 <main class="narrow-page">
-  <p class="eyebrow">Sua conta</p><h1>Perfil</h1>
+  <p class="eyebrow">Sua conta</p>
+  <h1>Perfil</h1>
   <section class="panel">
     <form [formGroup]="form" (ngSubmit)="save()" class="stack-single">
-      <label>Nome<input formControlName="name"></label>
-      <label>E-mail<input formControlName="email" type="email"></label>
+      <label>
+        Nome
+        <input formControlName="name" />
+      </label>
+      <label>
+        E-mail
+        <input formControlName="email" type="email" />
+      </label>
       @if (message()) {
-        <p class="notice" animate.enter="motion-feedback-enter" animate.leave="motion-feedback-leave">{{ message() }}</p>
+        <p class="notice" animate.enter="motion-feedback-enter" animate.leave="motion-feedback-leave">
+          {{ message() }}
+        </p>
       }
       <button class="button primary" [disabled]="form.invalid">Salvar perfil</button>
     </form>
   </section>
   <section class="panel danger-zone">
-    <h2>Excluir conta</h2><p>Carteiras, lançamentos e notas serão removidos definitivamente.</p>
+    <h2>Excluir conta</h2>
+    <p>Carteiras, lançamentos e notas serão removidos definitivamente.</p>
     <button class="button danger-button" (click)="remove()">Excluir minha conta</button>
   </section>
 </main>

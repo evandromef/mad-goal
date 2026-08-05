@@ -5,31 +5,74 @@ import { ApiService, Dashboard } from '../../core/api.service';
 import { PositionsComponent } from './positions.component';
 
 describe('PositionsComponent', () => {
-  const dashboard: Dashboard = { acquisitionCost: 100, currentValue: 120, profitLoss: 20,
-    returnPercentage: 20, totalIncome: 5, largestPosition: 'PETR4', categories: [], evolution: [],
+  const dashboard: Dashboard = {
+    acquisitionCost: 100,
+    currentValue: 120,
+    profitLoss: 20,
+    returnPercentage: 20,
+    totalIncome: 5,
+    largestPosition: 'PETR4',
+    categories: [],
+    evolution: [],
     positions: [
-      { assetId: 'a1', ticker: 'PETR4', name: 'Petrobras', category: 'ACAO', quantity: 2,
-        acquisitionCost: 100, currentPrice: 60, currentValue: 120, profitLoss: 20,
-        returnPercentage: 20, allocationPercentage: 80, totalIncome: 35.5, priceDate: '2026-08-01' },
-      { assetId: 'a2', ticker: 'HGLG11', name: 'CSHG Logística', category: 'FII', quantity: 1,
-        acquisitionCost: 30, currentPrice: 30, currentValue: 30, profitLoss: 0,
-        returnPercentage: 0, allocationPercentage: 20, totalIncome: 2, priceDate: '2026-08-01' }
-    ] };
+      {
+        assetId: 'a1',
+        ticker: 'PETR4',
+        name: 'Petrobras',
+        category: 'ACAO',
+        quantity: 2,
+        acquisitionCost: 100,
+        currentPrice: 60,
+        currentValue: 120,
+        profitLoss: 20,
+        returnPercentage: 20,
+        allocationPercentage: 80,
+        totalIncome: 35.5,
+        priceDate: '2026-08-01',
+      },
+      {
+        assetId: 'a2',
+        ticker: 'HGLG11',
+        name: 'CSHG Logística',
+        category: 'FII',
+        quantity: 1,
+        acquisitionCost: 30,
+        currentPrice: 30,
+        currentValue: 30,
+        profitLoss: 0,
+        returnPercentage: 0,
+        allocationPercentage: 20,
+        totalIncome: 2,
+        priceDate: '2026-08-01',
+      },
+    ],
+  };
   const api = { dashboard: vi.fn(), wallets: vi.fn(), assets: vi.fn(), records: vi.fn(), createRecord: vi.fn() };
 
   beforeEach(async () => {
-    vi.clearAllMocks(); api.dashboard.mockReturnValue(of(dashboard));
+    vi.clearAllMocks();
+    api.dashboard.mockReturnValue(of(dashboard));
     api.wallets.mockReturnValue(of([{ id: 'w1', name: 'Principal', currentValue: 120 }]));
-    api.assets.mockReturnValue(of([])); api.records.mockReturnValue(of([]));
-    await TestBed.configureTestingModule({ imports: [PositionsComponent], providers: [provideRouter([]),
-      { provide: ApiService, useValue: api }, { provide: ActivatedRoute, useValue: {
-        snapshot: { paramMap: convertToParamMap({ walletId: 'w1' }) }
-      } }
-    ] }).compileComponents();
+    api.assets.mockReturnValue(of([]));
+    api.records.mockReturnValue(of([]));
+    await TestBed.configureTestingModule({
+      imports: [PositionsComponent],
+      providers: [
+        provideRouter([]),
+        { provide: ApiService, useValue: api },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { paramMap: convertToParamMap({ walletId: 'w1' }) },
+          },
+        },
+      ],
+    }).compileComponents();
   });
 
   it('exibe posições completas e o formulário de novo registro', () => {
-    const fixture = TestBed.createComponent(PositionsComponent); fixture.detectChanges();
+    const fixture = TestBed.createComponent(PositionsComponent);
+    fixture.detectChanges();
     expect(api.dashboard).toHaveBeenCalledWith('w1');
     expect(fixture.componentInstance.walletName()).toBe('Principal');
     expect(fixture.nativeElement.textContent).toContain('PETR4');
@@ -52,7 +95,7 @@ describe('PositionsComponent', () => {
     select.dispatchEvent(new Event('change'));
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.filteredPositions().map(position => position.ticker)).toEqual(['HGLG11']);
+    expect(fixture.componentInstance.filteredPositions().map((position) => position.ticker)).toEqual(['HGLG11']);
     expect(fixture.nativeElement.querySelector('tbody').textContent).not.toContain('PETR4');
     expect(fixture.nativeElement.querySelector('tbody').textContent).toContain('HGLG11');
     expect(fixture.nativeElement.querySelector('.chip').textContent).toContain('1 de 2 ativos');

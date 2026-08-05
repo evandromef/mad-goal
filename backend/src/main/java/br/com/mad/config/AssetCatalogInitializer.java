@@ -17,7 +17,8 @@ public class AssetCatalogInitializer implements ApplicationRunner {
     private final AssetRepository assets;
     private final MarketDataService marketData;
     public AssetCatalogInitializer(AssetRepository assets, MarketDataService marketData) {
-        this.assets = assets; this.marketData = marketData;
+        this.assets = assets;
+        this.marketData = marketData;
     }
 
     @Override

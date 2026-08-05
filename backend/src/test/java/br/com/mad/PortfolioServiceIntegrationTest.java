@@ -1,7 +1,13 @@
 package br.com.mad;
 
-import br.com.mad.domain.*;
-import br.com.mad.repository.*;
+import br.com.mad.domain.Asset;
+import br.com.mad.domain.LedgerRecord;
+import br.com.mad.domain.User;
+import br.com.mad.domain.Wallet;
+import br.com.mad.repository.AssetRepository;
+import br.com.mad.repository.LedgerRecordRepository;
+import br.com.mad.repository.UserRepository;
+import br.com.mad.repository.WalletRepository;
 import br.com.mad.service.PortfolioService;
 import br.com.mad.web.ApiException;
 import org.junit.jupiter.api.Test;

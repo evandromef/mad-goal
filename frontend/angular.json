@@ -14,14 +14,14 @@
           "options": {
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
-            "assets": [{"glob": "**/*", "input": "public"}],
+            "assets": [{ "glob": "**/*", "input": "public" }],
             "styles": ["src/styles.css"]
           },
           "configurations": {
             "production": {
               "budgets": [
-                {"type": "initial", "maximumWarning": "750kB", "maximumError": "1MB"},
-                {"type": "anyComponentStyle", "maximumWarning": "8kB", "maximumError": "12kB"}
+                { "type": "initial", "maximumWarning": "750kB", "maximumError": "1MB" },
+                { "type": "anyComponentStyle", "maximumWarning": "8kB", "maximumError": "12kB" }
               ],
               "outputHashing": "all"
             },
@@ -36,8 +36,8 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "configurations": {
-            "production": {"buildTarget": "mad-frontend:build:production"},
-            "development": {"buildTarget": "mad-frontend:build:development"}
+            "production": { "buildTarget": "mad-frontend:build:production" },
+            "development": { "buildTarget": "mad-frontend:build:development" }
           },
           "defaultConfiguration": "development"
         },

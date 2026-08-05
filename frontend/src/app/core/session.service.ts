@@ -18,16 +18,21 @@ export class SessionService {
 
   refresh(): Observable<AuthResponse> {
     if (!this.refreshing) {
-      this.refreshing = this.rawHttp.post<AuthResponse>('/api/auth/refresh', {
-        token: localStorage.getItem('mad_refresh_token')
-      }).pipe(
-        tap({
-          next: (session) => this.save(session),
-          error: () => this.clear()
-        }),
-        shareReplay(1)
-      );
-      this.refreshing.subscribe({ next: () => this.refreshing = undefined, error: () => this.refreshing = undefined });
+      this.refreshing = this.rawHttp
+        .post<AuthResponse>('/api/auth/refresh', {
+          token: localStorage.getItem('mad_refresh_token'),
+        })
+        .pipe(
+          tap({
+            next: (session) => this.save(session),
+            error: () => this.clear(),
+          }),
+          shareReplay(1),
+        );
+      this.refreshing.subscribe({
+        next: () => (this.refreshing = undefined),
+        error: () => (this.refreshing = undefined),
+      });
     }
     return this.refreshing;
   }

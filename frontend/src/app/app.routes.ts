@@ -16,5 +16,5 @@ export const routes: Routes = [
   { path: 'wallets/:walletId/incomes', component: IncomesComponent, canActivate: [authGuard] },
   { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
   { path: '', component: DashboardComponent, canActivate: [authGuard] },
-  { path: '**', redirectTo: '' }
+  { path: '**', redirectTo: '' },
 ];

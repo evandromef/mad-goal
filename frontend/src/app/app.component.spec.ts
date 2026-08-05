@@ -10,7 +10,7 @@ describe('AppComponent', () => {
   it('deve criar a aplicação', async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
-      providers: [provideRouter([{ path: '', component: RoutedPageComponent }])]
+      providers: [provideRouter([{ path: '', component: RoutedPageComponent }])],
     }).compileComponents();
     expect(TestBed.createComponent(AppComponent).componentInstance).toBeTruthy();
   });
@@ -18,7 +18,7 @@ describe('AppComponent', () => {
   it('mantém apenas o landmark main fornecido pela página roteada', async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
-      providers: [provideRouter([{ path: '', component: RoutedPageComponent }])]
+      providers: [provideRouter([{ path: '', component: RoutedPageComponent }])],
     }).compileComponents();
     const fixture = TestBed.createComponent(AppComponent);
     await TestBed.inject(Router).navigateByUrl('/');
@@ -34,7 +34,7 @@ describe('AppComponent', () => {
     localStorage.clear();
     await TestBed.configureTestingModule({
       imports: [AppComponent],
-      providers: [provideRouter([{ path: '', component: RoutedPageComponent }])]
+      providers: [provideRouter([{ path: '', component: RoutedPageComponent }])],
     }).compileComponents();
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();

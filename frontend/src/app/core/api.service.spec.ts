@@ -39,7 +39,7 @@ describe('ApiService', () => {
       [api.incomes('w', { groupBy: 'MONTHLY' }), 'GET', '/api/incomes?walletId=w&groupBy=MONTHLY'],
       [api.profile(), 'GET', '/api/auth/me'],
       [api.updateProfile({ name: 'A', email: 'a@b.com' }), 'PUT', '/api/profile'],
-      [api.deleteProfile(), 'DELETE', '/api/profile?confirm=true']
+      [api.deleteProfile(), 'DELETE', '/api/profile?confirm=true'],
     ];
     for (const [observable, method, url] of calls) {
       (observable as { subscribe: (callback: () => void) => void }).subscribe(() => {});

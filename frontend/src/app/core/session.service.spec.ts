@@ -10,9 +10,9 @@ describe('SessionService', () => {
   let http: HttpTestingController;
   beforeEach(() => {
     localStorage.clear();
-    TestBed.configureTestingModule({ providers: [
-      provideHttpClient(), provideHttpClientTesting(), { provide: Router, useValue: router }
-    ] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: Router, useValue: router }],
+    });
     service = TestBed.inject(SessionService);
     http = TestBed.inject(HttpTestingController);
   });

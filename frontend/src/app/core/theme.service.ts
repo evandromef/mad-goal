@@ -9,7 +9,9 @@ export class ThemeService {
   private readonly storageKey = 'mad-theme';
   readonly theme = signal<AppTheme>(this.savedTheme());
 
-  constructor() { this.apply(this.theme()); }
+  constructor() {
+    this.apply(this.theme());
+  }
 
   toggle(): void {
     const nextTheme: AppTheme = this.theme() === 'orbital' ? 'classic' : 'orbital';

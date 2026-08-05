@@ -6,9 +6,17 @@ import { RecordsComponent } from './records.component';
 
 describe('RecordsComponent', () => {
   const records: LedgerItem[] = Array.from({ length: 25 }, (_, index) => ({
-    id: `r-${index}`, walletId: 'w-1', assetId: 'a-1', ticker: 'PETR4', type: 'COMPRA',
-    date: `2026-07-${String(index + 1).padStart(2, '0')}`, quantity: 10, unitPrice: 9.5,
-    fees: 1, totalValue: 96, description: `Registro ${index + 1}`
+    id: `r-${index}`,
+    walletId: 'w-1',
+    assetId: 'a-1',
+    ticker: 'PETR4',
+    type: 'COMPRA',
+    date: `2026-07-${String(index + 1).padStart(2, '0')}`,
+    quantity: 10,
+    unitPrice: 9.5,
+    fees: 1,
+    totalValue: 96,
+    description: `Registro ${index + 1}`,
   }));
   const api = { records: vi.fn(), wallets: vi.fn(), assets: vi.fn(), createRecord: vi.fn() };
 
@@ -17,10 +25,14 @@ describe('RecordsComponent', () => {
     api.records.mockReturnValue(of(records));
     api.wallets.mockReturnValue(of([{ id: 'w-1', name: 'Principal', currentValue: 0 }]));
     api.assets.mockReturnValue(of([]));
-    await TestBed.configureTestingModule({ imports: [RecordsComponent], providers: [
-      provideRouter([]), { provide: ApiService, useValue: api },
-      { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ walletId: 'w-1' }) } } }
-    ] }).compileComponents();
+    await TestBed.configureTestingModule({
+      imports: [RecordsComponent],
+      providers: [
+        provideRouter([]),
+        { provide: ApiService, useValue: api },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ walletId: 'w-1' }) } } },
+      ],
+    }).compileComponents();
   });
 
   it('carrega e exibe todo o histórico em ordem decrescente', () => {
@@ -34,8 +46,9 @@ describe('RecordsComponent', () => {
     expect(component.filteredRecords()[0].id).toBe('r-24');
     expect(fixture.nativeElement.querySelectorAll('tbody tr')).toHaveLength(25);
     expect(fixture.nativeElement.textContent).toContain('R$');
-    expect(fixture.nativeElement.querySelector('a.button.primary').getAttribute('href'))
-      .toBe('/wallets/w-1/records#novo-lancamento');
+    expect(fixture.nativeElement.querySelector('a.button.primary').getAttribute('href')).toBe(
+      '/wallets/w-1/records#novo-lancamento',
+    );
     expect(fixture.nativeElement.querySelector('app-record-form')).toBeTruthy();
     const grid = fixture.nativeElement.querySelector('.records-page-grid');
     expect(grid.children[0].matches('#novo-lancamento')).toBe(true);
@@ -47,21 +60,32 @@ describe('RecordsComponent', () => {
     const fixture = TestBed.createComponent(RecordsComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
-    component.records.update(items => [...items, {
-      ...records[0], id: 'sale', assetId: 'a-2', ticker: 'VALE3', type: 'VENDA', date: '2026-07-15'
-    }]);
+    component.records.update((items) => [
+      ...items,
+      {
+        ...records[0],
+        id: 'sale',
+        assetId: 'a-2',
+        ticker: 'VALE3',
+        type: 'VENDA',
+        date: '2026-07-15',
+      },
+    ]);
     component.filterForm.setValue({
-      from: '2026-07-10', to: '2026-07-20', type: 'COMPRA', assetId: 'a-1'
+      from: '2026-07-10',
+      to: '2026-07-20',
+      type: 'COMPRA',
+      assetId: 'a-1',
     });
     component.applyFilters();
 
     expect(component.filteredRecords()).toHaveLength(11);
-    expect(component.filteredRecords().every(item => item.type === 'COMPRA' && item.assetId === 'a-1')).toBe(true);
-    expect(component.recordAssets().map(asset => asset.ticker)).toEqual(['PETR4', 'VALE3']);
+    expect(component.filteredRecords().every((item) => item.type === 'COMPRA' && item.assetId === 'a-1')).toBe(true);
+    expect(component.recordAssets().map((asset) => asset.ticker)).toEqual(['PETR4', 'VALE3']);
 
     component.filterForm.setValue({ from: '', to: '', type: 'VENDA', assetId: 'a-2' });
     component.applyFilters();
-    expect(component.filteredRecords().map(item => item.id)).toEqual(['sale']);
+    expect(component.filteredRecords().map((item) => item.id)).toEqual(['sale']);
     component.clearFilters();
     expect(component.filterForm.getRawValue()).toEqual({ from: '', to: '', type: '', assetId: '' });
     expect(component.filteredRecords()).toHaveLength(26);

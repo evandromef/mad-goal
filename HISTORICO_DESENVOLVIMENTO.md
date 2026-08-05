@@ -487,6 +487,19 @@ registrar uma compra.
 - ao abrir um novo lançamento, o foco vai diretamente para Ativo; na compra,
   Enter seleciona o primeiro resultado correspondente e avança para Quantidade.
 
+### Qualidade estática e formatação
+
+- o frontend passou a usar ESLint com as configurações recomendadas para
+  TypeScript, Angular e templates acessíveis;
+- o Prettier centraliza a formatação de TypeScript, HTML, CSS e arquivos de
+  configuração, sem conflito com as regras do ESLint;
+- o backend executa Checkstyle na fase `validate` do Maven, incluindo os fontes
+  de teste;
+- imports genéricos, declarações múltiplas e atribuições encadeadas existentes
+  no Java foram corrigidos para atender à nova validação;
+- o comando `npm run verify` reúne lint, formatação, testes com cobertura e build
+  do frontend.
+
 ## Verificações executadas
 
 Ao longo do desenvolvimento foram usados os comandos canônicos:
@@ -497,6 +510,8 @@ mvn clean verify
 
 cd ../frontend
 npm ci
+npm run lint
+npm run format:check
 npm run test:coverage
 npm run build
 npm run e2e
@@ -510,9 +525,9 @@ git diff --check
 
 No último ciclo de validação registrado:
 
-- os 23 testes do backend e os 56 testes do frontend passaram;
-- a cobertura do frontend ficou em 92,30% de statements, 81,50% de branches,
-  96,70% de funções e 94,48% de linhas;
+- os 23 testes do backend e os 57 testes do frontend passaram;
+- a cobertura do frontend ficou em 92,47% de statements, 81,69% de branches,
+  97,13% de funções e 94,75% de linhas;
 - todas as verificações de cobertura do backend foram atendidas;
 - o build Angular passou localmente e dentro do Docker;
 - o E2E Playwright passou usando a stack real;

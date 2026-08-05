@@ -12,7 +12,12 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class PortfolioService {
@@ -91,10 +96,16 @@ public class PortfolioService {
                         .divide(position.quantity, MC);
                 position.cost = position.cost.subtract(reduction, MC);
                 position.quantity = position.quantity.subtract(item.getQuantity(), MC);
-                if (position.quantity.signum() == 0) position.cost = ZERO;
+                if (position.quantity.signum() == 0) {
+                    position.cost = ZERO;
+                }
             }
-            case BONIFICACAO -> position.quantity = position.quantity.add(item.getQuantity(), MC);
-            case DESDOBRAMENTO, GRUPAMENTO -> position.quantity = item.getNewQuantity();
+            case BONIFICACAO -> {
+                position.quantity = position.quantity.add(item.getQuantity(), MC);
+            }
+            case DESDOBRAMENTO, GRUPAMENTO -> {
+                position.quantity = item.getNewQuantity();
+            }
             case DIVIDENDO, JCP -> { }
         }
     }

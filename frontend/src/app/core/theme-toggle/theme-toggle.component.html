@@ -1,6 +1,10 @@
-<button class="theme-toggle" type="button" (click)="theme.toggle()"
+<button
+  class="theme-toggle"
+  type="button"
+  (click)="theme.toggle()"
   [attr.aria-label]="theme.theme() === 'orbital' ? 'Ativar tema claro' : 'Ativar tema orbital'"
-  [attr.aria-pressed]="theme.theme() === 'orbital'">
+  [attr.aria-pressed]="theme.theme() === 'orbital'"
+>
   <span class="theme-toggle-icon" aria-hidden="true"></span>
   <span class="theme-toggle-label">{{ theme.theme() === 'orbital' ? 'Tema claro' : 'Tema orbital' }}</span>
 </button>

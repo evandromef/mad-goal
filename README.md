@@ -16,7 +16,7 @@ próximos acessos.
 - Angular 21
 - PostgreSQL 17
 - Maven, npm, Docker e Docker Compose
-- JUnit, MockMvc, AssertJ, Vitest, JaCoCo e Playwright
+- JUnit, MockMvc, AssertJ, Vitest, JaCoCo, Playwright, ESLint, Prettier e Checkstyle
 
 ## Identificadores persistentes
 
@@ -109,12 +109,19 @@ mvn clean verify
 
 cd ../frontend
 npm ci
+npm run lint
+npm run format:check
 npm run test:coverage
 npm run build
 
 # Com a stack Docker em execução
 npm run e2e
 ```
+
+`mvn clean verify` executa o Checkstyle antes da compilação e dos testes do
+backend. No frontend, `npm run lint` verifica TypeScript e templates Angular,
+enquanto `npm run format:check` valida a formatação compartilhada pelo Prettier.
+Use `npm run lint:fix` e `npm run format` para aplicar correções automáticas.
 
 ## Configuração
 

@@ -1,29 +1,57 @@
 <main class="auth-shell">
   <section class="auth-story">
-    <a class="brand" href="/"><span>M</span> MAD</a>
-    <div><p class="eyebrow">Patrimônio sem ruído</p>
-      <h1>Seus ativos.<br><em>Uma visão clara.</em></h1>
+    <a class="brand" href="/">
+      <span>M</span>
+      MAD
+    </a>
+    <div>
+      <p class="eyebrow">Patrimônio sem ruído</p>
+      <h1>
+        Seus ativos.
+        <br />
+        <em>Uma visão clara.</em>
+      </h1>
       <p class="lede">Acompanhe custo, posição e proventos de ações e FIIs em uma experiência simples e direta.</p>
     </div>
     <p class="fine">Meus Ativos Digitais · Controle pessoal de investimentos</p>
   </section>
   <section class="auth-panel">
     <form [formGroup]="form" (ngSubmit)="submit()" class="auth-card">
-      <p class="eyebrow">{{ eyebrow() }}</p><h2>{{ title() }}</h2>
+      <p class="eyebrow">{{ eyebrow() }}</p>
+      <h2>{{ title() }}</h2>
       @if (mode() === 'register') {
-        <label>Nome<input formControlName="name" autocomplete="name" placeholder="Seu nome"></label>
+        <label>
+          Nome
+          <input formControlName="name" autocomplete="name" placeholder="Seu nome" />
+        </label>
       }
       @if (mode() === 'login' || mode() === 'register' || mode() === 'forgot') {
-        <label>E-mail<input formControlName="email" type="email" autocomplete="email" placeholder="voce@email.com"></label>
+        <label>
+          E-mail
+          <input formControlName="email" type="email" autocomplete="email" placeholder="voce@email.com" />
+        </label>
       }
       @if (mode() === 'login' || mode() === 'register' || mode() === 'reset') {
-        <label>Senha<input formControlName="password" type="password" autocomplete="current-password" placeholder="Mínimo de 8 caracteres"></label>
+        <label>
+          Senha
+          <input
+            formControlName="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Mínimo de 8 caracteres"
+          />
+        </label>
       }
       @if (mode() === 'confirm' || mode() === 'reset') {
-        <label>Token<input formControlName="accountToken" autocomplete="one-time-code" placeholder="Token recebido"></label>
+        <label>
+          Token
+          <input formControlName="accountToken" autocomplete="one-time-code" placeholder="Token recebido" />
+        </label>
       }
       @if (message()) {
-        <p class="notice" animate.enter="motion-feedback-enter" animate.leave="motion-feedback-leave">{{ message() }}</p>
+        <p class="notice" animate.enter="motion-feedback-enter" animate.leave="motion-feedback-leave">
+          {{ message() }}
+        </p>
       }
       @if (error()) {
         <p class="alert" animate.enter="motion-feedback-enter" animate.leave="motion-feedback-leave">{{ error() }}</p>
@@ -34,7 +62,9 @@
       @if (mode() === 'login') {
         <button class="text-button" type="button" (click)="setMode('forgot')">Esqueci minha senha</button>
         <div id="google-button" class="google-button"></div>
-        <button class="text-button" type="button" (click)="setMode('register')">Ainda não tem conta? Cadastre-se</button>
+        <button class="text-button" type="button" (click)="setMode('register')">
+          Ainda não tem conta? Cadastre-se
+        </button>
       } @else {
         <button class="text-button" type="button" (click)="setMode('login')">Voltar para o login</button>
       }

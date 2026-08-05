@@ -9,7 +9,7 @@ import { ModalService } from '../../core/modal.service';
   selector: 'app-asset-detail',
   imports: [CurrencyPipe, DatePipe, DecimalPipe, ReactiveFormsModule, RouterLink],
   templateUrl: './asset-detail.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AssetDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -24,18 +24,25 @@ export class AssetDetailComponent implements OnInit {
   readonly filter = signal<'TODOS' | 'OPERACOES' | 'PROVENTOS' | 'EVENTOS'>('TODOS');
   readonly editingNote = signal<Note | null>(null);
   readonly noteForm = this.fb.nonNullable.group({ content: ['', [Validators.required, Validators.maxLength(2000)]] });
-  readonly filteredRecords = computed(() => this.records().filter(item => {
-    const type = this.filter();
-    if (type === 'TODOS') return true;
-    if (type === 'PROVENTOS') return ['DIVIDENDO', 'JCP'].includes(item.type);
-    if (type === 'EVENTOS') return ['BONIFICACAO', 'DESDOBRAMENTO', 'GRUPAMENTO'].includes(item.type);
-    return ['COMPRA', 'VENDA', 'SUBSCRICAO'].includes(item.type);
-  }).reverse());
+  readonly filteredRecords = computed(() =>
+    this.records()
+      .filter((item) => {
+        const type = this.filter();
+        if (type === 'TODOS') return true;
+        if (type === 'PROVENTOS') return ['DIVIDENDO', 'JCP'].includes(item.type);
+        if (type === 'EVENTOS') return ['BONIFICACAO', 'DESDOBRAMENTO', 'GRUPAMENTO'].includes(item.type);
+        return ['COMPRA', 'VENDA', 'SUBSCRICAO'].includes(item.type);
+      })
+      .reverse(),
+  );
 
   ngOnInit(): void {
-    this.api.dashboard(this.walletId).subscribe(data =>
-      this.position.set(data.positions.find(item => item.assetId === this.assetId) ?? null));
-    this.api.records(this.walletId).subscribe(items => this.records.set(items.filter(item => item.assetId === this.assetId)));
+    this.api
+      .dashboard(this.walletId)
+      .subscribe((data) => this.position.set(data.positions.find((item) => item.assetId === this.assetId) ?? null));
+    this.api
+      .records(this.walletId)
+      .subscribe((items) => this.records.set(items.filter((item) => item.assetId === this.assetId)));
     this.loadNotes();
   }
   context(type: string): { wallet: string; asset: string; type: string } {
@@ -51,19 +58,31 @@ export class AssetDetailComponent implements OnInit {
     const current = this.editingNote();
     const body = { walletId: this.walletId, assetId: this.assetId, content };
     (current ? this.api.updateNote(current.id, body) : this.api.createNote(body)).subscribe(() => {
-      this.cancelNote(); this.loadNotes();
+      this.cancelNote();
+      this.loadNotes();
     });
   }
-  editNote(note: Note): void { this.editingNote.set(note); this.noteForm.setValue({ content: note.content }); }
-  cancelNote(): void { this.editingNote.set(null); this.noteForm.reset(); }
-  async deleteNote(note: Note): Promise<void> {
-    if (await this.modal.confirm({
-      title: 'Excluir nota?',
-      message: 'Esta anotação pessoal será removida definitivamente do histórico do ativo.',
-      confirmLabel: 'Excluir nota',
-      cancelLabel: 'Manter nota',
-      danger: true
-    })) this.api.deleteNote(note.id).subscribe(() => this.loadNotes());
+  editNote(note: Note): void {
+    this.editingNote.set(note);
+    this.noteForm.setValue({ content: note.content });
   }
-  private loadNotes(): void { this.api.notes(this.walletId, this.assetId).subscribe(items => this.notes.set(items)); }
+  cancelNote(): void {
+    this.editingNote.set(null);
+    this.noteForm.reset();
+  }
+  async deleteNote(note: Note): Promise<void> {
+    if (
+      await this.modal.confirm({
+        title: 'Excluir nota?',
+        message: 'Esta anotação pessoal será removida definitivamente do histórico do ativo.',
+        confirmLabel: 'Excluir nota',
+        cancelLabel: 'Manter nota',
+        danger: true,
+      })
+    )
+      this.api.deleteNote(note.id).subscribe(() => this.loadNotes());
+  }
+  private loadNotes(): void {
+    this.api.notes(this.walletId, this.assetId).subscribe((items) => this.notes.set(items));
+  }
 }

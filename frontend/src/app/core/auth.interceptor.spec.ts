@@ -8,21 +8,35 @@ import { SessionService } from './session.service';
 
 describe('authInterceptor', () => {
   const session = { clear: vi.fn(), refresh: vi.fn() };
-  let http: HttpClient; let controller: HttpTestingController;
+  let http: HttpClient;
+  let controller: HttpTestingController;
   beforeEach(() => {
-    localStorage.clear(); vi.clearAllMocks();
-    session.refresh.mockReturnValue(of({ token: 'new-access', refreshToken: 'new-refresh', id: 'u', name: 'A', email: 'a@b.com' }));
-    TestBed.configureTestingModule({ providers: [provideHttpClient(withInterceptors([authInterceptor])),
-      provideHttpClientTesting(), { provide: SessionService, useValue: session }] });
-    http = TestBed.inject(HttpClient); controller = TestBed.inject(HttpTestingController);
+    localStorage.clear();
+    vi.clearAllMocks();
+    session.refresh.mockReturnValue(
+      of({ token: 'new-access', refreshToken: 'new-refresh', id: 'u', name: 'A', email: 'a@b.com' }),
+    );
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([authInterceptor])),
+        provideHttpClientTesting(),
+        { provide: SessionService, useValue: session },
+      ],
+    });
+    http = TestBed.inject(HttpClient);
+    controller = TestBed.inject(HttpTestingController);
   });
   afterEach(() => controller.verify());
   it('anexa access token e renova uma vez após 401', () => {
-    localStorage.setItem('mad_token', 'old'); localStorage.setItem('mad_refresh_token', 'refresh');
+    localStorage.setItem('mad_token', 'old');
+    localStorage.setItem('mad_refresh_token', 'refresh');
     http.get('/api/profile').subscribe();
-    const first = controller.expectOne('/api/profile'); expect(first.request.headers.get('Authorization')).toBe('Bearer old');
+    const first = controller.expectOne('/api/profile');
+    expect(first.request.headers.get('Authorization')).toBe('Bearer old');
     first.flush({}, { status: 401, statusText: 'Unauthorized' });
-    const retry = controller.expectOne('/api/profile'); expect(retry.request.headers.get('Authorization')).toBe('Bearer new-access'); retry.flush({});
+    const retry = controller.expectOne('/api/profile');
+    expect(retry.request.headers.get('Authorization')).toBe('Bearer new-access');
+    retry.flush({});
     expect(session.refresh).toHaveBeenCalledOnce();
   });
   it('limpa sessão em 401 sem refresh e não intercepta erro público', () => {
@@ -39,8 +53,9 @@ describe('authInterceptor', () => {
     expect(session.clear).toHaveBeenCalledOnce();
 
     http.get('/api/profile').subscribe({ error: () => {} });
-    controller.expectOne('/api/profile').flush({ message: 'Operação não permitida.' },
-      { status: 403, statusText: 'Forbidden' });
+    controller
+      .expectOne('/api/profile')
+      .flush({ message: 'Operação não permitida.' }, { status: 403, statusText: 'Forbidden' });
     expect(session.clear).toHaveBeenCalledOnce();
   });
   it('limpa a sessão quando a renovação é recusada', () => {

@@ -22,7 +22,7 @@ Use the canonical application checks when changing executable code:
 
 ```bash
 cd backend && mvn clean verify
-cd frontend && npm ci && npm run test:coverage && npm run build
+cd frontend && npm ci && npm run lint && npm run format:check && npm run test:coverage && npm run build
 cd frontend && npm run e2e # requires the Docker stack
 ```
 

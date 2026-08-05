@@ -8,7 +8,7 @@ import { RecordFormComponent } from '../../shared/record-form/record-form.compon
   selector: 'app-positions',
   imports: [CurrencyPipe, DecimalPipe, RecordFormComponent, RouterLink],
   templateUrl: './positions.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PositionsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -20,14 +20,17 @@ export class PositionsComponent implements OnInit {
   readonly filteredPositions = computed(() => {
     const positions = this.dashboard()?.positions ?? [];
     const category = this.categoryFilter();
-    return category === 'TODOS' ? positions : positions.filter(position => position.category === category);
+    return category === 'TODOS' ? positions : positions.filter((position) => position.category === category);
   });
   readonly positionRecordTypes = ['COMPRA', 'VENDA', 'SUBSCRICAO', 'BONIFICACAO', 'DESDOBRAMENTO', 'GRUPAMENTO'];
 
   ngOnInit(): void {
     this.loadDashboard();
-    this.api.wallets().subscribe(wallets =>
-      this.walletName.set(wallets.find(wallet => wallet.id === this.walletId)?.name ?? ''));
+    this.api
+      .wallets()
+      .subscribe((wallets) => this.walletName.set(wallets.find((wallet) => wallet.id === this.walletId)?.name ?? ''));
   }
-  loadDashboard(): void { this.api.dashboard(this.walletId).subscribe(data => this.dashboard.set(data)); }
+  loadDashboard(): void {
+    this.api.dashboard(this.walletId).subscribe((data) => this.dashboard.set(data));
+  }
 }

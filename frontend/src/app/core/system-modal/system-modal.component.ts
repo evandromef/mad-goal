@@ -1,5 +1,14 @@
 import { DOCUMENT } from '@angular/common';
-import { ChangeDetectionStrategy, Component, effect, ElementRef, HostListener, inject, signal, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  ElementRef,
+  HostListener,
+  inject,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { ModalService, ModalState } from '../modal.service';
 import { MotionOverlayDirective } from '../motion-overlay.directive';
 
@@ -7,7 +16,7 @@ import { MotionOverlayDirective } from '../motion-overlay.directive';
   selector: 'app-system-modal',
   imports: [MotionOverlayDirective],
   templateUrl: './system-modal.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SystemModalComponent {
   readonly modal = inject(ModalService);
@@ -95,9 +104,11 @@ export class SystemModalComponent {
   }
 
   private focusableControls(): HTMLElement[] {
-    return Array.from(this.dialog()?.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
-    ) ?? []);
+    return Array.from(
+      this.dialog()?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+      ) ?? [],
+    );
   }
 
   private dialog(): HTMLElement | null {

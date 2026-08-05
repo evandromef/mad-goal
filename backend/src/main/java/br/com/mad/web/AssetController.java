@@ -2,7 +2,9 @@ package br.com.mad.web;
 
 import br.com.mad.domain.Asset;
 import br.com.mad.repository.AssetRepository;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -25,4 +27,3 @@ public class AssetController {
         return assets.findByActiveTrueOrderByTicker().stream().map(AssetResponse::of).toList();
     }
 }
-

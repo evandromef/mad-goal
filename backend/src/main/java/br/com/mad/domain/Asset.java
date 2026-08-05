@@ -1,7 +1,11 @@
 package br.com.mad.domain;
 
 import br.com.mad.util.UuidV7;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -41,10 +45,13 @@ public class Asset {
     public BigDecimal getCurrentPrice() { return currentPrice; }
     public LocalDate getPriceDate() { return priceDate; }
     public void updateCatalog(String name, Category category, boolean active) {
-        this.name = name; this.category = category; this.active = active;
+        this.name = name;
+        this.category = category;
+        this.active = active;
     }
     public void updateQuote(BigDecimal currentPrice, LocalDate priceDate) {
-        this.currentPrice = currentPrice; this.priceDate = priceDate;
+        this.currentPrice = currentPrice;
+        this.priceDate = priceDate;
     }
     public void deactivate() { this.active = false; }
 }

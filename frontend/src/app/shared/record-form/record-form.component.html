@@ -1,14 +1,24 @@
 <form class="embedded-record-form" [formGroup]="form" (ngSubmit)="save()">
   <div class="form-row">
-    <label>Tipo<select formControlName="type" (change)="onTypeChange()">
-      @for (type of visibleRecordTypes(); track type.value) {
-        <option [value]="type.value">{{ type.label }}</option>
-      }
-    </select></label>
+    <label>
+      Tipo
+      <select formControlName="type" (change)="onTypeChange()">
+        @for (type of visibleRecordTypes(); track type.value) {
+          <option [value]="type.value">{{ type.label }}</option>
+        }
+      </select>
+    </label>
     @if (form.controls.type.value === 'COMPRA') {
-      <label>Ativo<input type="text" list="record-purchase-assets" autocomplete="off"
-        placeholder="Digite o ticker ou nome" [value]="purchaseAssetQuery()"
-        (input)="onPurchaseAssetInput($any($event.target).value)">
+      <label>
+        Ativo
+        <input
+          type="text"
+          list="record-purchase-assets"
+          autocomplete="off"
+          placeholder="Digite o ticker ou nome"
+          [value]="purchaseAssetQuery()"
+          (input)="onPurchaseAssetInput($any($event.target).value)"
+        />
         <datalist id="record-purchase-assets">
           @for (asset of filteredPurchaseAssets(); track asset.id) {
             <option [value]="assetDisplay(asset)"></option>
@@ -16,47 +26,92 @@
         </datalist>
       </label>
     } @else {
-      <label>Ativo<select formControlName="assetId"><option value="">Selecione</option>
-        @for (asset of availableAssets(); track asset.id) {
-          <option [value]="asset.id">{{ assetDisplay(asset) }}</option>
-        }
-      </select></label>
+      <label>
+        Ativo
+        <select formControlName="assetId">
+          <option value="">Selecione</option>
+          @for (asset of availableAssets(); track asset.id) {
+            <option [value]="asset.id">{{ assetDisplay(asset) }}</option>
+          }
+        </select>
+      </label>
     }
   </div>
   <div class="form-row">
-    <label>Data<input type="date" formControlName="date"></label>
+    <label>
+      Data
+      <input type="date" formControlName="date" />
+    </label>
     @if (isCorporateEvent()) {
-      <label>Nova quantidade<input type="number" min="0.000001" step="0.000001" formControlName="newQuantity"></label>
+      <label>
+        Nova quantidade
+        <input type="number" min="0.000001" step="0.000001" formControlName="newQuantity" />
+      </label>
     } @else if (isIncome()) {
-      <label>Valor total<input type="number" min="0.01" step="0.01" formControlName="totalValue"></label>
+      <label>
+        Valor total
+        <input type="number" min="0.01" step="0.01" formControlName="totalValue" />
+      </label>
     } @else {
-      <label>Quantidade<input type="number" min="0.000001" step="0.000001" formControlName="quantity"></label>
+      <label>
+        Quantidade
+        <input type="number" min="0.000001" step="0.000001" formControlName="quantity" />
+      </label>
     }
   </div>
   @if (isCorporateEvent()) {
-    <div class="form-row"><label>Proporção <span>(opcional)</span>
-      <input formControlName="ratio" placeholder="Ex.: 1:2"></label></div>
+    <div class="form-row">
+      <label>
+        Proporção
+        <span>(opcional)</span>
+        <input formControlName="ratio" placeholder="Ex.: 1:2" />
+      </label>
+    </div>
   } @else {
     @if (isOperation()) {
-      <div class="form-row"><label>Valor total<input type="number" min="0.01" step="0.01" formControlName="totalValue"></label></div>
+      <div class="form-row">
+        <label>
+          Valor total
+          <input type="number" min="0.01" step="0.01" formControlName="totalValue" />
+        </label>
+      </div>
     }
     @if (!isBonus()) {
       <div class="form-row">
-        <label>Preço unitário <span>(opcional)</span><input type="number" min="0" step="0.01" formControlName="unitPrice"></label>
+        <label>
+          Preço unitário
+          <span>(opcional)</span>
+          <input type="number" min="0" step="0.01" formControlName="unitPrice" />
+        </label>
         @if (isOperation()) {
-          <label>Taxas <span>(opcional)</span><input type="number" min="0" step="0.01" formControlName="fees"></label>
+          <label>
+            Taxas
+            <span>(opcional)</span>
+            <input type="number" min="0" step="0.01" formControlName="fees" />
+          </label>
         }
       </div>
     }
   }
-  <label>Descrição <span>(opcional)</span><textarea formControlName="description" rows="2"></textarea></label>
+  <label>
+    Descrição
+    <span>(opcional)</span>
+    <textarea formControlName="description" rows="2"></textarea>
+  </label>
   <button class="button primary" type="submit" [disabled]="form.invalid || saving()" [class.loading]="saving()">
     {{ saving() ? 'Salvando…' : 'Salvar lançamento' }}
   </button>
   <div class="form-message-slot" aria-live="polite">
     @if (message()) {
-      <p [class.notice]="success()" [class.alert]="!success()" [attr.role]="success() ? 'status' : 'alert'"
-        animate.enter="motion-feedback-enter" animate.leave="motion-feedback-leave">{{ message() }}</p>
+      <p
+        [class.notice]="success()"
+        [class.alert]="!success()"
+        [attr.role]="success() ? 'status' : 'alert'"
+        animate.enter="motion-feedback-enter"
+        animate.leave="motion-feedback-leave"
+      >
+        {{ message() }}
+      </p>
     }
   </div>
 </form>

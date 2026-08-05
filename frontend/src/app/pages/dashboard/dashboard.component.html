@@ -1,17 +1,32 @@
 <header class="topbar">
-  <a class="brand dark" href="/"><span>M</span> MAD</a>
-  <nav class="topbar-menu"><a routerLink="/">Visão geral</a>
+  <a class="brand dark" href="/">
+    <span>M</span>
+    MAD
+  </a>
+  <nav class="topbar-menu">
+    <a routerLink="/">Visão geral</a>
     @if (selectedWalletId()) {
       <a [routerLink]="['/wallets', selectedWalletId(), 'positions']">Posições</a>
       <a [routerLink]="['/wallets', selectedWalletId(), 'records']">Lançamentos</a>
       <a [routerLink]="['/wallets', selectedWalletId(), 'incomes']">Proventos</a>
     }
   </nav>
-  <div class="user"><span>{{ userInitial() }}</span><a routerLink="/profile">Perfil</a><button class="text-button" (click)="logout()">Sair</button></div>
+  <div class="user">
+    <span>{{ userInitial() }}</span>
+    <a routerLink="/profile">Perfil</a>
+    <button class="text-button" (click)="logout()">Sair</button>
+  </div>
 </header>
 @if (successMessage()) {
-  <div class="success-toast" role="status" aria-live="polite"
-    animate.enter="motion-toast-enter" animate.leave="motion-toast-leave">{{ successMessage() }}</div>
+  <div
+    class="success-toast"
+    role="status"
+    aria-live="polite"
+    animate.enter="motion-toast-enter"
+    animate.leave="motion-toast-leave"
+  >
+    {{ successMessage() }}
+  </div>
 }
 <main class="workspace">
   <section class="hero-row">
@@ -22,15 +37,27 @@
     </div>
     <div class="hero-actions">
       <div class="wallet-control">
-        <label>Carteira
+        <label>
+          Carteira
           <select [value]="selectedWalletId()" (change)="selectWallet($any($event.target).value)">
-            @for (wallet of wallets(); track wallet.id) { <option [value]="wallet.id">{{ wallet.name }} · {{ wallet.currentValue == null ? 'indisponível' : (wallet.currentValue | currency:'BRL') }}</option> }
+            @for (wallet of wallets(); track wallet.id) {
+              <option [value]="wallet.id">
+                {{ wallet.name }} ·
+                {{ wallet.currentValue == null ? 'indisponível' : (wallet.currentValue | currency: 'BRL') }}
+              </option>
+            }
           </select>
         </label>
         <div class="wallet-actions" #walletActions>
-          <button #walletActionsTrigger class="button secondary wallet-actions-trigger" type="button"
-            aria-haspopup="true" aria-controls="wallet-actions-menu"
-            [attr.aria-expanded]="walletActionsOpen()" (click)="toggleWalletActions()">
+          <button
+            #walletActionsTrigger
+            class="button secondary wallet-actions-trigger"
+            type="button"
+            aria-haspopup="true"
+            aria-controls="wallet-actions-menu"
+            [attr.aria-expanded]="walletActionsOpen()"
+            (click)="toggleWalletActions()"
+          >
             Ações da carteira
             <svg class="wallet-actions-icon" aria-hidden="true" viewBox="0 0 20 20" focusable="false">
               <circle cx="10" cy="4" r="1.5" />
@@ -39,9 +66,16 @@
             </svg>
           </button>
           @if (walletActionsOpen()) {
-            <div appMotionOverlay #walletActionsMotion="motionOverlay" class="wallet-actions-menu"
-              id="wallet-actions-menu" role="group" aria-label="Ações da carteira"
-              animate.enter="motion-menu-enter" animate.leave="motion-menu-leave">
+            <div
+              appMotionOverlay
+              #walletActionsMotion="motionOverlay"
+              class="wallet-actions-menu"
+              id="wallet-actions-menu"
+              role="group"
+              aria-label="Ações da carteira"
+              animate.enter="motion-menu-enter"
+              animate.leave="motion-menu-leave"
+            >
               <button type="button" (click)="openWalletCreation()">Nova carteira</button>
               @if (selectedWalletId()) {
                 <button type="button" (click)="renameWallet()">Renomear carteira</button>
@@ -52,14 +86,16 @@
         </div>
       </div>
       @if (selectedWalletId()) {
-        <button class="button primary new-record-button" type="button" (click)="openRecordModal()">Novo lançamento</button>
+        <button class="button primary new-record-button" type="button" (click)="openRecordModal()">
+          Novo lançamento
+        </button>
       }
     </div>
   </section>
 
   @if (showWalletForm()) {
     <form class="inline-form" [formGroup]="walletForm" (ngSubmit)="createWallet()">
-      <input formControlName="name" placeholder="Nome da nova carteira">
+      <input formControlName="name" placeholder="Nome da nova carteira" />
       <button class="button primary" type="submit">Criar</button>
       <button class="button secondary" type="button" (click)="cancelWalletCreation()">Cancelar</button>
     </form>
@@ -67,91 +103,213 @@
 
   @if (!wallets().length) {
     <section class="empty">
-      <p class="eyebrow">Primeiro passo</p><h2>Crie sua primeira carteira</h2>
+      <p class="eyebrow">Primeiro passo</p>
+      <h2>Crie sua primeira carteira</h2>
       <p>Separe seus investimentos do jeito que fizer sentido para você.</p>
       <button class="button primary" (click)="showWalletForm.set(true)">Criar carteira</button>
     </section>
   } @else if (dashboard(); as data) {
     <section class="metrics">
-      <article class="metric featured"><span>Patrimônio atual</span><strong>{{ data.currentValue == null ? 'Indisponível' : (data.currentValue | currency:'BRL') }}</strong><small>Última posição consolidada</small></article>
-      <article class="metric"><span>Custo de aquisição</span><strong>{{ data.acquisitionCost | currency:'BRL' }}</strong><small>Capital alocado</small></article>
-      <article class="metric"><span>Resultado</span><strong [class.negative]="data.profitLoss != null && data.profitLoss < 0">{{ data.profitLoss == null ? 'Indisponível' : (data.profitLoss | currency:'BRL') }}</strong><small>{{ data.returnPercentage == null ? 'Rentabilidade indisponível' : ((data.returnPercentage | number:'1.2-2') + '% de rentabilidade') }}</small></article>
-      <article class="metric"><span>Proventos</span><strong>{{ data.totalIncome | currency:'BRL' }}</strong><small>Recebidos no histórico</small></article>
+      <article class="metric featured">
+        <span>Patrimônio atual</span>
+        <strong>{{ data.currentValue == null ? 'Indisponível' : (data.currentValue | currency: 'BRL') }}</strong>
+        <small>Última posição consolidada</small>
+      </article>
+      <article class="metric">
+        <span>Custo de aquisição</span>
+        <strong>{{ data.acquisitionCost | currency: 'BRL' }}</strong>
+        <small>Capital alocado</small>
+      </article>
+      <article class="metric">
+        <span>Resultado</span>
+        <strong [class.negative]="data.profitLoss != null && data.profitLoss < 0">
+          {{ data.profitLoss == null ? 'Indisponível' : (data.profitLoss | currency: 'BRL') }}
+        </strong>
+        <small>
+          {{
+            data.returnPercentage == null
+              ? 'Rentabilidade indisponível'
+              : (data.returnPercentage | number: '1.2-2') + '% de rentabilidade'
+          }}
+        </small>
+      </article>
+      <article class="metric">
+        <span>Proventos</span>
+        <strong>{{ data.totalIncome | currency: 'BRL' }}</strong>
+        <small>Recebidos no histórico</small>
+      </article>
     </section>
 
     <section class="content-grid positions-overview-grid" id="posicoes">
       <article class="panel wide">
-        <div class="panel-title"><div><p class="eyebrow">Composição</p>
-          <h2><a class="records-title-link" [routerLink]="['/wallets', selectedWalletId(), 'positions']">Posições da carteira</a></h2>
-        </div><span class="chip">{{ data.positions.length }} ativos</span></div>
+        <div class="panel-title">
+          <div>
+            <p class="eyebrow">Composição</p>
+            <h2>
+              <a class="records-title-link" [routerLink]="['/wallets', selectedWalletId(), 'positions']">
+                Posições da carteira
+              </a>
+            </h2>
+          </div>
+          <span class="chip">{{ data.positions.length }} ativos</span>
+        </div>
         @if (data.positions.length) {
-          <div class="table-scroll"><table>
-            <thead><tr><th>Ativo</th><th>Qtd.</th><th>Custo</th><th>Valor atual</th><th>Proventos</th><th>Resultado</th><th>Rentabilidade</th><th>Alocação</th></tr></thead>
-            <tbody>
-              @for (position of data.positions; track position.assetId) {
+          <div class="table-scroll">
+            <table>
+              <thead>
                 <tr>
-                  <td><a [routerLink]="['/assets', selectedWalletId(), position.assetId]"><strong>{{ position.ticker }}</strong></a><small>{{ position.category === 'ACAO' ? 'Ação' : 'FII' }}</small></td>
-                  <td>{{ position.quantity | number:'1.0-8' }}</td>
-                  <td>{{ position.acquisitionCost | currency:'BRL' }}</td>
-                  <td>{{ position.currentValue == null ? 'Indisponível' : (position.currentValue | currency:'BRL') }}</td>
-                  <td class="position-income">{{ position.totalIncome | currency:'BRL' }}</td>
-                  <td [class.negative]="position.profitLoss != null && position.profitLoss < 0">{{ position.profitLoss == null ? 'Indisponível' : (position.profitLoss | currency:'BRL') }}</td>
-                  <td>{{ position.returnPercentage == null ? 'Indisponível' : ((position.returnPercentage | number:'1.2-2') + '%') }}</td>
-                  <td><div class="allocation"><i [style.width.%]="position.allocationPercentage ?? 0"></i></div>{{ position.allocationPercentage == null ? '—' : ((position.allocationPercentage | number:'1.2-2') + '%') }}</td>
+                  <th>Ativo</th>
+                  <th>Qtd.</th>
+                  <th>Custo</th>
+                  <th>Valor atual</th>
+                  <th>Proventos</th>
+                  <th>Resultado</th>
+                  <th>Rentabilidade</th>
+                  <th>Alocação</th>
                 </tr>
-              }
-            </tbody>
-          </table></div>
-        } @else { <p class="empty-copy">Registre uma compra para começar a acompanhar sua posição.</p> }
+              </thead>
+              <tbody>
+                @for (position of data.positions; track position.assetId) {
+                  <tr>
+                    <td>
+                      <a [routerLink]="['/assets', selectedWalletId(), position.assetId]">
+                        <strong>{{ position.ticker }}</strong>
+                      </a>
+                      <small>{{ position.category === 'ACAO' ? 'Ação' : 'FII' }}</small>
+                    </td>
+                    <td>{{ position.quantity | number: '1.0-8' }}</td>
+                    <td>{{ position.acquisitionCost | currency: 'BRL' }}</td>
+                    <td>
+                      {{ position.currentValue == null ? 'Indisponível' : (position.currentValue | currency: 'BRL') }}
+                    </td>
+                    <td class="position-income">{{ position.totalIncome | currency: 'BRL' }}</td>
+                    <td [class.negative]="position.profitLoss != null && position.profitLoss < 0">
+                      {{ position.profitLoss == null ? 'Indisponível' : (position.profitLoss | currency: 'BRL') }}
+                    </td>
+                    <td>
+                      {{
+                        position.returnPercentage == null
+                          ? 'Indisponível'
+                          : (position.returnPercentage | number: '1.2-2') + '%'
+                      }}
+                    </td>
+                    <td>
+                      <div class="allocation"><i [style.width.%]="position.allocationPercentage ?? 0"></i></div>
+                      {{
+                        position.allocationPercentage == null
+                          ? '—'
+                          : (position.allocationPercentage | number: '1.2-2') + '%'
+                      }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="empty-copy">Registre uma compra para começar a acompanhar sua posição.</p>
+        }
       </article>
       <aside class="panel">
-        <p class="eyebrow">Distribuição</p><h2>Por categoria</h2>
+        <p class="eyebrow">Distribuição</p>
+        <h2>Por categoria</h2>
         @for (category of data.categories; track category.category) {
-          <div class="category-row"><span>{{ category.category === 'ACAO' ? 'Ações' : 'FIIs' }}</span><strong>{{ category.allocationPercentage == null ? '—' : ((category.allocationPercentage | number:'1.2-2') + '%') }}</strong></div>
-          <div class="category-details"><small>Custo {{ category.acquisitionCost | currency:'BRL' }}</small><small>Atual {{ category.currentValue == null ? 'indisponível' : (category.currentValue | currency:'BRL') }}</small><small>Retorno {{ category.returnPercentage == null ? 'indisponível' : ((category.returnPercentage | number:'1.2-2') + '%') }}</small></div>
+          <div class="category-row">
+            <span>{{ category.category === 'ACAO' ? 'Ações' : 'FIIs' }}</span>
+            <strong>
+              {{
+                category.allocationPercentage == null ? '—' : (category.allocationPercentage | number: '1.2-2') + '%'
+              }}
+            </strong>
+          </div>
+          <div class="category-details">
+            <small>Custo {{ category.acquisitionCost | currency: 'BRL' }}</small>
+            <small>
+              Atual {{ category.currentValue == null ? 'indisponível' : (category.currentValue | currency: 'BRL') }}
+            </small>
+            <small>
+              Retorno
+              {{
+                category.returnPercentage == null ? 'indisponível' : (category.returnPercentage | number: '1.2-2') + '%'
+              }}
+            </small>
+          </div>
           <div class="allocation large"><i [style.width.%]="category.allocationPercentage ?? 0"></i></div>
         }
-        <div class="highlight"><span>Maior posição</span><strong>{{ data.largestPosition ?? '—' }}</strong></div>
+        <div class="highlight">
+          <span>Maior posição</span>
+          <strong>{{ data.largestPosition ?? '—' }}</strong>
+        </div>
       </aside>
     </section>
 
     <section class="dashboard-insights-grid" id="lancamentos">
       <article class="panel records-panel">
-        <div class="panel-title"><div><p class="eyebrow">Atividade recente</p>
-          <h2><a class="records-title-link" [routerLink]="['/wallets', selectedWalletId(), 'records']">Lançamentos</a></h2>
-        </div></div>
+        <div class="panel-title">
+          <div>
+            <p class="eyebrow">Atividade recente</p>
+            <h2>
+              <a class="records-title-link" [routerLink]="['/wallets', selectedWalletId(), 'records']">Lançamentos</a>
+            </h2>
+          </div>
+        </div>
         @if (records().length) {
           <div class="activity-list">
             @for (item of recentRecords(); track item.id) {
               <div class="activity" [class.editing]="editingId() === item.id">
                 <span class="activity-icon">{{ typeInitial(item.type) }}</span>
-                <div><strong>{{ label(item.type) }} · {{ item.ticker }}</strong><small>{{ item.date | date:'dd/MM/yyyy':'UTC' }}</small></div>
+                <div>
+                  <strong>{{ label(item.type) }} · {{ item.ticker }}</strong>
+                  <small>{{ item.date | date: 'dd/MM/yyyy' : 'UTC' }}</small>
+                </div>
                 <div class="activity-value">
                   <b>{{ recordValue(item) }}</b>
-                  @if (operationDetails(item); as details) { <small>{{ details }}</small> }
+                  @if (operationDetails(item); as details) {
+                    <small>{{ details }}</small>
+                  }
                 </div>
                 <div class="activity-actions">
                   <button type="button" (click)="editRecord(item)" aria-label="Editar lançamento">Editar</button>
-                  <button class="danger" type="button" (click)="deleteRecord(item)" aria-label="Excluir lançamento">Excluir</button>
+                  <button class="danger" type="button" (click)="deleteRecord(item)" aria-label="Excluir lançamento">
+                    Excluir
+                  </button>
                 </div>
               </div>
             }
           </div>
           <a class="records-link" [routerLink]="['/wallets', selectedWalletId(), 'records']">
-            Ver histórico completo <span aria-hidden="true">→</span>
+            Ver histórico completo
+            <span aria-hidden="true">→</span>
           </a>
-        } @else { <p class="empty-copy">Nenhum lançamento nesta carteira.</p> }
+        } @else {
+          <p class="empty-copy">Nenhum lançamento nesta carteira.</p>
+        }
       </article>
       <article class="panel">
-        <div class="panel-title"><div><p class="eyebrow">Evolução</p><h2>Custo de aquisição</h2></div>
-          <select class="compact-select" [value]="granularity()" (change)="changeGranularity($any($event.target).value)">
-            <option value="MONTHLY">Mensal</option><option value="YEARLY">Anual</option>
+        <div class="panel-title">
+          <div>
+            <p class="eyebrow">Evolução</p>
+            <h2>Custo de aquisição</h2>
+          </div>
+          <select
+            class="compact-select"
+            [value]="granularity()"
+            (change)="changeGranularity($any($event.target).value)"
+          >
+            <option value="MONTHLY">Mensal</option>
+            <option value="YEARLY">Anual</option>
           </select>
         </div>
         <div class="evolution">
           @for (point of visibleEvolution(); track point.period) {
-            <div><span>{{ periodLabel(point.period) }}</span><i [style.width.%]="evolutionWidth(point.acquisitionCost)"></i><strong>{{ point.acquisitionCost | currency:'BRL' }}</strong></div>
-          } @empty { <p class="empty-copy">Sem dados de evolução.</p> }
+            <div>
+              <span>{{ periodLabel(point.period) }}</span>
+              <i [style.width.%]="evolutionWidth(point.acquisitionCost)"></i>
+              <strong>{{ point.acquisitionCost | currency: 'BRL' }}</strong>
+            </div>
+          } @empty {
+            <p class="empty-copy">Sem dados de evolução.</p>
+          }
         </div>
       </article>
       <article class="panel">
@@ -161,26 +319,50 @@
           @for (month of incomeMonths; track month) {
             <section class="income-month-details" [class.open]="selectedIncomeMonth() === month">
               <h3>
-                <button class="income-selected-month" type="button"
+                <button
+                  class="income-selected-month"
+                  type="button"
                   [attr.aria-expanded]="selectedIncomeMonth() === month"
                   [attr.aria-controls]="'income-month-' + month"
-                  (click)="selectIncomeMonth(month)">
-                  <span>{{ periodLabel(month) }}</span><span class="income-toggle-icon" aria-hidden="true"></span>
+                  (click)="selectIncomeMonth(month)"
+                >
+                  <span>{{ periodLabel(month) }}</span>
+                  <span class="income-toggle-icon" aria-hidden="true"></span>
                 </button>
               </h3>
               @if (selectedIncomeMonth() === month) {
-                <div class="income-month-content-shell" [id]="'income-month-' + month"
-                  animate.enter="motion-expand-enter" animate.leave="motion-expand-leave">
+                <div
+                  class="income-month-content-shell"
+                  [id]="'income-month-' + month"
+                  animate.enter="motion-expand-enter"
+                  animate.leave="motion-expand-leave"
+                >
                   <div class="income-month-content">
                     @if (selectedMonthIncomes().length) {
-                      <div class="table-scroll"><table>
-                        <thead><tr><th>Ativo</th><th>Tipo</th><th>Pagamento</th><th>Valor</th></tr></thead>
-                        <tbody>
-                          @for (item of selectedMonthIncomes(); track item.id) {
-                            <tr><td><strong>{{ item.ticker }}</strong></td><td>{{ label(item.type) }}</td><td>{{ item.date | date:'dd/MM/yyyy':'UTC' }}</td><td>{{ item.totalValue | currency:'BRL' }}</td></tr>
-                          }
-                        </tbody>
-                      </table></div>
+                      <div class="table-scroll">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Ativo</th>
+                              <th>Tipo</th>
+                              <th>Pagamento</th>
+                              <th>Valor</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (item of selectedMonthIncomes(); track item.id) {
+                              <tr>
+                                <td>
+                                  <strong>{{ item.ticker }}</strong>
+                                </td>
+                                <td>{{ label(item.type) }}</td>
+                                <td>{{ item.date | date: 'dd/MM/yyyy' : 'UTC' }}</td>
+                                <td>{{ item.totalValue | currency: 'BRL' }}</td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
                     } @else {
                       <p class="empty-copy compact">Nenhum provento recebido neste mês.</p>
                     }
@@ -196,28 +378,59 @@
 </main>
 
 @if (recordModalOpen()) {
-  <div appMotionOverlay #recordModalMotion="motionOverlay" class="modal-backdrop"
-    animate.enter="motion-modal-enter" animate.leave="motion-modal-leave" (mousedown)="cancelEdit()">
-    <section #recordModal class="system-modal record-modal" role="dialog" aria-modal="true"
-      aria-labelledby="record-modal-title" (mousedown)="$event.stopPropagation()" (keydown)="trapRecordModalFocus($event)">
+  <div
+    appMotionOverlay
+    #recordModalMotion="motionOverlay"
+    class="modal-backdrop"
+    animate.enter="motion-modal-enter"
+    animate.leave="motion-modal-leave"
+    (mousedown)="cancelEdit()"
+  >
+    <section
+      #recordModal
+      class="system-modal record-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="record-modal-title"
+      (mousedown)="$event.stopPropagation()"
+      (keydown)="trapRecordModalFocus($event)"
+    >
       <div class="modal-mark" aria-hidden="true">{{ editingId() ? 'E' : '+' }}</div>
       <div class="modal-copy">
         <p class="eyebrow">Lançamentos</p>
         <h2 id="record-modal-title">{{ editingId() ? 'Editar lançamento' : 'Novo lançamento' }}</h2>
-        <p>{{ editingId() ? 'Atualize os dados deste lançamento.' : 'Registre uma movimentação na carteira selecionada.' }}</p>
+        <p>
+          {{
+            editingId() ? 'Atualize os dados deste lançamento.' : 'Registre uma movimentação na carteira selecionada.'
+          }}
+        </p>
       </div>
       <form [formGroup]="recordForm" (ngSubmit)="saveRecord()" class="stack-form record-modal-form">
         <div class="form-row record-main-row">
-          <label>Tipo<select formControlName="type" (change)="onRecordTypeChange()">
-            @for (type of recordTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }
-          </select></label>
+          <label>
+            Tipo
+            <select formControlName="type" (change)="onRecordTypeChange()">
+              @for (type of recordTypes; track type.value) {
+                <option [value]="type.value">{{ type.label }}</option>
+              }
+            </select>
+          </label>
           <div class="record-asset-slot">
             @if (recordForm.controls.type.value === 'COMPRA') {
-              <label appMotionOverlay animate.enter="motion-field-enter" animate.leave="motion-field-leave">Ativo<input data-record-initial-focus type="text" list="purchase-assets" autocomplete="off"
-                placeholder="Digite o ticker ou nome" [value]="purchaseAssetQuery()"
-                [disabled]="recordForm.controls.assetId.disabled" [class.readonly]="editingId()"
-                (input)="onPurchaseAssetInput($any($event.target).value)"
-                (keydown.enter)="selectFirstPurchaseAsset($event)">
+              <label appMotionOverlay animate.enter="motion-field-enter" animate.leave="motion-field-leave">
+                Ativo
+                <input
+                  data-record-initial-focus
+                  type="text"
+                  list="purchase-assets"
+                  autocomplete="off"
+                  placeholder="Digite o ticker ou nome"
+                  [value]="purchaseAssetQuery()"
+                  [disabled]="recordForm.controls.assetId.disabled"
+                  [class.readonly]="editingId()"
+                  (input)="onPurchaseAssetInput($any($event.target).value)"
+                  (keydown.enter)="selectFirstPurchaseAsset($event)"
+                />
                 <datalist id="purchase-assets">
                   @for (asset of filteredPurchaseAssets(); track asset.id) {
                     <option [value]="assetDisplay(asset)"></option>
@@ -225,43 +438,114 @@
                 </datalist>
               </label>
             } @else {
-              <label appMotionOverlay animate.enter="motion-field-enter" animate.leave="motion-field-leave">Ativo<select data-record-initial-focus formControlName="assetId" [class.readonly]="editingId()"><option value="">Selecione</option>
-                @for (asset of availableAssets(); track asset.id) { <option [value]="asset.id">{{ asset.ticker }} · {{ asset.name }}</option> }
-              </select></label>
+              <label appMotionOverlay animate.enter="motion-field-enter" animate.leave="motion-field-leave">
+                Ativo
+                <select data-record-initial-focus formControlName="assetId" [class.readonly]="editingId()">
+                  <option value="">Selecione</option>
+                  @for (asset of availableAssets(); track asset.id) {
+                    <option [value]="asset.id">{{ asset.ticker }} · {{ asset.name }}</option>
+                  }
+                </select>
+              </label>
             }
           </div>
         </div>
         <div class="record-values-slot">
           @if (isCorporateEvent()) {
-            <div appMotionOverlay class="form-row record-values-row" animate.enter="motion-field-enter" animate.leave="motion-field-leave">
-              <label>Nova quantidade<input type="number" min="0.000001" step="0.000001" formControlName="newQuantity"></label>
-              <label>Proporção<input formControlName="ratio" placeholder="Ex.: 1:2"></label>
+            <div
+              appMotionOverlay
+              class="form-row record-values-row"
+              animate.enter="motion-field-enter"
+              animate.leave="motion-field-leave"
+            >
+              <label>
+                Nova quantidade
+                <input type="number" min="0.000001" step="0.000001" formControlName="newQuantity" />
+              </label>
+              <label>
+                Proporção
+                <input formControlName="ratio" placeholder="Ex.: 1:2" />
+              </label>
             </div>
           } @else if (isIncome()) {
-            <div appMotionOverlay class="form-row record-values-row" animate.enter="motion-field-enter" animate.leave="motion-field-leave">
-              <label class="record-unit-price"><span class="field-label">Valor por cota/ação <span>(opcional)</span></span><input type="number" min="0" step="0.01" formControlName="unitPrice"></label>
+            <div
+              appMotionOverlay
+              class="form-row record-values-row"
+              animate.enter="motion-field-enter"
+              animate.leave="motion-field-leave"
+            >
+              <label class="record-unit-price">
+                <span class="field-label">
+                  Valor por cota/ação
+                  <span>(opcional)</span>
+                </span>
+                <input type="number" min="0" step="0.01" formControlName="unitPrice" />
+              </label>
             </div>
           } @else if (isBonus()) {
-            <div appMotionOverlay class="form-row record-values-row" animate.enter="motion-field-enter" animate.leave="motion-field-leave">
-              <label>Quantidade<input type="number" min="0.000001" step="0.000001" formControlName="quantity"></label>
+            <div
+              appMotionOverlay
+              class="form-row record-values-row"
+              animate.enter="motion-field-enter"
+              animate.leave="motion-field-leave"
+            >
+              <label>
+                Quantidade
+                <input type="number" min="0.000001" step="0.000001" formControlName="quantity" />
+              </label>
             </div>
           } @else {
-            <div appMotionOverlay class="form-row record-values-row" animate.enter="motion-field-enter" animate.leave="motion-field-leave">
-              <label>Quantidade<input type="number" min="0.000001" step="0.000001" formControlName="quantity"></label>
-              <label class="record-unit-price"><span class="field-label">Preço unitário <span>(opcional)</span></span><input type="number" min="0" step="0.01" formControlName="unitPrice"></label>
-              <label><span class="field-label">Taxas <span>(opcional)</span></span><input type="number" min="0" step="0.01" formControlName="fees"></label>
+            <div
+              appMotionOverlay
+              class="form-row record-values-row"
+              animate.enter="motion-field-enter"
+              animate.leave="motion-field-leave"
+            >
+              <label>
+                Quantidade
+                <input type="number" min="0.000001" step="0.000001" formControlName="quantity" />
+              </label>
+              <label class="record-unit-price">
+                <span class="field-label">
+                  Preço unitário
+                  <span>(opcional)</span>
+                </span>
+                <input type="number" min="0" step="0.01" formControlName="unitPrice" />
+              </label>
+              <label>
+                <span class="field-label">
+                  Taxas
+                  <span>(opcional)</span>
+                </span>
+                <input type="number" min="0" step="0.01" formControlName="fees" />
+              </label>
             </div>
           }
         </div>
         <div class="form-row record-date-total-row">
-          <label>Data<input type="date" formControlName="date"></label>
+          <label>
+            Data
+            <input type="date" formControlName="date" />
+          </label>
           @if (!isCorporateEvent() && !isBonus()) {
-            <label appMotionOverlay class="total-value" [class.income-total-value]="isIncome()"
-              animate.enter="motion-field-enter" animate.leave="motion-field-leave">Valor total<input type="number" min="0.01" step="0.01" formControlName="totalValue"></label>
+            <label
+              appMotionOverlay
+              class="total-value"
+              [class.income-total-value]="isIncome()"
+              animate.enter="motion-field-enter"
+              animate.leave="motion-field-leave"
+            >
+              Valor total
+              <input type="number" min="0.01" step="0.01" formControlName="totalValue" />
+            </label>
           }
         </div>
         <div class="form-row">
-          <label class="record-description">Descrição <span>(opcional)</span><textarea formControlName="description" rows="2"></textarea></label>
+          <label class="record-description">
+            Descrição
+            <span>(opcional)</span>
+            <textarea formControlName="description" rows="2"></textarea>
+          </label>
         </div>
         <div class="form-actions">
           <button class="button primary" type="submit" [disabled]="recordForm.invalid">
@@ -271,7 +555,9 @@
         </div>
         <div class="form-message-slot" aria-live="polite">
           @if (message()) {
-            <p class="alert" animate.enter="motion-feedback-enter" animate.leave="motion-feedback-leave">{{ message() }}</p>
+            <p class="alert" animate.enter="motion-feedback-enter" animate.leave="motion-feedback-leave">
+              {{ message() }}
+            </p>
           }
         </div>
       </form>

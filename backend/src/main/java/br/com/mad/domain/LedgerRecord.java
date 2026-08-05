@@ -1,7 +1,14 @@
 package br.com.mad.domain;
 
 import br.com.mad.util.UuidV7;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -45,9 +52,15 @@ public class LedgerRecord extends AuditedEntity {
     public void update(Type type, LocalDate date, BigDecimal quantity, BigDecimal unitPrice,
                        BigDecimal fees, BigDecimal totalValue, BigDecimal newQuantity,
                        String ratio, String description) {
-        this.type = type; this.date = date; this.quantity = quantity; this.unitPrice = unitPrice;
-        this.fees = fees; this.totalValue = totalValue; this.newQuantity = newQuantity;
-        this.ratio = ratio; this.description = description;
+        this.type = type;
+        this.date = date;
+        this.quantity = quantity;
+        this.unitPrice = unitPrice;
+        this.fees = fees;
+        this.totalValue = totalValue;
+        this.newQuantity = newQuantity;
+        this.ratio = ratio;
+        this.description = description;
     }
     public UUID getId() { return id; }
     public Wallet getWallet() { return wallet; }

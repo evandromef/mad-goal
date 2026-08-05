@@ -1,4 +1,17 @@
-import { afterNextRender, ChangeDetectionStrategy, Component, computed, ElementRef, HostListener, inject, Injector, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  HostListener,
+  inject,
+  Injector,
+  OnDestroy,
+  OnInit,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -11,7 +24,7 @@ import { MotionOverlayDirective } from '../../core/motion-overlay.directive';
   selector: 'app-dashboard',
   imports: [ReactiveFormsModule, CurrencyPipe, DecimalPipe, DatePipe, RouterLink, MotionOverlayDirective],
   templateUrl: './dashboard.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
@@ -35,8 +48,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly incomeData = signal<IncomeResponse | null>(null);
   readonly incomeMonths = this.createIncomeMonths();
   readonly selectedIncomeMonth = signal(this.incomeMonths[0]);
-  readonly selectedMonthIncomes = computed(() => this.incomeData()?.items
-    .filter(item => item.date.startsWith(this.selectedIncomeMonth())) ?? []);
+  readonly selectedMonthIncomes = computed(
+    () => this.incomeData()?.items.filter((item) => item.date.startsWith(this.selectedIncomeMonth())) ?? [],
+  );
   private successTimer: ReturnType<typeof setTimeout> | null = null;
   private recordModalReturnFocus?: HTMLElement;
   readonly userName = signal(localStorage.getItem('mad_user') ?? 'Investidor');
@@ -47,12 +61,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly filteredPurchaseAssets = computed(() => {
     const query = this.purchaseAssetQuery().trim().toLocaleLowerCase('pt-BR');
     if (!query) return this.assets();
-    return this.assets().filter(asset => this.assetDisplay(asset).toLocaleLowerCase('pt-BR').includes(query));
+    return this.assets().filter((asset) => this.assetDisplay(asset).toLocaleLowerCase('pt-BR').includes(query));
   });
   availableAssets(): Asset[] {
     if (this.recordForm.controls.type.value === 'COMPRA') return this.assets();
-    const walletAssetIds = new Set(this.records().map(item => item.assetId));
-    return this.assets().filter(asset => walletAssetIds.has(asset.id));
+    const walletAssetIds = new Set(this.records().map((item) => item.assetId));
+    return this.assets().filter((asset) => walletAssetIds.has(asset.id));
   }
   readonly walletForm = this.fb.nonNullable.group({ name: ['', [Validators.required, Validators.maxLength(80)]] });
   readonly recordForm = this.fb.group({
@@ -65,13 +79,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
     totalValue: this.fb.control<number | null>(null),
     newQuantity: this.fb.control<number | null>(null),
     ratio: this.fb.nonNullable.control(''),
-    description: this.fb.nonNullable.control('')
+    description: this.fb.nonNullable.control(''),
   });
   readonly recordTypes = [
-    { value: 'COMPRA', label: 'Compra' }, { value: 'VENDA', label: 'Venda' },
-    { value: 'SUBSCRICAO', label: 'Subscrição' }, { value: 'DIVIDENDO', label: 'Dividendo' },
-    { value: 'JCP', label: 'JCP' }, { value: 'BONIFICACAO', label: 'Bonificação' },
-    { value: 'DESDOBRAMENTO', label: 'Desdobramento' }, { value: 'GRUPAMENTO', label: 'Grupamento' }
+    { value: 'COMPRA', label: 'Compra' },
+    { value: 'VENDA', label: 'Venda' },
+    { value: 'SUBSCRICAO', label: 'Subscrição' },
+    { value: 'DIVIDENDO', label: 'Dividendo' },
+    { value: 'JCP', label: 'JCP' },
+    { value: 'BONIFICACAO', label: 'Bonificação' },
+    { value: 'DESDOBRAMENTO', label: 'Desdobramento' },
+    { value: 'GRUPAMENTO', label: 'Grupamento' },
   ];
 
   ngOnInit(): void {
@@ -89,11 +107,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.wallets.set(wallets);
       if (wallets.length && !this.selectedWalletId()) {
         const requested = this.route.snapshot.queryParamMap.get('wallet');
-        this.selectWallet(wallets.some(item => item.id === requested) ? requested! : wallets[0].id);
+        this.selectWallet(wallets.some((item) => item.id === requested) ? requested! : wallets[0].id);
         const asset = this.route.snapshot.queryParamMap.get('asset');
         const type = this.route.snapshot.queryParamMap.get('type');
         if (asset) this.recordForm.controls.assetId.setValue(asset);
-        if (type && this.recordTypes.some(item => item.value === type)) this.recordForm.controls.type.setValue(type);
+        if (type && this.recordTypes.some((item) => item.value === type)) this.recordForm.controls.type.setValue(type);
         this.syncPurchaseAssetQuery();
       }
     });
@@ -130,28 +148,32 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
     this.walletActionsTrigger?.nativeElement.focus();
-    const name = (await this.modal.prompt({
-      title: 'Nova carteira',
-      message: 'Escolha um nome para identificar a nova carteira.',
-      inputLabel: 'Nome da carteira',
-      placeholder: 'Ex.: Longo prazo',
-      confirmLabel: 'Criar carteira'
-    }))?.trim();
+    const name = (
+      await this.modal.prompt({
+        title: 'Nova carteira',
+        message: 'Escolha um nome para identificar a nova carteira.',
+        inputLabel: 'Nome da carteira',
+        placeholder: 'Ex.: Longo prazo',
+        confirmLabel: 'Criar carteira',
+      })
+    )?.trim();
     if (name) this.submitWalletCreation(name);
   }
   async renameWallet(): Promise<void> {
     this.closeWalletActions();
     this.walletActionsTrigger?.nativeElement.focus();
-    const wallet = this.wallets().find(item => item.id === this.selectedWalletId());
+    const wallet = this.wallets().find((item) => item.id === this.selectedWalletId());
     if (!wallet) return;
-    const name = (await this.modal.prompt({
-      title: 'Renomear carteira',
-      message: `Escolha um novo nome para “${wallet.name}”.`,
-      inputLabel: 'Novo nome',
-      initialValue: wallet.name,
-      placeholder: 'Nome da carteira',
-      confirmLabel: 'Salvar nome'
-    }))?.trim();
+    const name = (
+      await this.modal.prompt({
+        title: 'Renomear carteira',
+        message: `Escolha um novo nome para “${wallet.name}”.`,
+        inputLabel: 'Novo nome',
+        initialValue: wallet.name,
+        placeholder: 'Nome da carteira',
+        confirmLabel: 'Salvar nome',
+      })
+    )?.trim();
     if (!name) return;
     this.api.updateWallet(wallet.id, name).subscribe(() => {
       this.showSuccess('Carteira atualizada.');
@@ -162,14 +184,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.closeWalletActions();
     this.walletActionsTrigger?.nativeElement.focus();
     const id = this.selectedWalletId();
-    const wallet = this.wallets().find(item => item.id === id);
-    if (!id || !await this.modal.confirm({
-      title: 'Excluir carteira?',
-      message: `A carteira “${wallet?.name ?? ''}” e todo o histórico dela serão removidos definitivamente.`,
-      confirmLabel: 'Excluir carteira',
-      cancelLabel: 'Manter carteira',
-      danger: true
-    })) return;
+    const wallet = this.wallets().find((item) => item.id === id);
+    if (
+      !id ||
+      !(await this.modal.confirm({
+        title: 'Excluir carteira?',
+        message: `A carteira “${wallet?.name ?? ''}” e todo o histórico dela serão removidos definitivamente.`,
+        confirmLabel: 'Excluir carteira',
+        cancelLabel: 'Manter carteira',
+        danger: true,
+      }))
+    )
+      return;
     this.api.deleteWallet(id).subscribe(() => {
       this.selectedWalletId.set('');
       this.dashboard.set(null);
@@ -204,7 +230,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
   private submitWalletCreation(name: string): void {
     this.api.createWallet(name).subscribe((wallet) => {
-      this.walletForm.reset(); this.showWalletForm.set(false); this.loadWallets(); this.selectWallet(wallet.id);
+      this.walletForm.reset();
+      this.showWalletForm.set(false);
+      this.loadWallets();
+      this.selectWallet(wallet.id);
     });
   }
   changeGranularity(value: 'MONTHLY' | 'YEARLY'): void {
@@ -217,24 +246,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const currentMonth = this.incomeMonths[0];
     const [year, month] = currentMonth.split('-').map(Number);
     const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
-    this.api.incomes(walletId, {
-      from: `${this.incomeMonths[11]}-01`,
-      to: `${currentMonth}-${String(lastDay).padStart(2, '0')}`,
-      groupBy: 'MONTHLY'
-    }).subscribe(data => this.incomeData.set(data));
+    this.api
+      .incomes(walletId, {
+        from: `${this.incomeMonths[11]}-01`,
+        to: `${currentMonth}-${String(lastDay).padStart(2, '0')}`,
+        groupBy: 'MONTHLY',
+      })
+      .subscribe((data) => this.incomeData.set(data));
   }
-  selectIncomeMonth(month: string): void { this.selectedIncomeMonth.set(month); }
+  selectIncomeMonth(month: string): void {
+    this.selectedIncomeMonth.set(month);
+  }
   evolutionWidth(value: number): number {
-    const max = Math.max(...this.visibleEvolution().map(item => item.acquisitionCost), 1);
-    return Math.max(2, value / max * 100);
+    const max = Math.max(...this.visibleEvolution().map((item) => item.acquisitionCost), 1);
+    return Math.max(2, (value / max) * 100);
   }
   periodLabel(period: string): string {
     const month = /^(\d{4})-(\d{2})$/.exec(period);
     if (month) {
       const monthIndex = Number(month[2]) - 1;
       if (monthIndex >= 0 && monthIndex <= 11) {
-        return new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' })
-          .format(new Date(Date.UTC(Number(month[1]), monthIndex, 1)));
+        return new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
+          new Date(Date.UTC(Number(month[1]), monthIndex, 1)),
+        );
       }
     }
     const quarter = /^(\d{4})-T([1-4])$/.exec(period);
@@ -266,16 +300,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
     const selectedAssetId = this.recordForm.controls.assetId.value;
-    if (selectedAssetId && !this.availableAssets().some(asset => asset.id === selectedAssetId)) {
+    if (selectedAssetId && !this.availableAssets().some((asset) => asset.id === selectedAssetId)) {
       this.recordForm.controls.assetId.setValue('');
     }
   }
-  assetDisplay(asset: Asset): string { return `${asset.ticker} · ${asset.name}`; }
+  assetDisplay(asset: Asset): string {
+    return `${asset.ticker} · ${asset.name}`;
+  }
   onPurchaseAssetInput(value: string): void {
     this.purchaseAssetQuery.set(value);
     const normalized = value.trim().toLocaleLowerCase('pt-BR');
-    const selected = this.assets().find(asset => asset.ticker.toLocaleLowerCase('pt-BR') === normalized
-      || this.assetDisplay(asset).toLocaleLowerCase('pt-BR') === normalized);
+    const selected = this.assets().find(
+      (asset) =>
+        asset.ticker.toLocaleLowerCase('pt-BR') === normalized ||
+        this.assetDisplay(asset).toLocaleLowerCase('pt-BR') === normalized,
+    );
     this.recordForm.controls.assetId.setValue(selected?.id ?? '');
   }
   selectFirstPurchaseAsset(event: Event): void {
@@ -299,9 +338,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (!walletId || this.recordForm.invalid) return;
     const body = this.recordPayload(walletId);
     const editingId = this.editingId();
-    const request = editingId
-      ? this.api.updateRecord(editingId, body)
-      : this.api.createRecord(body);
+    const request = editingId ? this.api.updateRecord(editingId, body) : this.api.createRecord(body);
     request.subscribe({
       next: () => {
         this.showSuccess(editingId ? 'Lançamento atualizado com sucesso.' : 'Lançamento salvo com sucesso.');
@@ -310,7 +347,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.closeRecordModal();
         this.selectWallet(walletId);
       },
-      error: (response) => this.showError(response.error?.message ?? 'Não foi possível salvar o lançamento.')
+      error: (response) => this.showError(response.error?.message ?? 'Não foi possível salvar o lançamento.'),
     });
   }
   editRecord(item: LedgerItem): void {
@@ -328,7 +365,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       totalValue: item.totalValue ?? null,
       newQuantity: item.newQuantity ?? null,
       ratio: item.ratio ?? '',
-      description: item.description ?? ''
+      description: item.description ?? '',
     });
     this.recordForm.controls.assetId.disable();
     this.syncPurchaseAssetQuery();
@@ -336,20 +373,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.focusRecordModal();
   }
   async deleteRecord(item: LedgerItem): Promise<void> {
-    if (!await this.modal.confirm({
-      title: 'Excluir lançamento?',
-      message: `${this.label(item.type)} de ${item.ticker} em ${new Date(item.date + 'T00:00:00').toLocaleDateString('pt-BR')} será removido do histórico.`,
-      confirmLabel: 'Excluir lançamento',
-      cancelLabel: 'Manter lançamento',
-      danger: true
-    })) return;
+    if (
+      !(await this.modal.confirm({
+        title: 'Excluir lançamento?',
+        message: `${this.label(item.type)} de ${item.ticker} em ${new Date(item.date + 'T00:00:00').toLocaleDateString('pt-BR')} será removido do histórico.`,
+        confirmLabel: 'Excluir lançamento',
+        cancelLabel: 'Manter lançamento',
+        danger: true,
+      }))
+    )
+      return;
     this.api.deleteRecord(item.id).subscribe({
       next: () => {
         if (this.editingId() === item.id) this.cancelEdit(false);
         this.showSuccess('Lançamento excluído com sucesso.');
         this.selectWallet(this.selectedWalletId());
       },
-      error: (response) => this.showError(response.error?.message ?? 'Não foi possível excluir o lançamento.')
+      error: (response) => this.showError(response.error?.message ?? 'Não foi possível excluir o lançamento.'),
     });
   }
   cancelEdit(clearMessage = true): void {
@@ -405,13 +445,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.recordModalReturnFocus = activeElement instanceof HTMLElement ? activeElement : undefined;
   }
   private focusRecordModal(): void {
-    afterNextRender(() => {
-      const initialControl = Array.from(this.recordModal?.nativeElement
-        .querySelectorAll<HTMLElement>('[data-record-initial-focus]') ?? [])
-        .find(control => !control.matches(':disabled') && !control.closest('[inert]'));
-      (initialControl ?? this.recordModal?.nativeElement
-        .querySelector<HTMLElement>('select[formControlName="type"]'))?.focus();
-    }, { injector: this.injector });
+    afterNextRender(
+      () => {
+        const initialControl = Array.from(
+          this.recordModal?.nativeElement.querySelectorAll<HTMLElement>('[data-record-initial-focus]') ?? [],
+        ).find((control) => !control.matches(':disabled') && !control.closest('[inert]'));
+        (
+          initialControl ?? this.recordModal?.nativeElement.querySelector<HTMLElement>('select[formControlName="type"]')
+        )?.focus();
+      },
+      { injector: this.injector },
+    );
   }
   private focusNextRecordControl(currentControl: HTMLElement): void {
     const controls = this.recordModalControls();
@@ -419,9 +463,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (currentIndex >= 0) controls[currentIndex + 1]?.focus();
   }
   private recordModalControls(): HTMLElement[] {
-    return Array.from(this.recordModal?.nativeElement.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
-    ) ?? []).filter(control => !control.closest('[inert]'));
+    return Array.from(
+      this.recordModal?.nativeElement.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+      ) ?? [],
+    ).filter((control) => !control.closest('[inert]'));
   }
   private closeRecordModal(restoreFocus = true): void {
     if (!this.recordModalOpen()) return;
@@ -444,7 +490,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private recordPayload(walletId: string): Record<string, unknown> {
     const value = this.recordForm.getRawValue();
     const payload: Record<string, unknown> = {
-      walletId, assetId: value.assetId, type: value.type, date: value.date
+      walletId,
+      assetId: value.assetId,
+      type: value.type,
+      date: value.date,
     };
     if (value.description) payload['description'] = value.description;
     if (this.isOperation() || this.isIncome()) {
@@ -474,20 +523,36 @@ export class DashboardComponent implements OnInit, OnDestroy {
       totalValue: null,
       newQuantity: null,
       ratio: '',
-      description: ''
+      description: '',
     });
     this.purchaseAssetQuery.set('');
   }
   private syncPurchaseAssetQuery(): void {
-    const selected = this.assets().find(asset => asset.id === this.recordForm.controls.assetId.value);
+    const selected = this.assets().find((asset) => asset.id === this.recordForm.controls.assetId.value);
     this.purchaseAssetQuery.set(selected ? this.assetDisplay(selected) : '');
   }
-  isOperation(): boolean { return this.isOperationType(this.recordForm.controls.type.value); }
-  isOperationType(type: string): boolean { return ['COMPRA', 'VENDA', 'SUBSCRICAO'].includes(type); }
-  isIncome(): boolean { return ['DIVIDENDO', 'JCP'].includes(this.recordForm.controls.type.value); }
-  isBonus(): boolean { return this.recordForm.controls.type.value === 'BONIFICACAO'; }
-  isCorporateEvent(): boolean { return ['DESDOBRAMENTO', 'GRUPAMENTO'].includes(this.recordForm.controls.type.value); }
-  typeInitial(type: string): string { return this.label(type).charAt(0).toUpperCase(); }
-  label(type: string): string { return this.recordTypes.find((item) => item.value === type)?.label ?? type; }
-  logout(): void { this.session.clear(); }
+  isOperation(): boolean {
+    return this.isOperationType(this.recordForm.controls.type.value);
+  }
+  isOperationType(type: string): boolean {
+    return ['COMPRA', 'VENDA', 'SUBSCRICAO'].includes(type);
+  }
+  isIncome(): boolean {
+    return ['DIVIDENDO', 'JCP'].includes(this.recordForm.controls.type.value);
+  }
+  isBonus(): boolean {
+    return this.recordForm.controls.type.value === 'BONIFICACAO';
+  }
+  isCorporateEvent(): boolean {
+    return ['DESDOBRAMENTO', 'GRUPAMENTO'].includes(this.recordForm.controls.type.value);
+  }
+  typeInitial(type: string): string {
+    return this.label(type).charAt(0).toUpperCase();
+  }
+  label(type: string): string {
+    return this.recordTypes.find((item) => item.value === type)?.label ?? type;
+  }
+  logout(): void {
+    this.session.clear();
+  }
 }

@@ -2,6 +2,12 @@
 
 MVP web para controle de carteiras brasileiras de ações e FIIs. A aplicação permite criar conta e múltiplas carteiras, registrar, editar e excluir operações, proventos, bonificações e eventos corporativos, manter notas por ativo e consultar posição, custo de aquisição, valor atual, P&L, rentabilidade, alocação e evolução do custo.
 
+## Status do projeto
+
+O MAD ainda está em desenvolvimento ativo. Funcionalidades, contratos e
+documentação podem mudar enquanto o projeto evolui e não devem ser considerados
+estáveis para uso em produção neste momento.
+
 ## Documentação
 
 Requisitos, escopo, especificações funcionais e registros de revisão estão

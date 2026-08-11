@@ -120,8 +120,8 @@ não comprova a cobertura mínima de 80%.
 ### 10. Preservar o template obrigatório de especificações
 
 **Status:** pendente
-**Local:** `espec_template.md:1`
-**Referência:** `AGENTS.md`
+**Local:** `../espec_template.md:1`
+**Referência:** `../../AGENTS.md`
 
 A exclusão do arquivo remove a estrutura usada para criar futuras ESPECs,
 embora o template seja definido como obrigatório nas diretrizes do repositório.

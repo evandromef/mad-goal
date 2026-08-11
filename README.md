@@ -2,6 +2,11 @@
 
 MVP web para controle de carteiras brasileiras de ações e FIIs. A aplicação permite criar conta e múltiplas carteiras, registrar, editar e excluir operações, proventos, bonificações e eventos corporativos, manter notas por ativo e consultar posição, custo de aquisição, valor atual, P&L, rentabilidade, alocação e evolução do custo.
 
+## Documentação
+
+Requisitos, escopo, especificações funcionais e registros de revisão estão
+organizados no [índice da documentação](docs/README.md).
+
 ## Temas da interface
 
 A interface inicia com o tema orbital, inspirado na linguagem visual aeroespacial:

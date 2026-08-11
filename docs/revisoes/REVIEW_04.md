@@ -53,7 +53,7 @@ página.
 
 **Status:** resolvido  
 **Local:** `frontend/src/app/pages/dashboard.component.ts:392`  
-**Referência:** `especs/ESPEC_03_operacoes.md:162-164`
+**Referência:** `../especs/ESPEC_03_operacoes.md:162-164`
 
 Quando `item.type` é `SUBSCRICAO`, o retorno antecipado omite quantidade e
 preço unitário, embora o formulário e `isOperation()` tratem subscrição com os

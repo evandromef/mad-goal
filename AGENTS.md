@@ -4,17 +4,18 @@
 
 This repository contains the requirements, feature specifications, and the MAD application.
 
-- `ers.md`: system requirements, business rules, glossary, and non-functional requirements.
-- `escopo_mvp.md`: features included in and excluded from the MVP.
-- `espec_template.md`: required structure for new feature specifications.
-- `especs/`: numbered, self-contained specifications such as `ESPEC_03_operacoes.md`.
+- `docs/ers.md`: system requirements, business rules, glossary, and non-functional requirements.
+- `docs/escopo_mvp.md`: features included in and excluded from the MVP.
+- `docs/espec_template.md`: required structure for new feature specifications.
+- `docs/especs/`: numbered, self-contained specifications such as `ESPEC_03_operacoes.md`.
+- `docs/revisoes/`: implementation review records.
 - `backend/`: Spring Boot API, Flyway migrations, and backend tests.
 - `frontend/`: Angular application, component tests, and Playwright flows. Keep
   each UI component in its own folder with its `.ts`, external `.html`, and
   colocated `.spec.ts`; keep non-component services and guards directly under
   `core/`.
 
-Keep cross-document identifiers aligned. Every RF, RN, or RNF referenced by an ESPEC must exist in `ers.md`, and MVP claims must agree with `escopo_mvp.md`.
+Keep cross-document identifiers aligned. Every RF, RN, or RNF referenced by an ESPEC must exist in `docs/ers.md`, and MVP claims must agree with `docs/escopo_mvp.md`.
 
 ## Build, Test, and Development Commands
 
@@ -30,7 +31,7 @@ Use lightweight checks when editing documentation:
 
 ```bash
 rg --files
-rg 'RF-[0-9]{3}|RN-[0-9]{3}|RNF-[0-9]{3}' especs/
+rg 'RF-[0-9]{3}|RN-[0-9]{3}|RNF-[0-9]{3}' docs/especs/
 git diff --check
 git diff --word-diff
 ```
@@ -39,7 +40,7 @@ These commands inventory files, inspect requirement references, catch whitespace
 
 ## Coding Style & Naming Conventions
 
-Write Markdown in Portuguese to match the product documents. Use ATX headings (`#`, `##`), short paragraphs, ordered lists for flows, and bullet lists for rules. Preserve domain terms from the ERS rather than introducing synonyms. Name specifications `ESPEC_XX_nome-da-funcionalidade.md`, using a two-digit sequence and lowercase kebab-case description. Start new specifications from `espec_template.md`; remove all instructional placeholders before review.
+Write Markdown in Portuguese to match the product documents. Use ATX headings (`#`, `##`), short paragraphs, ordered lists for flows, and bullet lists for rules. Preserve domain terms from the ERS rather than introducing synonyms. Name specifications `ESPEC_XX_nome-da-funcionalidade.md`, using a two-digit sequence and lowercase kebab-case description. Start new specifications from `docs/espec_template.md`; remove all instructional placeholders before review.
 
 ## Testing Guidelines
 
